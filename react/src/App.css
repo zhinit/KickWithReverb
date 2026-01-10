@@ -4,3 +4,48 @@
   padding: 2rem;
   text-align: center;
 }
+
+body {
+  --main-color: Silver;
+  background-image: url("assets/bkg2.png");
+  background-repeat: repeat;
+  /* background-color: black; */
+  color: var(--main-color);
+}
+
+button {
+  color: var(--main-color);
+}
+
+select {
+  color: var(--main-color);
+}
+
+.control-strip {
+  display: flex;
+  flex-direction: row;
+  gap: 66px;
+  justify-content: center;
+  padding-bottom: 20px;
+}
+
+.layer-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.sound-unit { 
+  display: flex;
+  flex-direction: row;
+  gap: 66px;
+  justify-content: center;
+}
+
+.master-strip-knobs { 
+  display: flex;
+  flex-direction: row;
+  gap: 66px;
+  justify-content: center;
+}

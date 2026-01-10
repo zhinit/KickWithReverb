@@ -13,34 +13,32 @@ const Selectah = () => (
 );
 
 const ControlStrip = () => (
-  <>
+  <div className="control-strip">
     <button>CUE</button>
     <button>PLAY</button>
     <button>BPM</button>
-  </>
+  </div>
 );
 
 const LayerStrip = () => (
-  <>
+  <div className="layer-strip">
     <div>
-      <div>
-        <Selectah />
-      </div>
-      <div>
-        <Knob />
-      </div>
-      <div>
-        <Knob />
-      </div>
-      <div>
-        <Knob />
-      </div>
+      <Selectah />
     </div>
-  </>
+    <div>
+      <Knob />
+    </div>
+    <div>
+      <Knob />
+    </div>
+    <div>
+      <Knob />
+    </div>
+  </div>
 );
 
 const SoundUnit = () => (
-  <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
+  <div className="sound-unit">
     <LayerStrip />
     <LayerStrip />
     <LayerStrip />
@@ -50,7 +48,7 @@ const SoundUnit = () => (
 const MasterStrip = () => (
   <>
     <p>Fully Deep Mastering Chain</p>
-    <div>
+    <div className="master-strip-knobs">
       <Knob />
       <Knob />
       <Knob />
