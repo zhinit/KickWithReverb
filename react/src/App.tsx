@@ -1,35 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+
+const Knob = () => {
+  return <button>Knob</button>;
+};
+
+const Selectah = () => (
+  <select>
+    <option>option 1</option>
+    <option>option 2</option>
+    <option>option 3</option>
+  </select>
+);
+
+const ControlStrip = () => (
+  <>
+    <button>CUE</button>
+    <button>PLAY</button>
+    <button>BPM</button>
+  </>
+);
+
+const LayerStrip = () => (
+  <>
+    <div>
+      <div>
+        <Selectah />
+      </div>
+      <div>
+        <Knob />
+      </div>
+      <div>
+        <Knob />
+      </div>
+      <div>
+        <Knob />
+      </div>
+    </div>
+  </>
+);
+
+const SoundUnit = () => (
+  <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
+    <LayerStrip />
+    <LayerStrip />
+    <LayerStrip />
+  </div>
+);
+
+const MasterStrip = () => (
+  <>
+    <p>Fully Deep Mastering Chain</p>
+    <div>
+      <Knob />
+      <Knob />
+      <Knob />
+    </div>
+  </>
+);
+
+const Daw = () => (
+  <>
+    <h1>KICK WITH REVERB</h1>
+    <h2>Fully featured fully sophisticated DAW</h2>
+    <h2>for the modern tik tok techno purist.</h2>
+    <ControlStrip />
+    <SoundUnit />
+    <MasterStrip />
+  </>
+);
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Daw />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
