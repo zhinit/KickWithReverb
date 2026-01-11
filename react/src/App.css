@@ -21,6 +21,25 @@ select {
   color: var(--main-color);
 }
 
+.cue-button {
+  width: 80px;
+  height: 80px;
+  display: block;
+}
+
+.play-button {
+  width: 80px;
+  height: 80px;
+  display: block;
+}
+
+.bpm-box {
+  width: 80px;
+  height: 40px;
+  font-size: 30px;
+  font-family: monospace;
+}
+
 .knob-container {
   display: flex;
   flex-direction: column;
@@ -28,28 +47,18 @@ select {
 }
 
 .knob {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, SlateGrey, Gray);
-  cursor: grab;
+  width: 75px;
+  height: 75px;
   position: relative;
-}
-
-.knob-line {
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  width: 2px;
-  height: 10px;
-  background-color: var(--main-color);
+  transform-origin: center center;
 }
 
 .control-strip {
   display: flex;
   flex-direction: row;
-  gap: 66px;
+  gap: 75px;
   justify-content: center;
+  align-items: center;
   padding-bottom: 20px;
 }
 
@@ -63,13 +72,13 @@ select {
 .sound-unit { 
   display: flex;
   flex-direction: row;
-  gap: 66px;
+  gap: 75px;
   justify-content: center;
 }
 
 .master-strip-knobs { 
   display: flex;
   flex-direction: row;
-  gap: 66px;
+  gap: 75px;
   justify-content: center;
 }

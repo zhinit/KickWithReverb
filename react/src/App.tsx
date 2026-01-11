@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import knobImage from "./assets/whiteMarbleKnob.png";
+import cueButtonOff from "./assets/cuebuttonOff.png";
+import cueButtonOn from "./assets/cuebuttonOn.png";
+import playButtonOff from "./assets/playbuttonOff.png";
+import playButtonOn from "./assets/playbuttonOn.png";
 import "./App.css";
 
 interface KnobProps {
@@ -16,6 +21,7 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
   const startValue = useRef(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     startY.current = e.clientY;
     startValue.current = value;
@@ -49,61 +55,114 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
   return (
     <div className="knob-container">
       <label>{label}</label>
-      <div
+      <img
+        src={knobImage}
+        alt="knob"
         className="knob"
-        style={{ transform: `rotate( ${rotation}deg )` }}
+        style={{ transform: `rotate(${rotation}deg)` }}
         onMouseDown={handleMouseDown}
-      >
-        <div className="knob-line"></div>
-      </div>
+      />
     </div>
   );
 };
 
-const Selectah = () => (
+interface SelectahProps {
+  dropdownItems: Array<string>;
+}
+
+const Selectah = ({ dropdownItems }: SelectahProps) => (
   <select>
-    <option>option 1</option>
-    <option>option 2</option>
-    <option>option 3</option>
+    {dropdownItems.map((item, i) => (
+      <option key={i} value={item}>
+        {item}
+      </option>
+    ))}
   </select>
 );
 
-const ControlStrip = () => (
-  <div className="control-strip">
-    <button>CUE</button>
-    <button>PLAY</button>
-    <button>BPM</button>
-  </div>
-);
+const ControlStrip = () => {
+  const [isPlayOn, setIsPlayOn] = useState(false);
+  const [isCuePressed, setIsCuePressed] = useState(false);
 
-const LayerStrip = () => (
+  const handlePlayClick = () => {
+    setIsPlayOn(!isPlayOn);
+  };
+
+  const handleCueMouseDown = () => {
+    setIsCuePressed(true);
+  };
+
+  const handleCueMouseUp = () => {
+    setIsCuePressed(false);
+  };
+
+  return (
+    <div className="control-strip">
+      <img
+        className="cue-button"
+        src={isCuePressed ? cueButtonOn : cueButtonOff}
+        alt="CUE"
+        onMouseDown={handleCueMouseDown}
+        onMouseUp={handleCueMouseUp}
+      />
+      <img
+        className="play-button"
+        src={isPlayOn ? playButtonOn : playButtonOff}
+        alt="PLAY"
+        onClick={handlePlayClick}
+      />
+      <input className="bpm-box" type="number" />
+    </div>
+  );
+};
+
+interface LayerStripProps {
+  layerLabel: string;
+  dropdownItems: Array<string>;
+  layerKnobLabels: Array<string>;
+}
+
+const LayerStrip = ({
+  layerLabel,
+  dropdownItems,
+  layerKnobLabels,
+}: LayerStripProps) => (
   <div className="layer-strip">
+    <label>{layerLabel}</label>
     <div>
-      <Selectah />
+      <Selectah dropdownItems={dropdownItems} />
     </div>
-    <div>
-      <Knob label="label1" />
-    </div>
-    <div>
-      <Knob label="label2" />
-    </div>
-    <div>
-      <Knob label="label3" />
-    </div>
+    {layerKnobLabels.map((knobLabel) => (
+      <div>
+        <Knob label={knobLabel} />
+      </div>
+    ))}
   </div>
 );
 
 const SoundUnit = () => (
   <div className="sound-unit">
-    <LayerStrip />
-    <LayerStrip />
-    <LayerStrip />
+    <LayerStrip
+      layerLabel="Kick Layer"
+      dropdownItems={["Kick1", "Kick2", "Kick3"]}
+      layerKnobLabels={["Length", "Transient", "Distortion"]}
+    />
+    <LayerStrip
+      layerLabel="Noise Layer"
+      dropdownItems={["white", "charcoal", "gray", "black"]}
+      layerKnobLabels={["Low Pass", "High Pass", "Comb"]}
+    />
+    <LayerStrip
+      layerLabel="Reverb Layer"
+      dropdownItems={["Club", "Cathedral", "Oil Tank"]}
+      layerKnobLabels={["Low Pass", "High Pass", "Size"]}
+    />
   </div>
 );
 
 const MasterStrip = () => (
   <>
-    <p>Fully Deep Mastering Chain</p>
+    <h2>Fully Deep Mastering Chain</h2>
     <div className="master-strip-knobs">
       <Knob label="OTT" />
       <Knob label="Distortion" />
@@ -113,14 +172,16 @@ const MasterStrip = () => (
 );
 
 const Daw = () => (
-  <>
+  <div className="daw">
     <h1>KICK WITH REVERB</h1>
-    <h2>Fully featured fully sophisticated DAW</h2>
-    <h2>for the modern tik tok techno purist.</h2>
+    <h2>
+      Fully featured fully sophisticated DAW <br />
+      for the modern tik tok techno purist.
+    </h2>
     <ControlStrip />
     <SoundUnit />
     <MasterStrip />
-  </>
+  </div>
 );
 
 function App() {
