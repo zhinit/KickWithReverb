@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import * as Tone from "tone";
 import knobImage from "./assets/whiteMarbleKnob.png";
 import cueButtonOff from "./assets/cuebuttonOff.png";
 import cueButtonOn from "./assets/cuebuttonOn.png";
@@ -83,13 +84,28 @@ const Selectah = ({ dropdownItems }: SelectahProps) => (
 const ControlStrip = () => {
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
+  const [bpm, setBPM] = useState(140);
+
+  const playerRef = useRef<Tone.Player | null>(null);
+
+  useEffect(() => {
+    playerRef.current = new Tone.Player({
+      url: "/src/assets/Kick1.wav",
+    }).toDestination();
+
+    return () => {
+      playerRef.current?.dispose();
+    };
+  }, []);
 
   const handlePlayClick = () => {
     setIsPlayOn(!isPlayOn);
   };
 
-  const handleCueMouseDown = () => {
+  const handleCueMouseDown = async () => {
     setIsCuePressed(true);
+    await Tone.start();
+    playerRef.current?.start();
   };
 
   const handleCueMouseUp = () => {
