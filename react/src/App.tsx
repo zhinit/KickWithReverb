@@ -96,16 +96,18 @@ const ControlStrip = () => {
       url: "/src/assets/Kick1.wav",
     }).toDestination();
 
-    noiseRef.current = new Tone.Noise("white");
+    noiseRef.current = new Tone.Noise("brown").toDestination();
+    noiseRef.current.volume.value = -10;
 
     return () => {
       playerRef.current?.dispose();
+      noiseRef.current?.dispose();
     };
   }, []);
 
   // bpm change effect
   useEffect(() => {
-    Tone.Transport.bpm.value = bpm;
+    Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
 
   const handlePlayClick = async () => {
@@ -114,20 +116,23 @@ const ControlStrip = () => {
 
     if (newPlayState) {
       await Tone.start();
-      Tone.Transport.bpm.value = bpm;
+      Tone.getTransport().bpm.value = bpm;
 
       loopRef.current = new Tone.Loop((time) => {
         playerRef.current?.start(time);
       }, "4n").start(0);
 
-      Tone.Transport.start();
+      noiseRef.current?.start();
+
+      Tone.getTransport().start();
     } else {
       if (loopRef.current) {
         loopRef.current.stop();
         loopRef.current.dispose();
         loopRef.current = null;
       }
-      Tone.Transport.stop();
+      noiseRef.current?.stop();
+      Tone.getTransport().stop();
     }
   };
 
@@ -182,8 +187,8 @@ const LayerStrip = ({
     <div>
       <Selectah dropdownItems={dropdownItems} />
     </div>
-    {layerKnobLabels.map((knobLabel) => (
-      <div>
+    {layerKnobLabels.map((knobLabel, index) => (
+      <div key={index}>
         <Knob label={knobLabel} />
       </div>
     ))}
