@@ -87,19 +87,48 @@ const ControlStrip = () => {
   const [bpm, setBPM] = useState(140);
 
   const playerRef = useRef<Tone.Player | null>(null);
+  const noiseRef = useRef<Tone.Noise | null>(null);
+  const loopRef = useRef<Tone.Loop | null>(null);
 
+  // mount and unmount effect
   useEffect(() => {
     playerRef.current = new Tone.Player({
       url: "/src/assets/Kick1.wav",
     }).toDestination();
+
+    noiseRef.current = new Tone.Noise("white");
 
     return () => {
       playerRef.current?.dispose();
     };
   }, []);
 
-  const handlePlayClick = () => {
-    setIsPlayOn(!isPlayOn);
+  // bpm change effect
+  useEffect(() => {
+    Tone.Transport.bpm.value = bpm;
+  }, [bpm]);
+
+  const handlePlayClick = async () => {
+    const newPlayState = !isPlayOn;
+    setIsPlayOn(newPlayState);
+
+    if (newPlayState) {
+      await Tone.start();
+      Tone.Transport.bpm.value = bpm;
+
+      loopRef.current = new Tone.Loop((time) => {
+        playerRef.current?.start(time);
+      }, "4n").start(0);
+
+      Tone.Transport.start();
+    } else {
+      if (loopRef.current) {
+        loopRef.current.stop();
+        loopRef.current.dispose();
+        loopRef.current = null;
+      }
+      Tone.Transport.stop();
+    }
   };
 
   const handleCueMouseDown = async () => {
@@ -127,7 +156,12 @@ const ControlStrip = () => {
         alt="PLAY"
         onClick={handlePlayClick}
       />
-      <input className="bpm-box" type="number" />
+      <input
+        className="bpm-box"
+        type="number"
+        value={bpm}
+        onChange={(e) => setBPM(Number(e.target.value))}
+      />
     </div>
   );
 };
