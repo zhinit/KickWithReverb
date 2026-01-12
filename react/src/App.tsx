@@ -5,6 +5,9 @@ import cueButtonOff from "./assets/cuebuttonOff.png";
 import cueButtonOn from "./assets/cuebuttonOn.png";
 import playButtonOff from "./assets/playbuttonOff.png";
 import playButtonOn from "./assets/playbuttonOn.png";
+import kick1 from "./assets/kicks/Kick1.wav";
+import kick2 from "./assets/kicks/Kick2.wav";
+import kick3 from "./assets/kicks/Kick3.wav";
 import "./App.css";
 
 interface KnobProps {
@@ -86,21 +89,25 @@ const ControlStrip = () => {
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
 
-  const playerRef = useRef<Tone.Player | null>(null);
+  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
   const noiseRef = useRef<Tone.Noise | null>(null);
   const loopRef = useRef<Tone.Loop | null>(null);
 
   // mount and unmount effect
   useEffect(() => {
-    playerRef.current = new Tone.Player({
-      url: "/src/assets/Kick1.wav",
+    kickSamplerRef.current = new Tone.Sampler({
+      urls: {
+        C1: kick1,
+        C2: kick2,
+        C3: kick3,
+      },
     }).toDestination();
 
     noiseRef.current = new Tone.Noise("brown").toDestination();
     noiseRef.current.volume.value = -10;
 
     return () => {
-      playerRef.current?.dispose();
+      kickSamplerRef.current?.dispose();
       noiseRef.current?.dispose();
     };
   }, []);
@@ -116,10 +123,11 @@ const ControlStrip = () => {
 
     if (newPlayState) {
       await Tone.start();
+
       Tone.getTransport().bpm.value = bpm;
 
       loopRef.current = new Tone.Loop((time) => {
-        playerRef.current?.start(time);
+        kickSamplerRef.current?.triggerAttackRelease("C1", 0.5, time);
       }, "4n").start(0);
 
       noiseRef.current?.start();
@@ -139,7 +147,7 @@ const ControlStrip = () => {
   const handleCueMouseDown = async () => {
     setIsCuePressed(true);
     await Tone.start();
-    playerRef.current?.start();
+    kickSamplerRef.current?.triggerAttackRelease("C1", 0.5);
   };
 
   const handleCueMouseUp = () => {
