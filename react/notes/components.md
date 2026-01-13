@@ -10,3 +10,4 @@ components
 - sound unit (3 layer strips)
 - master strip
 - daw
+  - holds control strip, sound unit, master strip

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEventHandler } from "react";
 import * as Tone from "tone";
 import knobImage from "./assets/whiteMarbleKnob.png";
 import cueButtonOff from "./assets/cuebuttonOff.png";
@@ -84,14 +84,147 @@ const Selectah = ({ dropdownItems }: SelectahProps) => (
   </select>
 );
 
-const ControlStrip = () => {
+interface ControlStripProps {
+  bpm: number;
+  isPlayOn: boolean;
+  isCuePressed: boolean;
+  handleCueMouseDown: MouseEventHandler;
+  handleCueMouseUp: MouseEventHandler;
+  handlePlayClick: MouseEventHandler;
+  setBPM: Function;
+}
+
+const ControlStrip = ({
+  bpm,
+  isPlayOn,
+  isCuePressed,
+  handleCueMouseDown,
+  handleCueMouseUp,
+  handlePlayClick,
+  setBPM,
+}: ControlStripProps) => {
+  return (
+    <div className="control-strip">
+      <img
+        className="cue-button"
+        src={isCuePressed ? cueButtonOn : cueButtonOff}
+        alt="CUE"
+        onMouseDown={handleCueMouseDown}
+        onMouseUp={handleCueMouseUp}
+      />
+      <img
+        className="play-button"
+        src={isPlayOn ? playButtonOn : playButtonOff}
+        alt="PLAY"
+        onClick={handlePlayClick}
+      />
+      <input
+        className="bpm-box"
+        type="number"
+        value={bpm}
+        onChange={(e) => setBPM(Number(e.target.value))}
+      />
+    </div>
+  );
+};
+
+interface LayerStripProps {
+  layerLabel: string;
+  dropdownItems: Array<string>;
+  layerKnobLabels: Array<string>;
+}
+
+const LayerStrip = ({
+  layerLabel,
+  dropdownItems,
+  layerKnobLabels,
+}: LayerStripProps) => (
+  <div className="layer-strip">
+    <label>{layerLabel}</label>
+    <div>
+      <Selectah dropdownItems={dropdownItems} />
+    </div>
+    {layerKnobLabels.map((knobLabel, index) => (
+      <div key={index}>
+        <Knob label={knobLabel} />
+      </div>
+    ))}
+  </div>
+);
+
+const SoundUnit = () => {
+  return (
+    <div className="sound-unit">
+      <LayerStrip
+        layerLabel="Kick Layer"
+        dropdownItems={["Kick1", "Kick2", "Kick3"]}
+        layerKnobLabels={["Length", "Distortion", "OTT"]}
+      />
+      <LayerStrip
+        layerLabel="Noise Layer"
+        dropdownItems={["white", "charcoal", "gray", "black"]}
+        layerKnobLabels={["Low Pass", "High Pass", "Comb"]}
+      />
+      <LayerStrip
+        layerLabel="Reverb Layer"
+        dropdownItems={["Club", "Cathedral", "Oil Tank"]}
+        layerKnobLabels={["Low Pass", "High Pass", "Size"]}
+      />
+    </div>
+  );
+};
+
+const MasterStrip = () => (
+  <>
+    <h2>Fully Deep Mastering Chain</h2>
+    <div className="master-strip-knobs">
+      <Knob label="OTT" />
+      <Knob label="Distortion" />
+      <Knob label="Limiter" />
+    </div>
+  </>
+);
+
+const Daw = () => {
+  // control strip states and refs
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
 
-  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const noiseRef = useRef<Tone.Noise | null>(null);
   const loopRef = useRef<Tone.Loop | null>(null);
+
+  // kick layer states and refs
+  const [kickLen, setKickLen] = useState(0.5);
+  const [kickOttAmt, setKickOttAmt] = useState(0);
+  const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
+
+  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
+  const kickOttEq = useRef<Tone.EQ3 | null>(null);
+  const kickOttMb = useRef<Tone.MultibandCompressor | null>(null);
+  const kickOttGain = useRef<Tone.Gain | null>(null);
+  const kickDistortion = useRef<Tone.Distortion | null>(null);
+
+  // noise layer states and refs
+  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(300);
+  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
+  const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
+
+  const noiseRef = useRef<Tone.Noise | null>(null);
+  const noiseLowPassRef = useRef<Tone.Filter | null>(null);
+  const noiseHighPassRef = useRef<Tone.Filter | null>(null);
+  const noiseDistortion = useRef<Tone.Distortion | null>(null);
+
+  // reverb layer states and refs
+  const [reverbDecay, setReverbDecay] = useState(1.0);
+  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(10000);
+  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(30);
+  const [reverbWet, setReverbWet] = useState(0.5);
+
+  const reverbRef = useRef<Tone.Reverb | null>(null);
+  const reverbLowPassRef = useRef<Tone.Filter | null>(null);
+  const reverbHighPassRef = useRef<Tone.Filter | null>(null);
+
+  // master chain states and refs
 
   // mount and unmount effect
   useEffect(() => {
@@ -155,97 +288,26 @@ const ControlStrip = () => {
   };
 
   return (
-    <div className="control-strip">
-      <img
-        className="cue-button"
-        src={isCuePressed ? cueButtonOn : cueButtonOff}
-        alt="CUE"
-        onMouseDown={handleCueMouseDown}
-        onMouseUp={handleCueMouseUp}
+    <div className="daw">
+      <h1>KICK WITH REVERB</h1>
+      <h2>
+        Fully featured fully sophisticated DAW <br />
+        for the modern tik tok techno purist.
+      </h2>
+      <ControlStrip
+        bpm={bpm}
+        isPlayOn={isPlayOn}
+        isCuePressed={isCuePressed}
+        handleCueMouseDown={handleCueMouseDown}
+        handleCueMouseUp={handleCueMouseUp}
+        handlePlayClick={handlePlayClick}
+        setBPM={setBPM}
       />
-      <img
-        className="play-button"
-        src={isPlayOn ? playButtonOn : playButtonOff}
-        alt="PLAY"
-        onClick={handlePlayClick}
-      />
-      <input
-        className="bpm-box"
-        type="number"
-        value={bpm}
-        onChange={(e) => setBPM(Number(e.target.value))}
-      />
+      <SoundUnit />
+      <MasterStrip />
     </div>
   );
 };
-
-interface LayerStripProps {
-  layerLabel: string;
-  dropdownItems: Array<string>;
-  layerKnobLabels: Array<string>;
-}
-
-const LayerStrip = ({
-  layerLabel,
-  dropdownItems,
-  layerKnobLabels,
-}: LayerStripProps) => (
-  <div className="layer-strip">
-    <label>{layerLabel}</label>
-    <div>
-      <Selectah dropdownItems={dropdownItems} />
-    </div>
-    {layerKnobLabels.map((knobLabel, index) => (
-      <div key={index}>
-        <Knob label={knobLabel} />
-      </div>
-    ))}
-  </div>
-);
-
-const SoundUnit = () => (
-  <div className="sound-unit">
-    <LayerStrip
-      layerLabel="Kick Layer"
-      dropdownItems={["Kick1", "Kick2", "Kick3"]}
-      layerKnobLabels={["Length", "Transient", "Distortion"]}
-    />
-    <LayerStrip
-      layerLabel="Noise Layer"
-      dropdownItems={["white", "charcoal", "gray", "black"]}
-      layerKnobLabels={["Low Pass", "High Pass", "Comb"]}
-    />
-    <LayerStrip
-      layerLabel="Reverb Layer"
-      dropdownItems={["Club", "Cathedral", "Oil Tank"]}
-      layerKnobLabels={["Low Pass", "High Pass", "Size"]}
-    />
-  </div>
-);
-
-const MasterStrip = () => (
-  <>
-    <h2>Fully Deep Mastering Chain</h2>
-    <div className="master-strip-knobs">
-      <Knob label="OTT" />
-      <Knob label="Distortion" />
-      <Knob label="Limiter" />
-    </div>
-  </>
-);
-
-const Daw = () => (
-  <div className="daw">
-    <h1>KICK WITH REVERB</h1>
-    <h2>
-      Fully featured fully sophisticated DAW <br />
-      for the modern tik tok techno purist.
-    </h2>
-    <ControlStrip />
-    <SoundUnit />
-    <MasterStrip />
-  </div>
-);
 
 function App() {
   return (
