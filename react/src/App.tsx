@@ -187,44 +187,54 @@ const MasterStrip = () => (
 
 const Daw = () => {
   // control strip states and refs
+  const loopRef = useRef<Tone.Loop | null>(null);
+
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
 
-  const loopRef = useRef<Tone.Loop | null>(null);
-
   // kick layer states and refs
+  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
+  const kickDistortion = useRef<Tone.Distortion | null>(null);
+  const kickOttEq = useRef<Tone.EQ3 | null>(null);
+  const kickOttMb = useRef<Tone.MultibandCompressor | null>(null);
+  const kickOttGain = useRef<Tone.Gain | null>(null);
+
   const [kickLen, setKickLen] = useState(0.5);
   const [kickOttAmt, setKickOttAmt] = useState(0);
   const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
 
-  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const kickOttEq = useRef<Tone.EQ3 | null>(null);
-  const kickOttMb = useRef<Tone.MultibandCompressor | null>(null);
-  const kickOttGain = useRef<Tone.Gain | null>(null);
-  const kickDistortion = useRef<Tone.Distortion | null>(null);
-
   // noise layer states and refs
-  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(300);
-  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
-  const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
-
   const noiseRef = useRef<Tone.Noise | null>(null);
+  const noiseDistortion = useRef<Tone.Distortion | null>(null);
   const noiseLowPassRef = useRef<Tone.Filter | null>(null);
   const noiseHighPassRef = useRef<Tone.Filter | null>(null);
-  const noiseDistortion = useRef<Tone.Distortion | null>(null);
+
+  const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
+  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(300);
+  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
 
   // reverb layer states and refs
-  const [reverbDecay, setReverbDecay] = useState(1.0);
-  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(10000);
-  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(30);
-  const [reverbWet, setReverbWet] = useState(0.5);
-
   const reverbRef = useRef<Tone.Reverb | null>(null);
   const reverbLowPassRef = useRef<Tone.Filter | null>(null);
   const reverbHighPassRef = useRef<Tone.Filter | null>(null);
 
+  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(10000);
+  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(30);
+  const [reverbDecay, setReverbDecay] = useState(1.0);
+  const [reverbWet, setReverbWet] = useState(0.5);
+
   // master chain states and refs
+  const masterOttEq = useRef<Tone.EQ3 | null>(null);
+  const masterOttMb = useRef<Tone.MultibandCompressor | null>(null);
+  const masterOttGain = useRef<Tone.Gain | null>(null);
+  const masterDistortion = useRef<Tone.Distortion | null>(null);
+  const masterLimiterGain = useRef<Tone.Gain | null>(null);
+  const masterLimiter = useRef<Tone.Limiter | null>(null);
+
+  const [masterOttAmt, setMasterOttAmt] = useState(0);
+  const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
+  const [masterLimiterAmt, setMasterLimiterAmt] = useState(0.5);
 
   // mount and unmount effect
   useEffect(() => {
