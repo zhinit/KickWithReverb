@@ -195,10 +195,11 @@ const Daw = () => {
 
   // kick layer states and refs
   const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const kickDistortion = useRef<Tone.Distortion | null>(null);
-  const kickOttEq = useRef<Tone.EQ3 | null>(null);
-  const kickOttMb = useRef<Tone.MultibandCompressor | null>(null);
-  const kickOttGain = useRef<Tone.Gain | null>(null);
+  const kickEnvelopeRef = useRef<Tone.AmplitudeEnvelope | null>(null);
+  const kickDistortionRef = useRef<Tone.Distortion | null>(null);
+  const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
+  const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
+  const kickOttGainRef = useRef<Tone.Gain | null>(null);
 
   const [kickLen, setKickLen] = useState(0.5);
   const [kickOttAmt, setKickOttAmt] = useState(0);
@@ -206,12 +207,12 @@ const Daw = () => {
 
   // noise layer states and refs
   const noiseRef = useRef<Tone.Noise | null>(null);
-  const noiseDistortion = useRef<Tone.Distortion | null>(null);
+  const noiseDistortionRef = useRef<Tone.Distortion | null>(null);
   const noiseLowPassRef = useRef<Tone.Filter | null>(null);
   const noiseHighPassRef = useRef<Tone.Filter | null>(null);
 
   const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
-  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(300);
+  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(200);
   const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
 
   // reverb layer states and refs
@@ -219,18 +220,17 @@ const Daw = () => {
   const reverbLowPassRef = useRef<Tone.Filter | null>(null);
   const reverbHighPassRef = useRef<Tone.Filter | null>(null);
 
-  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(10000);
-  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(30);
-  const [reverbDecay, setReverbDecay] = useState(1.0);
-  const [reverbWet, setReverbWet] = useState(0.5);
+  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(500);
+  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(100);
+  const [reverbDecay, setReverbDecay] = useState(3.0);
 
   // master chain states and refs
-  const masterOttEq = useRef<Tone.EQ3 | null>(null);
-  const masterOttMb = useRef<Tone.MultibandCompressor | null>(null);
-  const masterOttGain = useRef<Tone.Gain | null>(null);
-  const masterDistortion = useRef<Tone.Distortion | null>(null);
-  const masterLimiterGain = useRef<Tone.Gain | null>(null);
-  const masterLimiter = useRef<Tone.Limiter | null>(null);
+  const masterOttEqRef = useRef<Tone.EQ3 | null>(null);
+  const masterOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
+  const masterOttGainRef = useRef<Tone.Gain | null>(null);
+  const masterDistortionRef = useRef<Tone.Distortion | null>(null);
+  const masterLimiterGainRef = useRef<Tone.Gain | null>(null);
+  const masterLimiterRef = useRef<Tone.Limiter | null>(null);
 
   const [masterOttAmt, setMasterOttAmt] = useState(0);
   const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
@@ -238,16 +238,59 @@ const Daw = () => {
 
   // mount and unmount effect
   useEffect(() => {
+    // initialize kick layer
     kickSamplerRef.current = new Tone.Sampler({
       urls: {
         C1: kick1,
         C2: kick2,
         C3: kick3,
       },
-    }).toDestination();
+    });
+    kickEnvelopeRef.current = new Tone.AmplitudeEnvelope({
+      attack: 0.1,
+      decay: 0.2,
+      sustain: 1.0,
+      release: 0.8,
+    });
+    kickDistortionRef.current = new Tone.Distortion(kickDistortionAmt);
+    kickOttEqRef.current = new Tone.EQ3({});
+    kickOttMbRef.current = new Tone.MultibandCompressor({
+      lowFrequency: 200,
+      highFrequency: 1300,
+    });
+    kickOttGainRef.current = new Tone.Gain(1);
 
-    noiseRef.current = new Tone.Noise("brown").toDestination();
+    kickSamplerRef.current.connect(kickEnvelopeRef.current);
+    kickEnvelopeRef.current.connect(kickDistortionRef.current);
+    kickDistortionRef.current.connect(kickOttEqRef.current);
+    kickOttEqRef.current.connect(kickOttMbRef.current);
+    kickOttMbRef.current.connect(kickOttGainRef.current);
+    kickOttGainRef.current.toDestination();
+
+    // initialize noise layer
+    noiseRef.current = new Tone.Noise("brown");
     noiseRef.current.volume.value = -10;
+
+    noiseDistortionRef.current = new Tone.Distortion(noiseDistortionAmt);
+    noiseLowPassRef.current = new Tone.Filter(noiseLowPassFreq, "lowpass");
+    noiseHighPassRef.current = new Tone.Filter(noiseHighPassFreq, "highpass");
+
+    noiseRef.current.connect(noiseDistortionRef.current);
+    noiseDistortionRef.current.connect(noiseLowPassRef.current);
+    noiseLowPassRef.current.connect(noiseHighPassRef.current);
+    noiseHighPassRef.current.toDestination();
+
+    // initialize reverb layer
+    reverbRef.current = new Tone.Reverb(reverbDecay);
+    reverbRef.current.wet.value = 1;
+    reverbLowPassRef.current = new Tone.Filter(reverbLowPassFreq, "lowpass");
+    reverbHighPassRef.current = new Tone.Filter(reverbHighPassFreq, "highpass");
+
+    kickOttGainRef.current.connect(reverbRef.current);
+    noiseHighPassRef.current.connect(reverbRef.current);
+    reverbRef.current.connect(reverbLowPassRef.current);
+    reverbLowPassRef.current.connect(reverbHighPassRef.current);
+    reverbHighPassRef.current.toDestination();
 
     return () => {
       kickSamplerRef.current?.dispose();
@@ -271,6 +314,7 @@ const Daw = () => {
 
       loopRef.current = new Tone.Loop((time) => {
         kickSamplerRef.current?.triggerAttackRelease("C1", 0.5, time);
+        kickEnvelopeRef.current?.triggerAttackRelease(0.5, time);
       }, "4n").start(0);
 
       noiseRef.current?.start();
@@ -291,6 +335,7 @@ const Daw = () => {
     setIsCuePressed(true);
     await Tone.start();
     kickSamplerRef.current?.triggerAttackRelease("C1", 0.5);
+    kickEnvelopeRef.current?.triggerAttackRelease(0.5);
   };
 
   const handleCueMouseUp = () => {
