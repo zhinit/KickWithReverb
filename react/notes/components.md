@@ -5,9 +5,22 @@ components
 - cue button
 - play button
 - BPM display
-- control strip (cur, play bpm)
-- layer strip (selectah and 3 knobs)
+- control strip
+  - cue, play, bpm
+- layer strip
+  - selectah
+  - 3 knobs
 - sound unit (3 layer strips)
+  - kick layer
+    - selectah: kick sample in kick sampler
+    - knob: len, transient, distortion
+  - noise layer
+    - selectah: noise sample in noise sampler
+    - knob: low pass, high pass, comb
+  - reverb layer
+    - selectah: reverb type
+    - knob: low pass high pass, size
 - master strip
+  - ott distortion limiter
 - daw
   - holds control strip, sound unit, master strip
