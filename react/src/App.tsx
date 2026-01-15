@@ -89,10 +89,12 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
 
 interface SelectahProps {
   dropdownItems: Array<string>;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
-const Selectah = ({ dropdownItems }: SelectahProps) => (
-  <select>
+const Selectah = ({ dropdownItems, value, onChange }: SelectahProps) => (
+  <select value={value} onChange={(e) => onChange?.(e.target.value)}>
     {dropdownItems.map((item, i) => (
       <option key={i} value={item}>
         {item}
@@ -218,12 +220,11 @@ const Daw = () => {
 
   // kick layer states and refs
   const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  // const kickEnvelopeRef = useRef<Tone.AmplitudeEnvelope | null>(null);
+  const kickLenRef = useRef(0.5);
   const kickDistortionRef = useRef<Tone.Distortion | null>(null);
   const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
   const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
   const kickOttGainRef = useRef<Tone.Gain | null>(null);
-  const kickLenRef = useRef(0.5);
 
   const [kickLen, setKickLen] = useState(0.3);
   const [kickOttAmt, setKickOttAmt] = useState(0);
@@ -270,27 +271,39 @@ const Daw = () => {
         C3: kick3,
       },
     });
-    // kickEnvelopeRef.current = new Tone.AmplitudeEnvelope({
-    //   attack: 0.1,
-    //   decay: 0.5,
-    //   sustain: 1.0,
-    //   release: 0.8,
-    // });
     kickDistortionRef.current = new Tone.Distortion(kickDistortionAmt);
-    kickOttEqRef.current = new Tone.EQ3({});
     kickOttMbRef.current = new Tone.MultibandCompressor({
-      lowFrequency: 200,
-      highFrequency: 1300,
+      lowFrequency: 88.3,
+      highFrequency: 2500,
+      high: {
+        threshold: -35.5,
+        ratio: 1,
+        attack: 0.0135,
+        release: 0.132,
+      },
+      mid: {
+        threshold: -30.2,
+        ratio: 1,
+        attack: 0.0224,
+        release: 0.282,
+      },
+      low: {
+        threshold: -33.8,
+        ratio: 1,
+        attack: 0.0447,
+        release: 0.282,
+      },
+    });
+    kickOttEqRef.current = new Tone.EQ3({
+      lowFrequency: 88.3,
+      highFrequency: 2500,
     });
     kickOttGainRef.current = new Tone.Gain(1);
 
     kickSamplerRef.current.connect(kickDistortionRef.current);
-    // kickSamplerRef.current.connect(kickEnvelopeRef.current);
-    // kickEnvelopeRef.current.connect(kickDistortionRef.current);
-    kickDistortionRef.current.connect(kickOttEqRef.current);
-    kickOttEqRef.current.connect(kickOttMbRef.current);
-    kickOttMbRef.current.connect(kickOttGainRef.current);
-    // kickOttGainRef.current.toDestination();
+    kickDistortionRef.current.connect(kickOttMbRef.current);
+    kickOttMbRef.current.connect(kickOttEqRef.current);
+    kickOttEqRef.current.connect(kickOttGainRef.current);
 
     // initialize noise layer
     noiseRef.current = new Tone.Noise("brown");
@@ -303,7 +316,6 @@ const Daw = () => {
     noiseRef.current.connect(noiseDistortionRef.current);
     noiseDistortionRef.current.connect(noiseLowPassRef.current);
     noiseLowPassRef.current.connect(noiseHighPassRef.current);
-    // noiseHighPassRef.current.toDestination();
 
     // initialize reverb layer
     reverbRef.current = new Tone.Reverb(reverbDecay);
@@ -315,7 +327,6 @@ const Daw = () => {
     noiseHighPassRef.current.connect(reverbRef.current);
     reverbRef.current.connect(reverbLowPassRef.current);
     reverbLowPassRef.current.connect(reverbHighPassRef.current);
-    // reverbHighPassRef.current.toDestination();
 
     // initialized master layer
     masterOttEqRef.current = new Tone.EQ3();
@@ -361,6 +372,22 @@ const Daw = () => {
     }
   }, [kickDistortionAmt]);
 
+  useEffect(() => {
+    if (
+      kickOttEqRef.current &&
+      kickOttMbRef.current &&
+      kickOttGainRef.current
+    ) {
+      kickOttEqRef.current.mid.value = -3 * kickOttAmt;
+
+      kickOttMbRef.current.high.ratio.value = 1 + 10 * kickOttAmt;
+      kickOttMbRef.current.mid.ratio.value = 1 + 10 * kickOttAmt;
+      kickOttMbRef.current.low.ratio.value = 1 + 10 * kickOttAmt;
+
+      kickOttGainRef.current.gain.value = 1 + 1 * kickOttAmt;
+    }
+  }, [kickOttAmt]);
+
   const handlePlayClick = async () => {
     const newPlayState = !isPlayOn;
     setIsPlayOn(newPlayState);
@@ -376,7 +403,6 @@ const Daw = () => {
           kickLenRef.current,
           time
         );
-        // kickEnvelopeRef.current?.triggerAttackRelease(0.5, time);
       }, "4n").start(0);
 
       noiseRef.current?.start();
@@ -397,7 +423,6 @@ const Daw = () => {
     setIsCuePressed(true);
     await Tone.start();
     kickSamplerRef.current?.triggerAttackRelease("C1", 0.5);
-    // kickEnvelopeRef.current?.triggerAttackRelease(0.5);
   };
 
   const handleCueMouseUp = () => {
