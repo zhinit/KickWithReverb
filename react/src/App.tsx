@@ -431,6 +431,48 @@ const Daw = () => {
     noiseSampleRef.current = noiseMap[noiseSample];
   }, [noiseSample]);
 
+  // noise low pass change
+  useEffect(() => {
+    if (noiseLowPassRef.current) {
+      noiseLowPassRef.current.frequency.value = noiseLowPassFreq;
+    }
+  }, [noiseLowPassFreq]);
+
+  // noise high pass change
+  useEffect(() => {
+    if (noiseHighPassRef.current) {
+      noiseHighPassRef.current.frequency.value = noiseHighPassFreq;
+    }
+  }, [noiseHighPassFreq]);
+
+  // noise distortion change
+  useEffect(() => {
+    if (noiseDistortionRef.current) {
+      noiseDistortionRef.current.distortion = noiseDistortionAmt;
+    }
+  }, [noiseDistortionAmt]);
+
+  // reverb low pass change
+  useEffect(() => {
+    if (reverbLowPassRef.current) {
+      reverbLowPassRef.current.frequency.value = reverbLowPassFreq;
+    }
+  }, [reverbLowPassFreq]);
+
+  // reverb high pass change
+  useEffect(() => {
+    if (reverbHighPassRef.current) {
+      reverbHighPassRef.current.frequency.value = reverbHighPassFreq;
+    }
+  }, [reverbHighPassFreq]);
+
+  // reverb size change
+  useEffect(() => {
+    if (reverbRef.current) {
+      reverbRef.current.decay = reverbDecay;
+    }
+  }, [reverbDecay]);
+
   // play button functionality
   const handlePlayClick = async () => {
     const newPlayState = !isPlayOn;
@@ -520,16 +562,37 @@ const Daw = () => {
           dropdownItems: ["grey", "black", "charcoal"],
           dropdownValue: noiseSample,
           dropdownOnChange: setNoiseSample,
-          layerKnobLabels: ["Low Pass", "High Pass", "Comb"],
-          knobValues: [50, 50, 50],
-          knobOnChanges: [() => {}, () => {}, () => {}],
+          layerKnobLabels: ["Low Pass", "High Pass", "Distortion"],
+          knobValues: [
+            mapCustomRangeToKnobRange(noiseLowPassFreq, 30, 7000),
+            mapCustomRangeToKnobRange(noiseHighPassFreq, 30, 7000),
+            mapCustomRangeToKnobRange(noiseDistortionAmt, 0, 0.2),
+          ],
+          knobOnChanges: [
+            (value) =>
+              setNoiseLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
+            (value) =>
+              setNoiseHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
+            (value) =>
+              setNoiseDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+          ],
         }}
         reverbKnobProps={{
           layerLabel: "Reverb Layer",
           dropdownItems: ["club", "Cathedral", "Oil Tank"],
           layerKnobLabels: ["Low Pass", "High Pass", "Size"],
-          knobValues: [50, 50, 50],
-          knobOnChanges: [() => {}, () => {}, () => {}],
+          knobValues: [
+            mapCustomRangeToKnobRange(reverbLowPassFreq, 30, 7000),
+            mapCustomRangeToKnobRange(reverbHighPassFreq, 30, 7000),
+            mapCustomRangeToKnobRange(reverbDecay, 0.1, 6),
+          ],
+          knobOnChanges: [
+            (value) =>
+              setReverbLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
+            (value) =>
+              setReverbHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
+            (value) => setReverbDecay(mapKnobRangeToCustomRange(value, 0.1, 6)),
+          ],
         }}
       />
       <MasterStrip />
