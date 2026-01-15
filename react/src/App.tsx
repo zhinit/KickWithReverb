@@ -10,6 +10,23 @@ import kick2 from "./assets/kicks/Kick2.wav";
 import kick3 from "./assets/kicks/Kick3.wav";
 import "./App.css";
 
+// maps 0-100 to custom min-max
+const mapKnobRangeToCustomRange = (
+  knobValue: number,
+  min: number,
+  max: number
+): number => {
+  return min + (knobValue / 100) * (max - min);
+};
+
+const mapCustomRangeToKnobRange = (
+  value: number,
+  min: number,
+  max: number
+): number => {
+  return ((value - min) / (max - min)) * 100;
+};
+
 interface KnobProps {
   value?: number;
   onChange?: (value: number) => void;
@@ -132,12 +149,16 @@ interface LayerStripProps {
   layerLabel: string;
   dropdownItems: Array<string>;
   layerKnobLabels: Array<string>;
+  knobValues: Array<number>;
+  knobOnChanges: Array<(value: number) => void>;
 }
 
 const LayerStrip = ({
   layerLabel,
   dropdownItems,
   layerKnobLabels,
+  knobValues,
+  knobOnChanges,
 }: LayerStripProps) => (
   <div className="layer-strip">
     <label>{layerLabel}</label>
@@ -146,30 +167,32 @@ const LayerStrip = ({
     </div>
     {layerKnobLabels.map((knobLabel, index) => (
       <div key={index}>
-        <Knob label={knobLabel} />
+        <Knob
+          label={knobLabel}
+          value={knobValues[index]}
+          onChange={knobOnChanges[index]}
+        />
       </div>
     ))}
   </div>
 );
 
-const SoundUnit = () => {
+interface SoundUnitProps {
+  kickKnobProps: LayerStripProps;
+  noiseKnobProps: LayerStripProps;
+  reverbKnobProps: LayerStripProps;
+}
+
+const SoundUnit = ({
+  kickKnobProps,
+  noiseKnobProps,
+  reverbKnobProps,
+}: SoundUnitProps) => {
   return (
     <div className="sound-unit">
-      <LayerStrip
-        layerLabel="Kick Layer"
-        dropdownItems={["Kick1", "Kick2", "Kick3"]}
-        layerKnobLabels={["Length", "Distortion", "OTT"]}
-      />
-      <LayerStrip
-        layerLabel="Noise Layer"
-        dropdownItems={["white", "charcoal", "gray", "black"]}
-        layerKnobLabels={["Low Pass", "High Pass", "Comb"]}
-      />
-      <LayerStrip
-        layerLabel="Reverb Layer"
-        dropdownItems={["Club", "Cathedral", "Oil Tank"]}
-        layerKnobLabels={["Low Pass", "High Pass", "Size"]}
-      />
+      <LayerStrip {...kickKnobProps} />
+      <LayerStrip {...noiseKnobProps} />
+      <LayerStrip {...reverbKnobProps} />
     </div>
   );
 };
@@ -195,13 +218,14 @@ const Daw = () => {
 
   // kick layer states and refs
   const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const kickEnvelopeRef = useRef<Tone.AmplitudeEnvelope | null>(null);
+  // const kickEnvelopeRef = useRef<Tone.AmplitudeEnvelope | null>(null);
   const kickDistortionRef = useRef<Tone.Distortion | null>(null);
   const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
   const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
   const kickOttGainRef = useRef<Tone.Gain | null>(null);
+  const kickLenRef = useRef(0.5);
 
-  const [kickLen, setKickLen] = useState(0.5);
+  const [kickLen, setKickLen] = useState(0.3);
   const [kickOttAmt, setKickOttAmt] = useState(0);
   const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
 
@@ -246,12 +270,12 @@ const Daw = () => {
         C3: kick3,
       },
     });
-    kickEnvelopeRef.current = new Tone.AmplitudeEnvelope({
-      attack: 0.1,
-      decay: 0.5,
-      sustain: 1.0,
-      release: 0.8,
-    });
+    // kickEnvelopeRef.current = new Tone.AmplitudeEnvelope({
+    //   attack: 0.1,
+    //   decay: 0.5,
+    //   sustain: 1.0,
+    //   release: 0.8,
+    // });
     kickDistortionRef.current = new Tone.Distortion(kickDistortionAmt);
     kickOttEqRef.current = new Tone.EQ3({});
     kickOttMbRef.current = new Tone.MultibandCompressor({
@@ -260,8 +284,9 @@ const Daw = () => {
     });
     kickOttGainRef.current = new Tone.Gain(1);
 
-    kickSamplerRef.current.connect(kickEnvelopeRef.current);
-    kickEnvelopeRef.current.connect(kickDistortionRef.current);
+    kickSamplerRef.current.connect(kickDistortionRef.current);
+    // kickSamplerRef.current.connect(kickEnvelopeRef.current);
+    // kickEnvelopeRef.current.connect(kickDistortionRef.current);
     kickDistortionRef.current.connect(kickOttEqRef.current);
     kickOttEqRef.current.connect(kickOttMbRef.current);
     kickOttMbRef.current.connect(kickOttGainRef.current);
@@ -324,6 +349,18 @@ const Daw = () => {
     Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
 
+  // kick length change
+  useEffect(() => {
+    kickLenRef.current = kickLen;
+  }, [kickLen]);
+
+  // kick distortion change
+  useEffect(() => {
+    if (kickDistortionRef.current) {
+      kickDistortionRef.current.distortion = kickDistortionAmt;
+    }
+  }, [kickDistortionAmt]);
+
   const handlePlayClick = async () => {
     const newPlayState = !isPlayOn;
     setIsPlayOn(newPlayState);
@@ -334,8 +371,12 @@ const Daw = () => {
       Tone.getTransport().bpm.value = bpm;
 
       loopRef.current = new Tone.Loop((time) => {
-        kickSamplerRef.current?.triggerAttackRelease("C1", 0.5, time);
-        kickEnvelopeRef.current?.triggerAttackRelease(0.5, time);
+        kickSamplerRef.current?.triggerAttackRelease(
+          "C1",
+          kickLenRef.current,
+          time
+        );
+        // kickEnvelopeRef.current?.triggerAttackRelease(0.5, time);
       }, "4n").start(0);
 
       noiseRef.current?.start();
@@ -356,7 +397,7 @@ const Daw = () => {
     setIsCuePressed(true);
     await Tone.start();
     kickSamplerRef.current?.triggerAttackRelease("C1", 0.5);
-    kickEnvelopeRef.current?.triggerAttackRelease(0.5);
+    // kickEnvelopeRef.current?.triggerAttackRelease(0.5);
   };
 
   const handleCueMouseUp = () => {
@@ -379,7 +420,38 @@ const Daw = () => {
         handlePlayClick={handlePlayClick}
         setBPM={setBPM}
       />
-      <SoundUnit />
+      <SoundUnit
+        kickKnobProps={{
+          layerLabel: "Kick Layer",
+          dropdownItems: ["Kick1", "Kick2", "Kick3"],
+          layerKnobLabels: ["Length", "Distortion", "OTT"],
+          knobValues: [
+            mapCustomRangeToKnobRange(kickLen, 0, 0.3),
+            mapCustomRangeToKnobRange(kickDistortionAmt, 0, 0.2),
+            mapCustomRangeToKnobRange(kickOttAmt, 0, 1),
+          ],
+          knobOnChanges: [
+            (value) => setKickLen(mapKnobRangeToCustomRange(value, 0, 0.3)),
+            (value) =>
+              setKickDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+            (value) => setKickOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
+          ],
+        }}
+        noiseKnobProps={{
+          layerLabel: "Noise Layer",
+          dropdownItems: ["charcoal", "black", "grey"],
+          layerKnobLabels: ["Low Pass", "High Pass", "Comb"],
+          knobValues: [50, 50, 50],
+          knobOnChanges: [() => {}, () => {}, () => {}],
+        }}
+        reverbKnobProps={{
+          layerLabel: "Reverb Layer",
+          dropdownItems: ["club", "Cathedral", "Oil Tank"],
+          layerKnobLabels: ["Low Pass", "High Pass", "Size"],
+          knobValues: [50, 50, 50],
+          knobOnChanges: [() => {}, () => {}, () => {}],
+        }}
+      />
       <MasterStrip />
     </div>
   );
