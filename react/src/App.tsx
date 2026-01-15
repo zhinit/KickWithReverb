@@ -8,6 +8,9 @@ import playButtonOn from "./assets/playbuttonOn.png";
 import kick1 from "./assets/kicks/Kick1.wav";
 import kick2 from "./assets/kicks/Kick2.wav";
 import kick3 from "./assets/kicks/Kick3.wav";
+import noise1 from "./assets/noises/greyNoise.mp3";
+import noise2 from "./assets/noises/blackNoise.mp3";
+import noise3 from "./assets/noises/charcoalNoise.mp3";
 import "./App.css";
 
 // maps 0-100 to custom min-max
@@ -220,7 +223,8 @@ const MasterStrip = () => (
 
 const Daw = () => {
   // control strip states and refs
-  const loopRef = useRef<Tone.Loop | null>(null);
+  const kickLoopRef = useRef<Tone.Loop | null>(null);
+  const noiseLoopRef = useRef<Tone.Loop | null>(null);
 
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
@@ -228,8 +232,8 @@ const Daw = () => {
 
   // kick layer states and refs
   const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const kickSampleRef = useRef("C1");
-  const kickLenRef = useRef(0.5);
+  const kickSampleRef = useRef<string>("C1");
+  const kickLenRef = useRef<number>(0.5);
   const kickDistortionRef = useRef<Tone.Distortion | null>(null);
   const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
   const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
@@ -241,11 +245,13 @@ const Daw = () => {
   const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
 
   // noise layer states and refs
-  const noiseRef = useRef<Tone.Noise | null>(null);
+  const noiseRef = useRef<Tone.Sampler | null>(null);
+  const noiseSampleRef = useRef<string>("C1");
   const noiseDistortionRef = useRef<Tone.Distortion | null>(null);
   const noiseLowPassRef = useRef<Tone.Filter | null>(null);
   const noiseHighPassRef = useRef<Tone.Filter | null>(null);
 
+  const [noiseSample, setNoiseSample] = useState("grey");
   const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0.2);
   const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(80);
   const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
@@ -316,7 +322,13 @@ const Daw = () => {
     kickOttEqRef.current.connect(kickOttGainRef.current);
 
     // initialize noise layer
-    noiseRef.current = new Tone.Noise("brown");
+    noiseRef.current = new Tone.Sampler({
+      urls: {
+        C1: noise1,
+        C2: noise2,
+        C3: noise3,
+      },
+    });
     noiseRef.current.volume.value = -15;
 
     noiseDistortionRef.current = new Tone.Distortion(noiseDistortionAmt);
@@ -409,6 +421,17 @@ const Daw = () => {
     }
   }, [kickOttAmt]);
 
+  // noise sample change
+  useEffect(() => {
+    const noiseMap: Record<string, string> = {
+      grey: "C1",
+      black: "C2",
+      charcoal: "C3",
+    };
+    noiseSampleRef.current = noiseMap[noiseSample];
+  }, [noiseSample]);
+
+  // play button functionality
   const handlePlayClick = async () => {
     const newPlayState = !isPlayOn;
     setIsPlayOn(newPlayState);
@@ -418,7 +441,7 @@ const Daw = () => {
 
       Tone.getTransport().bpm.value = bpm;
 
-      loopRef.current = new Tone.Loop((time) => {
+      kickLoopRef.current = new Tone.Loop((time) => {
         kickSamplerRef.current?.triggerAttackRelease(
           kickSampleRef.current,
           kickLenRef.current,
@@ -426,20 +449,27 @@ const Daw = () => {
         );
       }, "4n").start(0);
 
-      noiseRef.current?.start();
+      noiseLoopRef.current = new Tone.Loop((time) => {
+        noiseRef.current?.triggerAttackRelease(noiseSampleRef.current, 1, time);
+      }, "1n").start(0);
 
       Tone.getTransport().start();
     } else {
-      if (loopRef.current) {
-        loopRef.current.stop();
-        loopRef.current.dispose();
-        loopRef.current = null;
+      if (kickLoopRef.current) {
+        kickLoopRef.current.stop();
+        kickLoopRef.current.dispose();
+        kickLoopRef.current = null;
       }
-      noiseRef.current?.stop();
+      if (noiseLoopRef.current) {
+        noiseLoopRef.current.stop();
+        noiseLoopRef.current.dispose();
+        noiseLoopRef.current = null;
+      }
       Tone.getTransport().stop();
     }
   };
 
+  // cue button functionality
   const handleCueMouseDown = async () => {
     setIsCuePressed(true);
     await Tone.start();
@@ -487,7 +517,9 @@ const Daw = () => {
         }}
         noiseKnobProps={{
           layerLabel: "Noise Layer",
-          dropdownItems: ["charcoal", "black", "grey"],
+          dropdownItems: ["grey", "black", "charcoal"],
+          dropdownValue: noiseSample,
+          dropdownOnChange: setNoiseSample,
           layerKnobLabels: ["Low Pass", "High Pass", "Comb"],
           knobValues: [50, 50, 50],
           knobOnChanges: [() => {}, () => {}, () => {}],
