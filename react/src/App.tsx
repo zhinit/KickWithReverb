@@ -150,6 +150,8 @@ const ControlStrip = ({
 interface LayerStripProps {
   layerLabel: string;
   dropdownItems: Array<string>;
+  dropdownValue?: string;
+  dropdownOnChange?: (value: string) => void;
   layerKnobLabels: Array<string>;
   knobValues: Array<number>;
   knobOnChanges: Array<(value: number) => void>;
@@ -158,6 +160,8 @@ interface LayerStripProps {
 const LayerStrip = ({
   layerLabel,
   dropdownItems,
+  dropdownValue,
+  dropdownOnChange,
   layerKnobLabels,
   knobValues,
   knobOnChanges,
@@ -165,7 +169,11 @@ const LayerStrip = ({
   <div className="layer-strip">
     <label>{layerLabel}</label>
     <div>
-      <Selectah dropdownItems={dropdownItems} />
+      <Selectah
+        dropdownItems={dropdownItems}
+        value={dropdownValue}
+        onChange={dropdownOnChange}
+      />
     </div>
     {layerKnobLabels.map((knobLabel, index) => (
       <div key={index}>
@@ -220,12 +228,14 @@ const Daw = () => {
 
   // kick layer states and refs
   const kickSamplerRef = useRef<Tone.Sampler | null>(null);
+  const kickSampleRef = useRef("C1");
   const kickLenRef = useRef(0.5);
   const kickDistortionRef = useRef<Tone.Distortion | null>(null);
   const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
   const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
   const kickOttGainRef = useRef<Tone.Gain | null>(null);
 
+  const [kickSample, setKickSample] = useState("Kick1");
   const [kickLen, setKickLen] = useState(0.3);
   const [kickOttAmt, setKickOttAmt] = useState(0);
   const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
@@ -360,6 +370,16 @@ const Daw = () => {
     Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
 
+  // kick sample change
+  useEffect(() => {
+    const noteMap: Record<string, string> = {
+      Kick1: "C1",
+      Kick2: "C2",
+      Kick3: "C3",
+    };
+    kickSampleRef.current = noteMap[kickSample];
+  }, [kickSample]);
+
   // kick length change
   useEffect(() => {
     kickLenRef.current = kickLen;
@@ -372,6 +392,7 @@ const Daw = () => {
     }
   }, [kickDistortionAmt]);
 
+  // kick ott change
   useEffect(() => {
     if (
       kickOttEqRef.current &&
@@ -399,7 +420,7 @@ const Daw = () => {
 
       loopRef.current = new Tone.Loop((time) => {
         kickSamplerRef.current?.triggerAttackRelease(
-          "C1",
+          kickSampleRef.current,
           kickLenRef.current,
           time
         );
@@ -422,7 +443,7 @@ const Daw = () => {
   const handleCueMouseDown = async () => {
     setIsCuePressed(true);
     await Tone.start();
-    kickSamplerRef.current?.triggerAttackRelease("C1", 0.5);
+    kickSamplerRef.current?.triggerAttackRelease(kickSampleRef.current, 0.5);
   };
 
   const handleCueMouseUp = () => {
@@ -449,6 +470,8 @@ const Daw = () => {
         kickKnobProps={{
           layerLabel: "Kick Layer",
           dropdownItems: ["Kick1", "Kick2", "Kick3"],
+          dropdownValue: kickSample,
+          dropdownOnChange: setKickSample,
           layerKnobLabels: ["Length", "Distortion", "OTT"],
           knobValues: [
             mapCustomRangeToKnobRange(kickLen, 0, 0.3),
