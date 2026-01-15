@@ -210,13 +210,29 @@ const SoundUnit = ({
   );
 };
 
-const MasterStrip = () => (
+interface MasterStripProps {
+  layerKnobLabels: Array<string>;
+  knobValues: Array<number>;
+  knobOnChanges: Array<(value: number) => void>;
+}
+
+const MasterStrip = ({
+  layerKnobLabels,
+  knobValues,
+  knobOnChanges,
+}: MasterStripProps) => (
   <>
     <h2>Fully Deep Mastering Chain</h2>
     <div className="master-strip-knobs">
-      <Knob label="OTT" />
-      <Knob label="Distortion" />
-      <Knob label="Limiter" />
+      {layerKnobLabels.map((knobLabel, index) => (
+        <div key={index}>
+          <Knob
+            label={knobLabel}
+            value={knobValues[index]}
+            onChange={knobOnChanges[index]}
+          />
+        </div>
+      ))}
     </div>
   </>
 );
@@ -473,6 +489,37 @@ const Daw = () => {
     }
   }, [reverbDecay]);
 
+  // master ott change
+  useEffect(() => {
+    if (
+      masterOttEqRef.current &&
+      masterOttMbRef.current &&
+      masterOttGainRef.current
+    ) {
+      masterOttEqRef.current.mid.value = -3 * masterOttAmt;
+
+      masterOttMbRef.current.high.ratio.value = 1 + 10 * masterOttAmt;
+      masterOttMbRef.current.mid.ratio.value = 1 + 10 * masterOttAmt;
+      masterOttMbRef.current.low.ratio.value = 1 + 10 * masterOttAmt;
+
+      masterOttGainRef.current.gain.value = 1 + 1 * masterOttAmt;
+    }
+  }, [masterOttAmt]);
+
+  // master distortion change
+  useEffect(() => {
+    if (masterDistortionRef.current) {
+      masterDistortionRef.current.distortion = masterDistortionAmt;
+    }
+  }, [masterDistortionAmt]);
+
+  // master limiter change
+  useEffect(() => {
+    if (masterLimiterGainRef.current) {
+      masterLimiterGainRef.current.gain.value = masterLimiterAmt;
+    }
+  });
+
   // play button functionality
   const handlePlayClick = async () => {
     const newPlayState = !isPlayOn;
@@ -595,7 +642,21 @@ const Daw = () => {
           ],
         }}
       />
-      <MasterStrip />
+      <MasterStrip
+        layerKnobLabels={["OTT", "Distortion", "Limiter"]}
+        knobValues={[
+          mapCustomRangeToKnobRange(masterOttAmt, 0, 1),
+          mapCustomRangeToKnobRange(masterDistortionAmt, 0, 0.2),
+          mapCustomRangeToKnobRange(masterLimiterAmt, 1, 5),
+        ]}
+        knobOnChanges={[
+          (value) => setMasterOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
+          (value) =>
+            setMasterDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+          (value) =>
+            setMasterLimiterAmt(mapKnobRangeToCustomRange(value, 1, 5)),
+        ]}
+      />
     </div>
   );
 };
