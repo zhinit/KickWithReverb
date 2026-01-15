@@ -7,7 +7,7 @@
 
 body {
   --main-color: Silver;
-  background-image: url("assets/bkg2.png");
+  background-image: url("assets/backgrounds/bkg2.png");
   background-repeat: repeat;
   /* background-color: black; */
   color: var(--main-color);
