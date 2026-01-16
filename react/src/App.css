@@ -52,6 +52,8 @@ select {
 }
 
 .knob {
+  touch-action: none;
+  user-select: none;
   width: 75px;
   height: 75px;
   position: relative;
@@ -74,14 +76,14 @@ select {
   align-items: center;
 }
 
-.sound-unit { 
+.sound-unit {
   display: flex;
   flex-direction: row;
   gap: 75px;
   justify-content: center;
 }
 
-.master-strip-knobs { 
+.master-strip-knobs {
   display: flex;
   flex-direction: row;
   gap: 75px;

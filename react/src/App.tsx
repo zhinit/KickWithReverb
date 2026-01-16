@@ -71,7 +71,7 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
   const startY = useRef(0);
   const startValue = useRef(0);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     setIsDragging(true);
     startY.current = e.clientY;
@@ -81,7 +81,7 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       const deltaY = startY.current - e.clientY;
       const sensitivity = 0.5;
       const newValue = Math.min(
@@ -92,14 +92,14 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
       onChange?.(newValue);
     };
 
-    const handleMouseUp = () => setIsDragging(false);
+    const handlePointerUp = () => setIsDragging(false);
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [isDragging]);
 
@@ -111,7 +111,7 @@ const Knob = ({ value: initialValue = 50, onChange, label }: KnobProps) => {
         alt="knob"
         className="knob"
         style={{ transform: `rotate(${rotation}deg)` }}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
       />
     </div>
   );
