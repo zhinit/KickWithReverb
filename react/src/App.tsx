@@ -296,8 +296,8 @@ const Daw = () => {
 
   const [noiseSample, setNoiseSample] = useState(noiseNames[0] || "greyNoise");
   const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
-  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(1000);
-  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(30);
+  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(30);
+  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(7000);
 
   // reverb layer states and refs
   const reverbRef = useRef<Tone.Convolver | null>(null);
@@ -320,7 +320,7 @@ const Daw = () => {
 
   const [masterOttAmt, setMasterOttAmt] = useState(0);
   const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
-  const [masterLimiterAmt, setMasterLimiterAmt] = useState(2.5);
+  const [masterLimiterAmt, setMasterLimiterAmt] = useState(1.5);
 
   // mount and unmount effect
   useEffect(() => {
@@ -333,7 +333,7 @@ const Daw = () => {
     kickSamplerRef.current = new Tone.Sampler({
       urls: kickUrls,
     });
-    kickDistortionRef.current = new Tone.Distortion(0.4);
+    kickDistortionRef.current = new Tone.Distortion(0.3);
     kickOttMbRef.current = new Tone.MultibandCompressor({
       lowFrequency: 88.3,
       highFrequency: 2500,
@@ -364,6 +364,7 @@ const Daw = () => {
       high: 0,
     });
     kickOttGainRef.current = new Tone.Gain(1);
+    kickSamplerRef.current.volume.value = -1;
 
     kickSamplerRef.current.connect(kickDistortionRef.current);
     kickDistortionRef.current.connect(kickOttMbRef.current);
@@ -379,9 +380,9 @@ const Daw = () => {
     noiseRef.current = new Tone.Sampler({
       urls: noiseUrls,
     });
-    noiseRef.current.volume.value = -15;
+    noiseRef.current.volume.value = -12;
 
-    noiseDistortionRef.current = new Tone.Distortion(0.4);
+    noiseDistortionRef.current = new Tone.Distortion(0.3);
     noiseLowPassRef.current = new Tone.Filter(noiseLowPassFreq, "lowpass");
     noiseHighPassRef.current = new Tone.Filter(noiseHighPassFreq, "highpass");
 
@@ -439,7 +440,7 @@ const Daw = () => {
       },
     });
     masterOttGainRef.current = new Tone.Gain(1);
-    masterDistortionRef.current = new Tone.Distortion(0.4);
+    masterDistortionRef.current = new Tone.Distortion(0.3);
     masterLimiterGainRef.current = new Tone.Gain(masterLimiterAmt);
     masterLimiterRef.current = new Tone.Limiter(0);
 
