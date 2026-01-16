@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEventHandler } from "react";
 import * as Tone from "tone";
-import knobImage from "./assets/knobs/whiteMarbleKnob.png";
+import knobImage from "./assets/knobs/whiteMarbleKnob2.png";
 import cueButtonOff from "./assets/buttons/cueButtonOff.png";
 import cueButtonOn from "./assets/buttons/cueButtonOn.png";
 import playButtonOff from "./assets/buttons/playButtonOff.png";
@@ -325,7 +325,6 @@ const Daw = () => {
   // mount and unmount effect
   useEffect(() => {
     // initialize kick layer
-    // Dynamically create urls object from kickFiles
     const kickUrls: Record<string, string> = {};
     kickNames.forEach((kickName, index) => {
       const note = `C${index + 1}`;
@@ -334,7 +333,7 @@ const Daw = () => {
     kickSamplerRef.current = new Tone.Sampler({
       urls: kickUrls,
     });
-    kickDistortionRef.current = new Tone.Distortion(kickDistortionAmt);
+    kickDistortionRef.current = new Tone.Distortion(0.4);
     kickOttMbRef.current = new Tone.MultibandCompressor({
       lowFrequency: 88.3,
       highFrequency: 2500,
@@ -360,6 +359,9 @@ const Daw = () => {
     kickOttEqRef.current = new Tone.EQ3({
       lowFrequency: 88.3,
       highFrequency: 2500,
+      low: 0,
+      mid: 0,
+      high: 0,
     });
     kickOttGainRef.current = new Tone.Gain(1);
 
@@ -369,7 +371,6 @@ const Daw = () => {
     kickOttEqRef.current.connect(kickOttGainRef.current);
 
     // initialize noise layer
-    // Dynamically create urls object from noiseFiles
     const noiseUrls: Record<string, string> = {};
     noiseNames.forEach((noiseName, index) => {
       const note = `C${index + 1}`;
@@ -380,7 +381,7 @@ const Daw = () => {
     });
     noiseRef.current.volume.value = -15;
 
-    noiseDistortionRef.current = new Tone.Distortion(noiseDistortionAmt);
+    noiseDistortionRef.current = new Tone.Distortion(0.4);
     noiseLowPassRef.current = new Tone.Filter(noiseLowPassFreq, "lowpass");
     noiseHighPassRef.current = new Tone.Filter(noiseHighPassFreq, "highpass");
 
@@ -408,13 +409,37 @@ const Daw = () => {
     reverbHighPassRef.current.connect(reverbPhaserRef.current);
 
     // initialized master layer
-    masterOttEqRef.current = new Tone.EQ3();
+    masterOttEqRef.current = new Tone.EQ3({
+      lowFrequency: 88.3,
+      highFrequency: 2500,
+      low: 0,
+      mid: 0,
+      high: 0,
+    });
     masterOttMbRef.current = new Tone.MultibandCompressor({
-      lowFrequency: 200,
-      highFrequency: 1300,
+      lowFrequency: 88.3,
+      highFrequency: 2500,
+      high: {
+        threshold: -35.5,
+        ratio: 1,
+        attack: 0.0135,
+        release: 0.132,
+      },
+      mid: {
+        threshold: -30.2,
+        ratio: 1,
+        attack: 0.0224,
+        release: 0.282,
+      },
+      low: {
+        threshold: -33.8,
+        ratio: 1,
+        attack: 0.0447,
+        release: 0.282,
+      },
     });
     masterOttGainRef.current = new Tone.Gain(1);
-    masterDistortionRef.current = new Tone.Distortion(masterDistortionAmt);
+    masterDistortionRef.current = new Tone.Distortion(0.4);
     masterLimiterGainRef.current = new Tone.Gain(masterLimiterAmt);
     masterLimiterRef.current = new Tone.Limiter(0);
 
@@ -458,7 +483,7 @@ const Daw = () => {
   // kick distortion change
   useEffect(() => {
     if (kickDistortionRef.current) {
-      kickDistortionRef.current.distortion = kickDistortionAmt;
+      kickDistortionRef.current.wet.value = kickDistortionAmt;
     }
   }, [kickDistortionAmt]);
 
@@ -505,7 +530,7 @@ const Daw = () => {
   // noise distortion change
   useEffect(() => {
     if (noiseDistortionRef.current) {
-      noiseDistortionRef.current.distortion = noiseDistortionAmt;
+      noiseDistortionRef.current.wet.value = noiseDistortionAmt;
     }
   }, [noiseDistortionAmt]);
 
@@ -557,7 +582,7 @@ const Daw = () => {
   // master distortion change
   useEffect(() => {
     if (masterDistortionRef.current) {
-      masterDistortionRef.current.distortion = masterDistortionAmt;
+      masterDistortionRef.current.wet.value = masterDistortionAmt;
     }
   }, [masterDistortionAmt]);
 
@@ -643,13 +668,13 @@ const Daw = () => {
           layerKnobLabels: ["Length", "Distortion", "OTT"],
           knobValues: [
             mapCustomRangeToKnobRange(kickLen, 0, 0.3),
-            mapCustomRangeToKnobRange(kickDistortionAmt, 0, 0.2),
+            mapCustomRangeToKnobRange(kickDistortionAmt, 0, 0.5),
             mapCustomRangeToKnobRange(kickOttAmt, 0, 1),
           ],
           knobOnChanges: [
             (value) => setKickLen(mapKnobRangeToCustomRange(value, 0, 0.3)),
             (value) =>
-              setKickDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+              setKickDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
             (value) => setKickOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
           ],
         }}
@@ -662,7 +687,7 @@ const Daw = () => {
           knobValues: [
             mapCustomRangeToKnobRange(noiseLowPassFreq, 30, 7000),
             mapCustomRangeToKnobRange(noiseHighPassFreq, 30, 7000),
-            mapCustomRangeToKnobRange(noiseDistortionAmt, 0, 0.2),
+            mapCustomRangeToKnobRange(noiseDistortionAmt, 0, 0.5),
           ],
           knobOnChanges: [
             (value) =>
@@ -670,7 +695,7 @@ const Daw = () => {
             (value) =>
               setNoiseHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
             (value) =>
-              setNoiseDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+              setNoiseDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
           ],
         }}
         reverbKnobProps={{
@@ -698,13 +723,13 @@ const Daw = () => {
         layerKnobLabels={["OTT", "Distortion", "Limiter"]}
         knobValues={[
           mapCustomRangeToKnobRange(masterOttAmt, 0, 1),
-          mapCustomRangeToKnobRange(masterDistortionAmt, 0, 0.2),
+          mapCustomRangeToKnobRange(masterDistortionAmt, 0, 0.5),
           mapCustomRangeToKnobRange(masterLimiterAmt, 1, 4),
         ]}
         knobOnChanges={[
           (value) => setMasterOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
           (value) =>
-            setMasterDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.2)),
+            setMasterDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
           (value) =>
             setMasterLimiterAmt(mapKnobRangeToCustomRange(value, 1, 4)),
         ]}
