@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type MouseEventHandler } from "react";
 import * as Tone from "tone";
 import knobImage from "./assets/knobs/whiteMarbleKnob.png";
-import cueButtonOff from "./assets/buttons/cuebuttonOff.png";
-import cueButtonOn from "./assets/buttons/cuebuttonOn.png";
-import playButtonOff from "./assets/buttons/playbuttonOff.png";
-import playButtonOn from "./assets/buttons/playbuttonOn.png";
+import cueButtonOff from "./assets/buttons/cueButtonOff.png";
+import cueButtonOn from "./assets/buttons/cueButtonOn.png";
+import playButtonOff from "./assets/buttons/playButtonOff.png";
+import playButtonOn from "./assets/buttons/playButtonOn.png";
 import "./App.css";
 
 // Import all kick files
