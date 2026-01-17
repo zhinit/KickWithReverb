@@ -5,7 +5,7 @@ import { SoundUnit } from "./SoundUnit"
 import * as Tone from "tone";
 
 // Import all kick files
-const kickModules = import.meta.glob("./assets/kicks/*.wav", { eager: true });
+const kickModules = import.meta.glob("../assets/kicks/*.wav", { eager: true });
 
 const kickFiles: Record<string, string> = {};
 Object.keys(kickModules).forEach((path) => {
@@ -16,7 +16,7 @@ Object.keys(kickModules).forEach((path) => {
 const kickNames = Object.keys(kickFiles).sort();
 
 // Import all noise files using import.meta.glob
-const noiseModules = import.meta.glob("./assets/noises/*.mp3", { eager: true });
+const noiseModules = import.meta.glob("../assets/noises/*.mp3", { eager: true });
 
 const noiseFiles: Record<string, string> = {};
 Object.keys(noiseModules).forEach((path) => {
@@ -27,7 +27,7 @@ Object.keys(noiseModules).forEach((path) => {
 const noiseNames = Object.keys(noiseFiles).sort();
 
 // Import all IR files
-const irModules = import.meta.glob("./assets/IRs/*.wav", { eager: true });
+const irModules = import.meta.glob("../assets/IRs/*.wav", { eager: true });
 
 const irFiles: Record<string, string> = {};
 Object.keys(irModules).forEach((path) => {
