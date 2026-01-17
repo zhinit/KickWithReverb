@@ -152,6 +152,36 @@ const ControlStrip = ({
   handlePlayClick,
   setBPM,
 }: ControlStripProps) => {
+  const [inputValue, setInputValue] = useState(bpm.toString());
+
+  // Sync input value when BPM changes externally (e.g., from other controls)
+  // useEffect(() => {
+  //   setInputValue(bpm.toString());
+  // }, [bpm]);
+
+  const handleLocalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+  };
+
+  const handleBlur = () => {
+    const numValue = Number(inputValue);
+    if (!isNaN(numValue)) {
+      const clampedValue = Math.min(365, Math.max(60, numValue));
+      setBPM(clampedValue);
+      setInputValue(clampedValue.toString());
+    } else {
+      // If invalid, reset to current BPM
+      setInputValue(bpm.toString());
+    }
+  };
+
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur(); // Triggers handleBlur
+    }
+  };
+
   return (
     <div className="control-strip">
       <img
@@ -170,8 +200,12 @@ const ControlStrip = ({
       <input
         className="bpm-box"
         type="number"
-        value={bpm}
-        onChange={(e) => setBPM(Number(e.target.value))}
+        value={inputValue}
+        min="60"
+        max="365" 
+        onChange={handleLocalInput}
+        onBlur={handleBlur}
+        onKeyDown={handleEnter}
       />
     </div>
   );
