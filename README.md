@@ -39,7 +39,5 @@ Have Fun!
       - A dropdown
     - SoundUnit
       - Combines the audio layer strips (Kick layer, Noise Layer, Reverb Layer)
-  - hooks
-    - not yet implemented
   - types
     - interfaces for typescript types
