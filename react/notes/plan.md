@@ -8,10 +8,10 @@
 
 ## Tuesday — Models + Refactor
 - Read react.dev: managing-state, escape-hatches
-- Define Django models (User, Preset) + run migrations
-- Start refactoring Daw.tsx into custom hooks
+- Refactor Daw.tsx into custom hooks
 
 ## Wednesday — Auth
+- Define Django models (User, Preset) + run migrations
 - Django REST Framework auth endpoints (signup, login, JWT)
 - React auth context + Login/Signup UI
 - Test full auth flow
@@ -19,7 +19,6 @@
 ## Thursday — Presets CRUD
 - Preset endpoints: list, create, load, delete
 - React UI: save/load presets
-- Continue Daw.tsx refactor
 
 ## Friday — Kick Generation
 - POST /generate-kick endpoint
