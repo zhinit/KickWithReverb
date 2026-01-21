@@ -5,9 +5,8 @@ import { SoundUnit } from "./SoundUnit";
 import * as Tone from "tone";
 import { useKickLayer } from "../hooks/useKickLayer";
 import { useNoiseLayer } from "../hooks/useNoiseLayer";
+import { useReverbLayer } from "../hooks/useReverbLayer";
 import {
-  irFiles,
-  irNames,
   mapKnobRangeToCustomRange,
   mapCustomRangeToKnobRange,
 } from "../utils/audioAssets";
@@ -16,6 +15,7 @@ export const Daw = () => {
   // Layer hooks
   const kick = useKickLayer();
   const noise = useNoiseLayer();
+  const reverb = useReverbLayer();
 
   // control strip states and refs
   const kickLoopRef = useRef<Tone.Loop | null>(null);
@@ -24,17 +24,6 @@ export const Daw = () => {
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
-
-  // reverb layer states and refs
-  const reverbRef = useRef<Tone.Convolver | null>(null);
-  const reverbLowPassRef = useRef<Tone.Filter | null>(null);
-  const reverbHighPassRef = useRef<Tone.Filter | null>(null);
-  const reverbPhaserRef = useRef<Tone.Phaser | null>(null);
-
-  const [reverbIr, setReverbIr] = useState(irNames[0] || "JFKUnderpass");
-  const [reverbLowPassFreq, setReverbLowPassFreq] = useState(1000);
-  const [reverbHighPassFreq, setReverbHighPassFreq] = useState(30);
-  const [reverbPhaserWetness, setReverbPhaserWetness] = useState(0);
 
   // master chain states and refs
   const masterOttEqRef = useRef<Tone.EQ3 | null>(null);
@@ -48,26 +37,8 @@ export const Daw = () => {
   const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
   const [masterLimiterAmt, setMasterLimiterAmt] = useState(1.5);
 
-  // Initialize reverb and master audio nodes
+  // Initialize master audio nodes
   useEffect(() => {
-    // initialize reverb layer
-    reverbRef.current = new Tone.Convolver(
-      irFiles[reverbIr] || irFiles[irNames[0]]
-    );
-    reverbLowPassRef.current = new Tone.Filter(reverbLowPassFreq, "lowpass");
-    reverbHighPassRef.current = new Tone.Filter(reverbHighPassFreq, "highpass");
-    reverbPhaserRef.current = new Tone.Phaser({
-      frequency: 0.5,
-      octaves: 3,
-      baseFrequency: 350,
-      wet: reverbPhaserWetness,
-    });
-
-    reverbRef.current.connect(reverbLowPassRef.current);
-    reverbLowPassRef.current.connect(reverbHighPassRef.current);
-    reverbHighPassRef.current.connect(reverbPhaserRef.current);
-
-    // initialize master layer
     masterOttEqRef.current = new Tone.EQ3({
       lowFrequency: 88.3,
       highFrequency: 2500,
@@ -102,7 +73,6 @@ export const Daw = () => {
     masterLimiterGainRef.current = new Tone.Gain(masterLimiterAmt);
     masterLimiterRef.current = new Tone.Limiter(0);
 
-    reverbPhaserRef.current.connect(masterOttEqRef.current);
     masterOttEqRef.current.connect(masterOttMbRef.current);
     masterOttMbRef.current.connect(masterOttGainRef.current);
     masterOttGainRef.current.connect(masterDistortionRef.current);
@@ -111,59 +81,42 @@ export const Daw = () => {
     masterLimiterRef.current.toDestination();
 
     return () => {
-      reverbRef.current?.dispose();
-      reverbPhaserRef.current?.dispose();
+      masterOttEqRef.current?.dispose();
+      masterOttMbRef.current?.dispose();
+      masterOttGainRef.current?.dispose();
+      masterDistortionRef.current?.dispose();
+      masterLimiterGainRef.current?.dispose();
+      masterLimiterRef.current?.dispose();
     };
   }, []);
 
   // Connect kick output to reverb and master when ready
   useEffect(() => {
-    if (kick.output && reverbRef.current && masterOttEqRef.current) {
-      kick.output.connect(reverbRef.current);
+    if (kick.output && reverb.input && masterOttEqRef.current) {
+      kick.output.connect(reverb.input);
       kick.output.connect(masterOttEqRef.current);
     }
-  }, [kick.output]);
+  }, [kick.output, reverb.input]);
 
   // Connect noise output to reverb and master when ready
   useEffect(() => {
-    if (noise.output && reverbRef.current && masterOttEqRef.current) {
-      noise.output.connect(reverbRef.current);
+    if (noise.output && reverb.input && masterOttEqRef.current) {
+      noise.output.connect(reverb.input);
       noise.output.connect(masterOttEqRef.current);
     }
-  }, [noise.output]);
+  }, [noise.output, reverb.input]);
+
+  // Connect reverb output to master when ready
+  useEffect(() => {
+    if (reverb.output && masterOttEqRef.current) {
+      reverb.output.connect(masterOttEqRef.current);
+    }
+  }, [reverb.output]);
 
   // bpm change effect
   useEffect(() => {
     Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
-
-  // reverb ir change
-  useEffect(() => {
-    if (reverbRef.current && irFiles[reverbIr]) {
-      reverbRef.current.load(irFiles[reverbIr]).catch(console.error);
-    }
-  }, [reverbIr]);
-
-  // reverb low pass change
-  useEffect(() => {
-    if (reverbLowPassRef.current) {
-      reverbLowPassRef.current.frequency.value = reverbLowPassFreq;
-    }
-  }, [reverbLowPassFreq]);
-
-  // reverb high pass change
-  useEffect(() => {
-    if (reverbHighPassRef.current) {
-      reverbHighPassRef.current.frequency.value = reverbHighPassFreq;
-    }
-  }, [reverbHighPassFreq]);
-
-  // phaser wetness change
-  useEffect(() => {
-    if (reverbPhaserRef.current) {
-      reverbPhaserRef.current.wet.value = reverbPhaserWetness;
-    }
-  }, [reverbPhaserWetness]);
 
   // master ott change
   useEffect(() => {
@@ -261,26 +214,7 @@ export const Daw = () => {
       <SoundUnit
         kickKnobProps={kick.uiProps}
         noiseKnobProps={noise.uiProps}
-        reverbKnobProps={{
-          layerLabel: "Reverb Layer",
-          dropdownItems: irNames,
-          dropdownValue: reverbIr,
-          dropdownOnChange: setReverbIr,
-          layerKnobLabels: ["Low Pass", "High Pass", "Phaser"],
-          knobValues: [
-            mapCustomRangeToKnobRange(reverbLowPassFreq, 30, 7000),
-            mapCustomRangeToKnobRange(reverbHighPassFreq, 30, 7000),
-            mapCustomRangeToKnobRange(reverbPhaserWetness, 0, 1),
-          ],
-          knobOnChanges: [
-            (value) =>
-              setReverbLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-            (value) =>
-              setReverbHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-            (value) =>
-              setReverbPhaserWetness(mapKnobRangeToCustomRange(value, 0, 1)),
-          ],
-        }}
+        reverbKnobProps={reverb.uiProps}
       />
       <MasterStrip
         layerKnobLabels={["OTT", "Distortion", "Limiter"]}
