@@ -10,9 +10,7 @@ import type { LayerStripProps } from "../types/types";
 
 export interface UseKickLayerReturn {
   output: Tone.Gain | null;
-  trigger: (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => void;
-  sampleRef: React.MutableRefObject<string>;
-  lenRef: React.MutableRefObject<number>;
+  trigger: (time?: Tone.Unit.Time) => void;
   uiProps: LayerStripProps;
 }
 
@@ -129,10 +127,10 @@ export const useKickLayer = (): UseKickLayerReturn => {
   }, [ottAmt]);
 
   // Trigger function for transport
-  const trigger = (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => {
+  const trigger = (time?: Tone.Unit.Time) => {
     samplerRef.current?.triggerAttackRelease(
       sampleRef.current,
-      duration ?? lenRef.current,
+      lenRef.current,
       time
     );
   };
@@ -159,8 +157,6 @@ export const useKickLayer = (): UseKickLayerReturn => {
   return {
     output,
     trigger,
-    sampleRef,
-    lenRef,
     uiProps,
   };
 };

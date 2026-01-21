@@ -3,9 +3,8 @@ import * as Tone from "tone";
 import type { ControlStripProps } from "../types/types";
 
 export interface TransportTriggers {
-  kickTrigger: (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => void;
-  kickLenRef: React.MutableRefObject<number>;
-  noiseTrigger: (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => void;
+  kickTrigger: (time?: Tone.Unit.Time) => void;
+  noiseTrigger: (time?: Tone.Unit.Time) => void;
 }
 
 export interface UseTransportReturn {
@@ -38,11 +37,11 @@ export const useTransport = (triggers: TransportTriggers): UseTransportReturn =>
       Tone.getTransport().bpm.value = bpm;
 
       kickLoopRef.current = new Tone.Loop((time) => {
-        triggers.kickTrigger(time, triggers.kickLenRef.current);
+        triggers.kickTrigger(time);
       }, "4n").start(0);
 
       noiseLoopRef.current = new Tone.Loop((time) => {
-        triggers.noiseTrigger(time, 4);
+        triggers.noiseTrigger(time);
       }, "1n").start(0);
 
       Tone.getTransport().start();
@@ -65,8 +64,8 @@ export const useTransport = (triggers: TransportTriggers): UseTransportReturn =>
   const handleCueMouseDown = async () => {
     setIsCuePressed(true);
     await Tone.start();
-    triggers.kickTrigger(undefined, 0.5);
-    triggers.noiseTrigger(undefined, 0.5);
+    triggers.kickTrigger();
+    triggers.noiseTrigger();
   };
 
   const handleCueMouseUp = () => {

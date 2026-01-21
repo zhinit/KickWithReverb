@@ -10,8 +10,7 @@ import type { LayerStripProps } from "../types/types";
 
 export interface UseNoiseLayerReturn {
   output: Tone.Filter | null;
-  trigger: (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => void;
-  sampleRef: React.MutableRefObject<string>;
+  trigger: (time?: Tone.Unit.Time) => void;
   uiProps: LayerStripProps;
 }
 
@@ -95,12 +94,8 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
   }, [distortionAmt]);
 
   // Trigger function for transport
-  const trigger = (time?: Tone.Unit.Time, duration?: Tone.Unit.Time) => {
-    samplerRef.current?.triggerAttackRelease(
-      sampleRef.current,
-      duration ?? 4,
-      time
-    );
+  const trigger = (time?: Tone.Unit.Time) => {
+    samplerRef.current?.triggerAttackRelease(sampleRef.current, 4, time);
   };
 
   // UI props for LayerStrip
@@ -125,7 +120,6 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
   return {
     output,
     trigger,
-    sampleRef,
     uiProps,
   };
 };

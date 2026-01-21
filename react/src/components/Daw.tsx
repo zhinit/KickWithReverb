@@ -18,7 +18,6 @@ export const Daw = () => {
   // Transport hook
   const transport = useTransport({
     kickTrigger: kick.trigger,
-    kickLenRef: kick.lenRef,
     noiseTrigger: noise.trigger,
   });
 
