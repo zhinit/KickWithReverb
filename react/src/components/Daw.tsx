@@ -6,16 +6,14 @@ import * as Tone from "tone";
 import { useKickLayer } from "../hooks/useKickLayer";
 import { useNoiseLayer } from "../hooks/useNoiseLayer";
 import { useReverbLayer } from "../hooks/useReverbLayer";
-import {
-  mapKnobRangeToCustomRange,
-  mapCustomRangeToKnobRange,
-} from "../utils/audioAssets";
+import { useMasterChain } from "../hooks/useMasterChain";
 
 export const Daw = () => {
   // Layer hooks
   const kick = useKickLayer();
   const noise = useNoiseLayer();
   const reverb = useReverbLayer();
+  const master = useMasterChain();
 
   // control strip states and refs
   const kickLoopRef = useRef<Tone.Loop | null>(null);
@@ -25,129 +23,33 @@ export const Daw = () => {
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
 
-  // master chain states and refs
-  const masterOttEqRef = useRef<Tone.EQ3 | null>(null);
-  const masterOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
-  const masterOttGainRef = useRef<Tone.Gain | null>(null);
-  const masterDistortionRef = useRef<Tone.Distortion | null>(null);
-  const masterLimiterGainRef = useRef<Tone.Gain | null>(null);
-  const masterLimiterRef = useRef<Tone.Limiter | null>(null);
-
-  const [masterOttAmt, setMasterOttAmt] = useState(0);
-  const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
-  const [masterLimiterAmt, setMasterLimiterAmt] = useState(1.5);
-
-  // Initialize master audio nodes
-  useEffect(() => {
-    masterOttEqRef.current = new Tone.EQ3({
-      lowFrequency: 88.3,
-      highFrequency: 2500,
-      low: 0,
-      mid: 0,
-      high: 0,
-    });
-    masterOttMbRef.current = new Tone.MultibandCompressor({
-      lowFrequency: 88.3,
-      highFrequency: 2500,
-      high: {
-        threshold: -35.5,
-        ratio: 1,
-        attack: 0.0135,
-        release: 0.132,
-      },
-      mid: {
-        threshold: -30.2,
-        ratio: 1,
-        attack: 0.0224,
-        release: 0.282,
-      },
-      low: {
-        threshold: -33.8,
-        ratio: 1,
-        attack: 0.0447,
-        release: 0.282,
-      },
-    });
-    masterOttGainRef.current = new Tone.Gain(1);
-    masterDistortionRef.current = new Tone.Distortion(0.3);
-    masterLimiterGainRef.current = new Tone.Gain(masterLimiterAmt);
-    masterLimiterRef.current = new Tone.Limiter(0);
-
-    masterOttEqRef.current.connect(masterOttMbRef.current);
-    masterOttMbRef.current.connect(masterOttGainRef.current);
-    masterOttGainRef.current.connect(masterDistortionRef.current);
-    masterDistortionRef.current.connect(masterLimiterGainRef.current);
-    masterLimiterGainRef.current.connect(masterLimiterRef.current);
-    masterLimiterRef.current.toDestination();
-
-    return () => {
-      masterOttEqRef.current?.dispose();
-      masterOttMbRef.current?.dispose();
-      masterOttGainRef.current?.dispose();
-      masterDistortionRef.current?.dispose();
-      masterLimiterGainRef.current?.dispose();
-      masterLimiterRef.current?.dispose();
-    };
-  }, []);
-
   // Connect kick output to reverb and master when ready
   useEffect(() => {
-    if (kick.output && reverb.input && masterOttEqRef.current) {
+    if (kick.output && reverb.input && master.input) {
       kick.output.connect(reverb.input);
-      kick.output.connect(masterOttEqRef.current);
+      kick.output.connect(master.input);
     }
-  }, [kick.output, reverb.input]);
+  }, [kick.output, reverb.input, master.input]);
 
   // Connect noise output to reverb and master when ready
   useEffect(() => {
-    if (noise.output && reverb.input && masterOttEqRef.current) {
+    if (noise.output && reverb.input && master.input) {
       noise.output.connect(reverb.input);
-      noise.output.connect(masterOttEqRef.current);
+      noise.output.connect(master.input);
     }
-  }, [noise.output, reverb.input]);
+  }, [noise.output, reverb.input, master.input]);
 
   // Connect reverb output to master when ready
   useEffect(() => {
-    if (reverb.output && masterOttEqRef.current) {
-      reverb.output.connect(masterOttEqRef.current);
+    if (reverb.output && master.input) {
+      reverb.output.connect(master.input);
     }
-  }, [reverb.output]);
+  }, [reverb.output, master.input]);
 
   // bpm change effect
   useEffect(() => {
     Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
-
-  // master ott change
-  useEffect(() => {
-    if (
-      masterOttEqRef.current &&
-      masterOttMbRef.current &&
-      masterOttGainRef.current
-    ) {
-      masterOttEqRef.current.mid.value = -3 * masterOttAmt;
-
-      masterOttMbRef.current.high.ratio.value = 1 + 10 * masterOttAmt;
-      masterOttMbRef.current.mid.ratio.value = 1 + 10 * masterOttAmt;
-      masterOttMbRef.current.low.ratio.value = 1 + 10 * masterOttAmt;
-
-      masterOttGainRef.current.gain.value = 1 + 1 * masterOttAmt;
-    }
-  }, [masterOttAmt]);
-
-  // master distortion change
-  useEffect(() => {
-    if (masterDistortionRef.current) {
-      masterDistortionRef.current.wet.value = masterDistortionAmt;
-    }
-  }, [masterDistortionAmt]);
-
-  // master limiter change
-  useEffect(() => {
-    if (masterLimiterGainRef.current) {
-      masterLimiterGainRef.current.gain.value = masterLimiterAmt;
-    }
-  });
 
   // play button functionality
   const handlePlayClick = async () => {
@@ -216,21 +118,7 @@ export const Daw = () => {
         noiseKnobProps={noise.uiProps}
         reverbKnobProps={reverb.uiProps}
       />
-      <MasterStrip
-        layerKnobLabels={["OTT", "Distortion", "Limiter"]}
-        knobValues={[
-          mapCustomRangeToKnobRange(masterOttAmt, 0, 1),
-          mapCustomRangeToKnobRange(masterDistortionAmt, 0, 0.5),
-          mapCustomRangeToKnobRange(masterLimiterAmt, 1, 4),
-        ]}
-        knobOnChanges={[
-          (value) => setMasterOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
-          (value) =>
-            setMasterDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
-          (value) =>
-            setMasterLimiterAmt(mapKnobRangeToCustomRange(value, 1, 4)),
-        ]}
-      />
+      <MasterStrip {...master.uiProps} />
     </div>
   );
 };
