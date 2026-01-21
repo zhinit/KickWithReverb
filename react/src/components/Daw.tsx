@@ -1,60 +1,22 @@
-import { useEffect, useRef, useState} from "react";
-import { ControlStrip } from "./ControlStrip"
-import { MasterStrip } from "./MasterStrip"
-import { SoundUnit } from "./SoundUnit"
+import { useEffect, useRef, useState } from "react";
+import { ControlStrip } from "./ControlStrip";
+import { MasterStrip } from "./MasterStrip";
+import { SoundUnit } from "./SoundUnit";
 import * as Tone from "tone";
-
-// Import all kick files
-const kickModules = import.meta.glob("../assets/kicks/*.wav", { eager: true });
-
-const kickFiles: Record<string, string> = {};
-Object.keys(kickModules).forEach((path) => {
-  const fileName = path.split("/").pop()?.replace(".wav", "") || "";
-  kickFiles[fileName] = (kickModules[path] as { default: string }).default;
-});
-
-const kickNames = Object.keys(kickFiles).sort();
-
-// Import all noise files using import.meta.glob
-const noiseModules = import.meta.glob("../assets/noises/*.mp3", { eager: true });
-
-const noiseFiles: Record<string, string> = {};
-Object.keys(noiseModules).forEach((path) => {
-  const fileName = path.split("/").pop()?.replace(".mp3", "") || "";
-  noiseFiles[fileName] = (noiseModules[path] as { default: string }).default;
-});
-
-const noiseNames = Object.keys(noiseFiles).sort();
-
-// Import all IR files
-const irModules = import.meta.glob("../assets/IRs/*.wav", { eager: true });
-
-const irFiles: Record<string, string> = {};
-Object.keys(irModules).forEach((path) => {
-  const fileName = path.split("/").pop()?.replace(".wav", "") || "";
-  irFiles[fileName] = (irModules[path] as { default: string }).default;
-});
-
-const irNames = Object.keys(irFiles);
-
-// maps 0-100 to custom min-max
-const mapKnobRangeToCustomRange = (
-  knobValue: number,
-  min: number,
-  max: number
-): number => {
-  return min + (knobValue / 100) * (max - min);
-};
-
-const mapCustomRangeToKnobRange = (
-  value: number,
-  min: number,
-  max: number
-): number => {
-  return ((value - min) / (max - min)) * 100;
-};
+import { useKickLayer } from "../hooks/useKickLayer";
+import { useNoiseLayer } from "../hooks/useNoiseLayer";
+import {
+  irFiles,
+  irNames,
+  mapKnobRangeToCustomRange,
+  mapCustomRangeToKnobRange,
+} from "../utils/audioAssets";
 
 export const Daw = () => {
+  // Layer hooks
+  const kick = useKickLayer();
+  const noise = useNoiseLayer();
+
   // control strip states and refs
   const kickLoopRef = useRef<Tone.Loop | null>(null);
   const noiseLoopRef = useRef<Tone.Loop | null>(null);
@@ -62,32 +24,6 @@ export const Daw = () => {
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
-
-  // kick layer states and refs
-  const kickSamplerRef = useRef<Tone.Sampler | null>(null);
-  const kickSampleRef = useRef<string>("C1");
-  const kickLenRef = useRef<number>(0.5);
-  const kickDistortionRef = useRef<Tone.Distortion | null>(null);
-  const kickOttEqRef = useRef<Tone.EQ3 | null>(null);
-  const kickOttMbRef = useRef<Tone.MultibandCompressor | null>(null);
-  const kickOttGainRef = useRef<Tone.Gain | null>(null);
-
-  const [kickSample, setKickSample] = useState(kickNames[0] || "Kick1");
-  const [kickLen, setKickLen] = useState(0.3);
-  const [kickOttAmt, setKickOttAmt] = useState(0);
-  const [kickDistortionAmt, setKickDistortionAmt] = useState(0);
-
-  // noise layer states and refs
-  const noiseRef = useRef<Tone.Sampler | null>(null);
-  const noiseSampleRef = useRef<string>("C1");
-  const noiseDistortionRef = useRef<Tone.Distortion | null>(null);
-  const noiseLowPassRef = useRef<Tone.Filter | null>(null);
-  const noiseHighPassRef = useRef<Tone.Filter | null>(null);
-
-  const [noiseSample, setNoiseSample] = useState(noiseNames[0] || "greyNoise");
-  const [noiseDistortionAmt, setNoiseDistortionAmt] = useState(0);
-  const [noiseLowPassFreq, setNoiseLowPassFreq] = useState(30);
-  const [noiseHighPassFreq, setNoiseHighPassFreq] = useState(7000);
 
   // reverb layer states and refs
   const reverbRef = useRef<Tone.Convolver | null>(null);
@@ -112,74 +48,8 @@ export const Daw = () => {
   const [masterDistortionAmt, setMasterDistortionAmt] = useState(0);
   const [masterLimiterAmt, setMasterLimiterAmt] = useState(1.5);
 
-  // mount and unmount effect
+  // Initialize reverb and master audio nodes
   useEffect(() => {
-    // initialize kick layer
-    const kickUrls: Record<string, string> = {};
-    kickNames.forEach((kickName, index) => {
-      const note = `C${index + 1}`;
-      kickUrls[note] = kickFiles[kickName];
-    });
-    kickSamplerRef.current = new Tone.Sampler({
-      urls: kickUrls,
-    });
-    kickDistortionRef.current = new Tone.Distortion(0.3);
-    kickOttMbRef.current = new Tone.MultibandCompressor({
-      lowFrequency: 88.3,
-      highFrequency: 2500,
-      high: {
-        threshold: -35.5,
-        ratio: 1,
-        attack: 0.0135,
-        release: 0.132,
-      },
-      mid: {
-        threshold: -30.2,
-        ratio: 1,
-        attack: 0.0224,
-        release: 0.282,
-      },
-      low: {
-        threshold: -33.8,
-        ratio: 1,
-        attack: 0.0447,
-        release: 0.282,
-      },
-    });
-    kickOttEqRef.current = new Tone.EQ3({
-      lowFrequency: 88.3,
-      highFrequency: 2500,
-      low: 0,
-      mid: 0,
-      high: 0,
-    });
-    kickOttGainRef.current = new Tone.Gain(1);
-    kickSamplerRef.current.volume.value = -1;
-
-    kickSamplerRef.current.connect(kickDistortionRef.current);
-    kickDistortionRef.current.connect(kickOttMbRef.current);
-    kickOttMbRef.current.connect(kickOttEqRef.current);
-    kickOttEqRef.current.connect(kickOttGainRef.current);
-
-    // initialize noise layer
-    const noiseUrls: Record<string, string> = {};
-    noiseNames.forEach((noiseName, index) => {
-      const note = `C${index + 1}`;
-      noiseUrls[note] = noiseFiles[noiseName];
-    });
-    noiseRef.current = new Tone.Sampler({
-      urls: noiseUrls,
-    });
-    noiseRef.current.volume.value = -12;
-
-    noiseDistortionRef.current = new Tone.Distortion(0.3);
-    noiseLowPassRef.current = new Tone.Filter(noiseLowPassFreq, "lowpass");
-    noiseHighPassRef.current = new Tone.Filter(noiseHighPassFreq, "highpass");
-
-    noiseRef.current.connect(noiseDistortionRef.current);
-    noiseDistortionRef.current.connect(noiseLowPassRef.current);
-    noiseLowPassRef.current.connect(noiseHighPassRef.current);
-
     // initialize reverb layer
     reverbRef.current = new Tone.Convolver(
       irFiles[reverbIr] || irFiles[irNames[0]]
@@ -193,13 +63,11 @@ export const Daw = () => {
       wet: reverbPhaserWetness,
     });
 
-    kickOttGainRef.current.connect(reverbRef.current);
-    noiseHighPassRef.current.connect(reverbRef.current);
     reverbRef.current.connect(reverbLowPassRef.current);
     reverbLowPassRef.current.connect(reverbHighPassRef.current);
     reverbHighPassRef.current.connect(reverbPhaserRef.current);
 
-    // initialized master layer
+    // initialize master layer
     masterOttEqRef.current = new Tone.EQ3({
       lowFrequency: 88.3,
       highFrequency: 2500,
@@ -234,8 +102,6 @@ export const Daw = () => {
     masterLimiterGainRef.current = new Tone.Gain(masterLimiterAmt);
     masterLimiterRef.current = new Tone.Limiter(0);
 
-    kickOttGainRef.current.connect(masterOttEqRef.current);
-    noiseHighPassRef.current.connect(masterOttEqRef.current);
     reverbPhaserRef.current.connect(masterOttEqRef.current);
     masterOttEqRef.current.connect(masterOttMbRef.current);
     masterOttMbRef.current.connect(masterOttGainRef.current);
@@ -245,85 +111,31 @@ export const Daw = () => {
     masterLimiterRef.current.toDestination();
 
     return () => {
-      kickSamplerRef.current?.dispose();
-      noiseRef.current?.dispose();
       reverbRef.current?.dispose();
       reverbPhaserRef.current?.dispose();
     };
   }, []);
 
+  // Connect kick output to reverb and master when ready
+  useEffect(() => {
+    if (kick.output && reverbRef.current && masterOttEqRef.current) {
+      kick.output.connect(reverbRef.current);
+      kick.output.connect(masterOttEqRef.current);
+    }
+  }, [kick.output]);
+
+  // Connect noise output to reverb and master when ready
+  useEffect(() => {
+    if (noise.output && reverbRef.current && masterOttEqRef.current) {
+      noise.output.connect(reverbRef.current);
+      noise.output.connect(masterOttEqRef.current);
+    }
+  }, [noise.output]);
+
   // bpm change effect
   useEffect(() => {
     Tone.getTransport().bpm.value = bpm;
   }, [bpm]);
-
-  // kick sample change
-  useEffect(() => {
-    const noteMap: Record<string, string> = {};
-    kickNames.forEach((kickName, index) => {
-      noteMap[kickName] = `C${index + 1}`;
-    });
-    kickSampleRef.current = noteMap[kickSample] || `C1`;
-  }, [kickSample]);
-
-  // kick length change
-  useEffect(() => {
-    kickLenRef.current = kickLen;
-  }, [kickLen]);
-
-  // kick distortion change
-  useEffect(() => {
-    if (kickDistortionRef.current) {
-      kickDistortionRef.current.wet.value = kickDistortionAmt;
-    }
-  }, [kickDistortionAmt]);
-
-  // kick ott change
-  useEffect(() => {
-    if (
-      kickOttEqRef.current &&
-      kickOttMbRef.current &&
-      kickOttGainRef.current
-    ) {
-      kickOttEqRef.current.mid.value = -3 * kickOttAmt;
-
-      kickOttMbRef.current.high.ratio.value = 1 + 10 * kickOttAmt;
-      kickOttMbRef.current.mid.ratio.value = 1 + 10 * kickOttAmt;
-      kickOttMbRef.current.low.ratio.value = 1 + 10 * kickOttAmt;
-
-      kickOttGainRef.current.gain.value = 1 + 1 * kickOttAmt;
-    }
-  }, [kickOttAmt]);
-
-  // noise sample change
-  useEffect(() => {
-    const noiseMap: Record<string, string> = {};
-    noiseNames.forEach((noiseName, index) => {
-      noiseMap[noiseName] = `C${index + 1}`;
-    });
-    noiseSampleRef.current = noiseMap[noiseSample] || `C1`;
-  }, [noiseSample]);
-
-  // noise low pass change
-  useEffect(() => {
-    if (noiseLowPassRef.current) {
-      noiseLowPassRef.current.frequency.value = noiseLowPassFreq;
-    }
-  }, [noiseLowPassFreq]);
-
-  // noise high pass change
-  useEffect(() => {
-    if (noiseHighPassRef.current) {
-      noiseHighPassRef.current.frequency.value = noiseHighPassFreq;
-    }
-  }, [noiseHighPassFreq]);
-
-  // noise distortion change
-  useEffect(() => {
-    if (noiseDistortionRef.current) {
-      noiseDistortionRef.current.wet.value = noiseDistortionAmt;
-    }
-  }, [noiseDistortionAmt]);
 
   // reverb ir change
   useEffect(() => {
@@ -395,15 +207,11 @@ export const Daw = () => {
       Tone.getTransport().bpm.value = bpm;
 
       kickLoopRef.current = new Tone.Loop((time) => {
-        kickSamplerRef.current?.triggerAttackRelease(
-          kickSampleRef.current,
-          kickLenRef.current,
-          time
-        );
+        kick.trigger(time, kick.lenRef.current);
       }, "4n").start(0);
 
       noiseLoopRef.current = new Tone.Loop((time) => {
-        noiseRef.current?.triggerAttackRelease(noiseSampleRef.current, 4, time);
+        noise.trigger(time, 4);
       }, "1n").start(0);
 
       Tone.getTransport().start();
@@ -426,8 +234,8 @@ export const Daw = () => {
   const handleCueMouseDown = async () => {
     setIsCuePressed(true);
     await Tone.start();
-    kickSamplerRef.current?.triggerAttackRelease(kickSampleRef.current, 0.5);
-    noiseRef.current?.triggerAttackRelease(noiseSampleRef.current, 0.5);
+    kick.trigger(undefined, 0.5);
+    noise.trigger(undefined, 0.5);
   };
 
   const handleCueMouseUp = () => {
@@ -451,44 +259,8 @@ export const Daw = () => {
         setBPM={setBPM}
       />
       <SoundUnit
-        kickKnobProps={{
-          layerLabel: "Kick Layer",
-          dropdownItems: kickNames,
-          dropdownValue: kickSample,
-          dropdownOnChange: setKickSample,
-          layerKnobLabels: ["Length", "Distortion", "OTT"],
-          knobValues: [
-            mapCustomRangeToKnobRange(kickLen, 0, 0.3),
-            mapCustomRangeToKnobRange(kickDistortionAmt, 0, 0.5),
-            mapCustomRangeToKnobRange(kickOttAmt, 0, 1),
-          ],
-          knobOnChanges: [
-            (value) => setKickLen(mapKnobRangeToCustomRange(value, 0, 0.3)),
-            (value) =>
-              setKickDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
-            (value) => setKickOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
-          ],
-        }}
-        noiseKnobProps={{
-          layerLabel: "Noise Layer",
-          dropdownItems: noiseNames,
-          dropdownValue: noiseSample,
-          dropdownOnChange: setNoiseSample,
-          layerKnobLabels: ["Low Pass", "High Pass", "Distortion"],
-          knobValues: [
-            mapCustomRangeToKnobRange(noiseLowPassFreq, 30, 7000),
-            mapCustomRangeToKnobRange(noiseHighPassFreq, 30, 7000),
-            mapCustomRangeToKnobRange(noiseDistortionAmt, 0, 0.5),
-          ],
-          knobOnChanges: [
-            (value) =>
-              setNoiseLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-            (value) =>
-              setNoiseHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-            (value) =>
-              setNoiseDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
-          ],
-        }}
+        kickKnobProps={kick.uiProps}
+        noiseKnobProps={noise.uiProps}
         reverbKnobProps={{
           layerLabel: "Reverb Layer",
           dropdownItems: irNames,
