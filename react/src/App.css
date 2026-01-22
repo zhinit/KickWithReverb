@@ -11,7 +11,7 @@ html {
 }
 
 body {
-  --main-color: Silver;
+  --main-color: silver;
   /* background-image: url("assets/backgrounds/bkg2.png"); */
   /* background-repeat: repeat; */
   /* background-color: black; */
@@ -24,6 +24,15 @@ button {
 
 select {
   color: var(--main-color);
+}
+
+/* .login-register {
+  display: flex;
+  flex-direction: row;
+} */
+
+.login-button {
+  background-color: transparent;
 }
 
 .cue-button {
