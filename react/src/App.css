@@ -42,6 +42,14 @@ form {
   background-color: transparent;
 }
 
+.logout-button {
+  background-color: transparent;
+}
+
+.logout-button-border {
+  padding-top: 40px;
+}
+
 .cue-button {
   width: 80px;
   height: 80px;
