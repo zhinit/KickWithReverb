@@ -23,7 +23,7 @@ from users.views import RegisterView
 urlpatterns = [
     path("admin/", admin.site.urls),
     # login (access and refresh token)
-    path("api/token", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     # refresh
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # create new user
