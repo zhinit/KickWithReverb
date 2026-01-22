@@ -5,7 +5,7 @@ import { LoginRegister } from "./components/LoginRegister";
 function App() {
   return (
     <>
-      <LoginRegister />
+      {/* <LoginRegister /> */}
       <Daw />
     </>
   );
