@@ -1,34 +1,13 @@
-import { useState } from "react"
-import { LoginForm } from "./LoginForm"
-import { RegisterForm } from "./RegisterForm"
-
-type View = "buttons" | "login" | "register";
-
-export const LoginRegister = () => {
-  const [view, setView] = useState<View>("buttons");
-
-  if (view === "login") {
-    return <LoginForm onBack={ () => setView("buttons")} />;
-  }
-
-  if (view === "register") {
-    return <RegisterForm onBack={ () => setView("buttons") }/>
-  }
-
-  return(
-  <div className="login-register">
-    <button 
-      className="login-button"
-      onClick={() => setView("login")}
-    >
-      Log In
-    </button>
-    <button 
-      className="login-button"
-      onClick={() => setView("register")}
-    >
-      Sign Up
-    </button>
-  </div>
-  )
+interface LoginRegisterProps {
+  onLogin: () => void;
+  onRegister: () => void;
 }
+
+export const LoginRegister = ({ onLogin, onRegister }: LoginRegisterProps) => {
+  return (
+    <div className="login-register">
+      <button className="login-button" onClick={onLogin}>Log In</button>
+      <button className="login-button" onClick={onRegister}>Sign Up</button>
+    </div>
+  );
+};
