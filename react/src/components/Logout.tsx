@@ -1,6 +1,6 @@
 import { useAuth } from "../hooks/useAuth";
 
-export function LogoutButton() {
+export function Logout() {
   const { logout } = useAuth();
 
   return (

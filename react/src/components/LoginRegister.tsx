@@ -15,6 +15,7 @@ export const LoginRegister = () => {
     return <RegisterForm onBack={ () => setView("buttons") }/>
   }
 
+  return(
   <div className="login-register">
     <button 
       className="login-button"
@@ -29,4 +30,5 @@ export const LoginRegister = () => {
       Sign Up
     </button>
   </div>
+  )
 }
