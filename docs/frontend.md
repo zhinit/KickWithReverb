@@ -2,7 +2,7 @@
 
 ## Overview
 
-The frontend is a React 19 application built with TypeScript and Vite. It provides a web-based DAW (Digital Audio Workstation) interface for creating kick drum sounds with reverb effects.
+The frontend is a React 19 application built with TypeScript and Vite. It provides a web-based DAW (Digital Audio Workstation) interface for creating kick drum sounds with reverb.
 
 ## Technology Stack
 
@@ -53,7 +53,7 @@ TypeScript interfaces for component props:
 
 ### `/src/utils/`
 
-- `api.ts` - API functions for authentication (`loginUser`, `registerUser`)
+- `api.ts` - API functions for authentication (`loginUser`, `registerUser`). Uses `VITE_API_URL` env var for backend URL.
 - `audioAssets.ts` - Audio file imports/exports
 
 ### `/src/assets/`
@@ -93,9 +93,22 @@ Each layer hook returns:
 - `trigger` - Function to trigger the sound
 - `uiProps` - Props for the UI component
 
+## Environment Variables
+
+- `VITE_API_URL` - Backend API URL (defaults to `http://localhost:8000` for local dev)
+
 ## Scripts
 
 - `npm run dev` - Start dev server (port 5173)
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
 - `npm run preview` - Preview production build
+
+## Production Deployment
+
+Deployed on **Vercel**.
+
+- **URL**: `https://kick-with-reverb.vercel.app`
+- **Environment variable**: `VITE_API_URL=https://kickwithreverb-production.up.railway.app`
+
+Vercel auto-deploys from the `main` branch. After adding/changing environment variables, a manual redeploy is required.
