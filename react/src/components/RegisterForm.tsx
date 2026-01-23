@@ -16,9 +16,9 @@ export function RegisterForm({onBack}: LoginFormProps) {
     e.preventDefault();
     setError("");
 
-    const success = await register(username, email, password);
-    if (!success) {
-      setError("Registration failed");
+    const errorMessage = await register(username, email, password);
+    if (errorMessage) {
+      setError(errorMessage);
     }
   }
 

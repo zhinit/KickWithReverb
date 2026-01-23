@@ -15,9 +15,9 @@ export function LoginForm({onBack}: LoginFormProps) {
     e.preventDefault();
     setError("");
 
-    const success = await login(username, password);
-    if (!success) {
-      setError("Invalid username or password");
+    const errorMessage = await login(username, password);
+    if (errorMessage) {
+      setError(errorMessage);
     }
   }
 
