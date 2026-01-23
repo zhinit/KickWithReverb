@@ -7,6 +7,7 @@ import { useNoiseLayer } from "../hooks/useNoiseLayer";
 import { useReverbLayer } from "../hooks/useReverbLayer";
 import { useMasterChain } from "../hooks/useMasterChain";
 import { useTransport } from "../hooks/useTransport";
+import { PresetsBar } from "./PresetsBar";
 
 export const Daw = () => {
   // Layer hooks
@@ -51,6 +52,7 @@ export const Daw = () => {
         Fully featured fully sophisticated DAW <br />
         for the modern tik tok techno purist.
       </h2>
+      {/* <PresetsBar /> */}
       <ControlStrip {...transport.controlProps} />
       <SoundUnit
         kickKnobProps={kick.uiProps}
