@@ -5,7 +5,7 @@ interface LoginFormProps {
   onBack: () => void;
 }
 
-export function RegisterForm({onBack}: LoginFormProps) {
+export function RegisterForm({ onBack }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +24,7 @@ export function RegisterForm({onBack}: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Sign Up</h2>
+      <h3 className="form-header">Create System Persona</h3>
       {error && <p className="error">{error}</p>}
       <input
         type="text"
@@ -45,7 +45,9 @@ export function RegisterForm({onBack}: LoginFormProps) {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button type="submit">Sign Up</button>
-      <button type="button" onClick={onBack}>Back</button>
+      <button type="button" onClick={onBack}>
+        Back
+      </button>
     </form>
-  )
+  );
 }

@@ -5,7 +5,7 @@ interface LoginFormProps {
   onBack: () => void;
 }
 
-export function LoginForm({onBack}: LoginFormProps) {
+export function LoginForm({ onBack }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,7 +23,7 @@ export function LoginForm({onBack}: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Log In</h2>
+      <h3 className="form-header">Link Identity To The System</h3>
       {error && <p className="error">{error}</p>}
       <input
         type="text"
@@ -38,7 +38,9 @@ export function LoginForm({onBack}: LoginFormProps) {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button type="submit">Log In</button>
-      <button type="button" onClick={onBack}>Back</button>
+      <button type="button" onClick={onBack}>
+        Back
+      </button>
     </form>
-  )
+  );
 }

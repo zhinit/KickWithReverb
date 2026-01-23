@@ -33,15 +33,21 @@ form {
   max-width: 300px;
 }
 
+/* label {
+  font-weight: 400;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+} */
+
 .error {
   color: #ff4444;
   margin: 0;
 }
 
-/* .login-register {
-  display: flex;
-  flex-direction: row;
-} */
+.form-header {
+  text-shadow: 0 0 6px rgba(0, 255, 156, 0.6);
+  text-transform: uppercase;
+  font-weight: 400;
+}
 
 .login-button {
   background-color: transparent;
