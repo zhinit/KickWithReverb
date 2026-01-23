@@ -10,13 +10,13 @@ export function RegisterForm({onBack}: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    const success = await login(username, password);
+    const success = await register(username, email, password);
     if (!success) {
       setError("Registration failed");
     }
