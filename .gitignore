@@ -16,15 +16,22 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
+# OS files
 .DS_Store
-/notes
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+
+# Private
+/notes
 .env
 .claudeignore
