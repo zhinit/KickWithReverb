@@ -1,37 +1,37 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { loginUser, registerUser } from "../utils/api"
+import { loginUser, registerUser } from "../utils/api";
+import { mapAuthError } from "../utils/authErrors";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
-  register: (username: string, email:string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<string | null>;
+  register: (username: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: {children: ReactNode}) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  async function login(username: string, password:string) {
+  async function login(username: string, password: string): Promise<string | null> {
     const response = await loginUser(username, password);
-    if (response.ok) {
-      const tokens = await response.json()
-      localStorage.setItem("accessToken", tokens.access);
-      localStorage.setItem("refreshToken", tokens.refresh);
+    if (response.ok && response.data) {
+      localStorage.setItem("accessToken", response.data.access);
+      localStorage.setItem("refreshToken", response.data.refresh);
       setIsAuthenticated(true);
-      return true;
+      return null;
     }
-    return false;
+    return mapAuthError(response.status, response.data, "login");
   }
 
-  async function register(username: string, email: string, password:string) {
+  async function register(username: string, email: string, password: string): Promise<string | null> {
     const response = await registerUser(username, email, password);
     if (response.ok) {
       // auto login after successful registration
       return await login(username, password);
     }
-    return false;
+    return mapAuthError(response.status, response.data, "register");
   }
 
   function logout() {
@@ -54,5 +54,3 @@ export function useAuth() {
   }
   return context;
 }
-
-

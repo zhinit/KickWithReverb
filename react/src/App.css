@@ -33,6 +33,11 @@ form {
   max-width: 300px;
 }
 
+.error {
+  color: #ff4444;
+  margin: 0;
+}
+
 /* .login-register {
   display: flex;
   flex-direction: row;
