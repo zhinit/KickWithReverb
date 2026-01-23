@@ -5,7 +5,9 @@ export function Logout() {
 
   return (
     <div className="logout-button-border">
-      <button onClick={logout} className="logout-button">Log Out</button>
+      <button onClick={logout} className="logout-button">
+        Log Out
+      </button>
     </div>
   );
 }
