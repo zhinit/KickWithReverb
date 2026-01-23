@@ -52,7 +52,7 @@ export const Daw = () => {
         Fully featured fully sophisticated DAW <br />
         for the modern tik tok techno purist.
       </h2>
-      {/* <PresetsBar /> */}
+      <PresetsBar />
       <ControlStrip {...transport.controlProps} />
       <SoundUnit
         kickKnobProps={kick.uiProps}
