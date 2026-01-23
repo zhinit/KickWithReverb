@@ -27,3 +27,4 @@ dist-ssr
 /notes
 
 .env
+.claudeignore
