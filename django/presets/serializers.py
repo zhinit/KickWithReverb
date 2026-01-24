@@ -1,0 +1,42 @@
+from rest_framework import serializers
+from .models import Preset, SharedPreset
+
+
+class PresetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Preset
+        fields = [
+            "id",
+            "preset_name",
+            "bpm",
+            "kick_sample",
+            "kick_len",
+            "kick_dist_amt",
+            "kick_ott_amt",
+            "noise_sample",
+            "noise_low_pass_freq",
+            "noise_high_pass_freq",
+            "noise_dist_amt",
+            "reverb_sample",
+            "reverb_low_pass_freq",
+            "reverb_high_pass_freq",
+            "reverb_phaser_amt",
+            "master_ott_amt",
+            "master_dist_amt",
+            "master_limiter_amt",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_preset_name(self, value):
+        if not value.replace(" ", "").isalnum():
+            raise serializers.ValidationError("Preset name must be alphanumeric")
+        return value
+
+
+class SharedPresetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SharedPreset
+        fields = "__all__"
+        read_only_fields = "__all__"
