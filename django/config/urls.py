@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from users.views import RegisterView
+from presets.views import SharedPresetView, PresetListCreateView, PresetDetailView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,4 +29,12 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # create new user
     path("api/register/", RegisterView.as_view(), name="register"),
+    # preset list create view
+    path("api/presets/", PresetListCreateView.as_view(), name="preset_list_create"),
+    # preset detail view
+    path(
+        "api/presets/<int:pk>/", PresetDetailView.as_view(), name="preset_detail_view"
+    ),
+    # shared preset view
+    path("api/presets/shared/", SharedPresetView.as_view(), name="shared_preset_view"),
 ]
