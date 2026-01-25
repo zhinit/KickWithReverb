@@ -11,6 +11,12 @@ export interface UseTransportReturn {
   isPlaying: boolean;
   bpm: number;
   controlProps: ControlStripProps;
+  setters: {
+    setBpm: (value: number) => void;
+  };
+  getState: () => {
+    bpm: number;
+  };
 }
 
 export const useTransport = (triggers: TransportTriggers): UseTransportReturn => {
@@ -83,9 +89,17 @@ export const useTransport = (triggers: TransportTriggers): UseTransportReturn =>
     setBPM,
   };
 
+  const getState = () => ({
+    bpm,
+  });
+
   return {
     isPlaying: isPlayOn,
     bpm,
     controlProps,
+    setters: {
+      setBpm: setBPM,
+    },
+    getState,
   };
 };

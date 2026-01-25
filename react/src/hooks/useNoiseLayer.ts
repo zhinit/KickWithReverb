@@ -12,6 +12,18 @@ export interface UseNoiseLayerReturn {
   output: Tone.Filter | null;
   trigger: (time?: Tone.Unit.Time) => void;
   uiProps: LayerStripProps;
+  setters: {
+    setSample: (value: string) => void;
+    setLowPassFreq: (value: number) => void;
+    setHighPassFreq: (value: number) => void;
+    setDistAmt: (value: number) => void;
+  };
+  getState: () => {
+    noiseSample: string;
+    noiseLowPassFreq: number;
+    noiseHighPassFreq: number;
+    noiseDistAmt: number;
+  };
 }
 
 export const useNoiseLayer = (): UseNoiseLayerReturn => {
@@ -117,9 +129,23 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     ],
   };
 
+  const getState = () => ({
+    noiseSample: sample,
+    noiseLowPassFreq: lowPassFreq,
+    noiseHighPassFreq: highPassFreq,
+    noiseDistAmt: distortionAmt,
+  });
+
   return {
     output,
     trigger,
     uiProps,
+    setters: {
+      setSample,
+      setLowPassFreq,
+      setHighPassFreq,
+      setDistAmt: setDistortionAmt,
+    },
+    getState,
   };
 };
