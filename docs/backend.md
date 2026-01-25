@@ -9,6 +9,7 @@ The backend is a Django REST API that handles user authentication. It uses Djang
 - **Django 5.2** - Web framework
 - **Django REST Framework** - API toolkit
 - **Simple JWT** - JWT authentication
+- **djangorestframework-camel-case** - Automatic snake_case to camelCase conversion for API responses/requests
 - **PostgreSQL** - Database (Supabase in production)
 - **python-dotenv** - Environment variable management
 - **Gunicorn** - Production WSGI server
@@ -27,13 +28,22 @@ django/
 │   ├── urls.py              # Root URL configuration
 │   ├── asgi.py              # ASGI config
 │   └── wsgi.py              # WSGI config
-└── users/                    # Users app
+├── users/                    # Users app
+│   ├── __init__.py
+│   ├── admin.py             # Admin site config
+│   ├── apps.py              # App config
+│   ├── models.py            # Database models
+│   ├── serializers.py       # DRF serializers
+│   ├── views.py             # API views
+│   ├── tests.py             # Tests
+│   └── migrations/          # Database migrations
+└── presets/                  # Presets app
     ├── __init__.py
-    ├── admin.py             # Admin site config
+    ├── admin.py             # Admin site config for presets
     ├── apps.py              # App config
-    ├── models.py            # Database models
-    ├── serializers.py       # DRF serializers
-    ├── views.py             # API views
+    ├── models.py            # Preset and SharedPreset models
+    ├── serializers.py       # DRF serializers for presets
+    ├── views.py             # API views for preset CRUD
     ├── tests.py             # Tests
     └── migrations/          # Database migrations
 ```
@@ -72,12 +82,17 @@ Uses JWT via `rest_framework_simplejwt`:
 
 ## API Endpoints
 
-| Method | Endpoint              | Description                          |
-| ------ | --------------------- | ------------------------------------ |
-| POST   | `/api/token/`         | Obtain JWT access and refresh tokens |
-| POST   | `/api/token/refresh/` | Refresh access token                 |
-| POST   | `/api/register/`      | Create new user account              |
-| GET    | `/admin/`             | Django admin interface               |
+| Method | Endpoint               | Description                          | Auth Required |
+| ------ | ---------------------- | ------------------------------------ | ------------- |
+| POST   | `/api/token/`          | Obtain JWT access and refresh tokens | No            |
+| POST   | `/api/token/refresh/`  | Refresh access token                 | No            |
+| POST   | `/api/register/`       | Create new user account              | No            |
+| GET    | `/api/presets/`        | List user's presets                  | Yes           |
+| POST   | `/api/presets/`        | Create a new preset                  | Yes           |
+| PUT    | `/api/presets/<id>/`   | Update an existing preset            | Yes           |
+| DELETE | `/api/presets/<id>/`   | Delete a preset                      | Yes           |
+| GET    | `/api/presets/shared/` | List shared (global) presets         | Yes           |
+| GET    | `/admin/`              | Django admin interface               | Admin         |
 
 ## Users App
 
@@ -100,6 +115,65 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 - `POST` - Creates new user
 - Permission: `AllowAny`
 - Returns 201 on success, 400 on validation error
+
+## Presets App
+
+### Models (`presets/models.py`)
+
+**Preset** - User-owned presets
+
+- `user` - Foreign key to User (CASCADE delete)
+- `preset_name` - Name of the preset (max 32 chars)
+- `bpm` - Beats per minute
+- Kick layer: `kick_sample`, `kick_len`, `kick_dist_amt`, `kick_ott_amt`
+- Noise layer: `noise_sample`, `noise_low_pass_freq`, `noise_high_pass_freq`, `noise_dist_amt`
+- Reverb layer: `reverb_sample`, `reverb_low_pass_freq`, `reverb_high_pass_freq`, `reverb_phaser_amt`
+- Master chain: `master_ott_amt`, `master_dist_amt`, `master_limiter_amt`
+- Timestamps: `created_at`, `updated_at`
+- Unique constraint on `(user, preset_name)`
+
+**SharedPreset** - Global presets available to all users (admin-managed)
+
+- Same fields as Preset but without `user` foreign key
+- `preset_name` is unique globally
+- Read-only via API (only admins can create/modify via Django admin)
+
+### Serializers (`presets/serializers.py`)
+
+**PresetSerializer**
+
+- Serializes all preset fields
+- Read-only: `id`, `created_at`, `updated_at`
+- Validates `preset_name` is alphanumeric (spaces allowed)
+
+**SharedPresetSerializer**
+
+- Read-only serializer for shared presets
+- All fields are read-only
+
+### Views (`presets/views.py`)
+
+**PresetListCreateView** (`/api/presets/`)
+
+- `GET` - List all presets owned by the authenticated user
+- `POST` - Create a new preset for the authenticated user
+
+**PresetDetailView** (`/api/presets/<id>/`)
+
+- `PUT` - Update a preset (only if owned by the user)
+- `DELETE` - Delete a preset (only if owned by the user)
+
+**SharedPresetView** (`/api/presets/shared/`)
+
+- `GET` - List all shared presets
+
+### API Response Format
+
+The backend uses `djangorestframework-camel-case` to automatically convert:
+- Request bodies: `camelCase` (frontend) → `snake_case` (Django)
+- Response bodies: `snake_case` (Django) → `camelCase` (frontend)
+
+This allows the frontend to use JavaScript conventions while Django uses Python conventions.
 
 ## Running the Server
 

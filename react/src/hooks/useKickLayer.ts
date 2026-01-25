@@ -11,6 +11,7 @@ import type { LayerStripProps } from "../types/types";
 export interface UseKickLayerReturn {
   output: Tone.Gain | null;
   trigger: (time?: Tone.Unit.Time) => void;
+  releaseAll: () => void;
   uiProps: LayerStripProps;
   setters: {
     setSample: (value: string) => void;
@@ -147,6 +148,11 @@ export const useKickLayer = (): UseKickLayerReturn => {
     );
   };
 
+  // Release all playing sounds
+  const releaseAll = () => {
+    samplerRef.current?.releaseAll();
+  };
+
   // UI props for LayerStrip
   const uiProps: LayerStripProps = {
     layerLabel: "Kick Layer",
@@ -176,6 +182,7 @@ export const useKickLayer = (): UseKickLayerReturn => {
   return {
     output,
     trigger,
+    releaseAll,
     uiProps,
     setters: {
       setSample,

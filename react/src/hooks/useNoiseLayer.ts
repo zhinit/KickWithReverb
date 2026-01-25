@@ -11,6 +11,7 @@ import type { LayerStripProps } from "../types/types";
 export interface UseNoiseLayerReturn {
   output: Tone.Filter | null;
   trigger: (time?: Tone.Unit.Time) => void;
+  releaseAll: () => void;
   uiProps: LayerStripProps;
   setters: {
     setSample: (value: string) => void;
@@ -110,6 +111,11 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     samplerRef.current?.triggerAttackRelease(sampleRef.current, 4, time);
   };
 
+  // Release all playing sounds
+  const releaseAll = () => {
+    samplerRef.current?.releaseAll();
+  };
+
   // UI props for LayerStrip
   const uiProps: LayerStripProps = {
     layerLabel: "Noise Layer",
@@ -139,6 +145,7 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
   return {
     output,
     trigger,
+    releaseAll,
     uiProps,
     setters: {
       setSample,

@@ -18,6 +18,13 @@ App
 
 ```
 Daw
+├── PresetsBar
+│   ├── Navigation Buttons (prev/next)
+│   ├── Preset Dropdown
+│   ├── Delete Button
+│   ├── Save Button
+│   ├── Save Modal
+│   └── Delete Confirmation Modal
 ├── ControlStrip
 │   ├── Cue Button (img)
 │   ├── Play Button (img)
@@ -54,9 +61,12 @@ Handles routing based on auth state:
 Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Contains:
 
 - Title and description
+- `PresetsBar` - Preset management controls (authenticated users only)
 - `ControlStrip` - Transport controls
 - `SoundUnit` - Sound layer controls
 - `MasterStrip` - Master output controls
+
+The Daw component wires up the `usePresets` hook by passing layer setters and getters from all audio hooks, enabling presets to save and restore the complete DAW state.
 
 ### ControlStrip (`ControlStrip.tsx`)
 
@@ -99,6 +109,21 @@ Rotary knob control with drag interaction:
 ### Selectah (`Selectah.tsx`)
 
 Dropdown select component for choosing samples or presets.
+
+### PresetsBar (`PresetsBar.tsx`)
+
+Preset management bar displayed at the top of the DAW. Features:
+
+- Previous/Next buttons to navigate through presets
+- Dropdown to select a preset by name
+- Delete button (disabled for shared presets)
+- Save button opens a modal to name the preset
+
+When not authenticated, displays a message prompting users to log in.
+
+Includes two modals:
+- **Save Modal** - Form to enter preset name with validation (alphanumeric, max 32 chars)
+- **Delete Confirmation Modal** - Confirms before deleting a user preset
 
 ### LoginRegister (`LoginRegister.tsx`)
 

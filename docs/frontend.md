@@ -44,16 +44,26 @@ Custom hooks that encapsulate audio logic and state management:
 - `useReverbLayer.ts` - Reverb effect processing
 - `useMasterChain.ts` - Master output chain with effects
 - `useTransport.ts` - Playback transport controls (play, cue, BPM)
+- `usePresets.ts` - Preset management (load, save, delete, navigate)
+
+Each audio layer hook exposes:
+- `setters` - Functions to update layer parameters programmatically
+- `getState` - Function to retrieve current layer state for saving presets
+- `releaseAll` - Function to stop all playing sounds (kick and noise layers)
 
 ### `/src/types/`
 
 TypeScript interfaces for component props:
 
 - `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps`, `SoundUnitProps`, `MasterStripProps`
+- `preset.ts` - Defines `PresetData` interface for preset state (all layer parameters, BPM, timestamps)
 
 ### `/src/utils/`
 
-- `api.ts` - API functions for authentication (`loginUser`, `registerUser`). Uses `VITE_API_URL` env var for backend URL.
+- `api.ts` - API functions for authentication and presets. Uses `VITE_API_URL` env var for backend URL.
+  - Authentication: `loginUser`, `registerUser`
+  - Presets: `getPresets`, `getSharedPresets`, `createPreset`, `updatePreset`, `deletePreset`
+  - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
 - `audioAssets.ts` - Audio file imports/exports
 
 ### `/src/assets/`
