@@ -50,7 +50,6 @@ interface LayerRefs {
       kickDistAmt: number;
       kickOttAmt: number;
     };
-    releaseAll: () => void;
   };
   noise: {
     setters: NoiseSetters;
@@ -60,7 +59,6 @@ interface LayerRefs {
       noiseHighPassFreq: number;
       noiseDistAmt: number;
     };
-    releaseAll: () => void;
   };
   reverb: {
     setters: ReverbSetters;
@@ -166,10 +164,6 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       const allPresets = [...sharedPresets, ...userPresets];
       const preset = allPresets.find((p) => p.id === id);
       if (!preset) return;
-
-      // Stop all currently playing sounds
-      layers.kick.releaseAll();
-      layers.noise.releaseAll();
 
       // Apply to kick layer
       layers.kick.setters.setSample(preset.kickSample);
