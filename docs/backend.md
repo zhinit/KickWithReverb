@@ -126,8 +126,8 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 - `preset_name` - Name of the preset (max 32 chars)
 - `bpm` - Beats per minute
 - Kick layer: `kick_sample`, `kick_len`, `kick_dist_amt`, `kick_ott_amt`
-- Noise layer: `noise_sample`, `noise_low_pass_freq`, `noise_high_pass_freq`, `noise_dist_amt`
-- Reverb layer: `reverb_sample`, `reverb_low_pass_freq`, `reverb_high_pass_freq`, `reverb_phaser_amt`
+- Noise layer: `noise_sample`, `noise_low_pass_freq`, `noise_high_pass_freq`, `noise_voume`
+- Reverb layer: `reverb_sample`, `reverb_low_pass_freq`, `reverb_high_pass_freq`, `reverb_voume`
 - Master chain: `master_ott_amt`, `master_dist_amt`, `master_limiter_amt`
 - Timestamps: `created_at`, `updated_at`
 - Unique constraint on `(user, preset_name)`
@@ -170,6 +170,7 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 ### API Response Format
 
 The backend uses `djangorestframework-camel-case` to automatically convert:
+
 - Request bodies: `camelCase` (frontend) → `snake_case` (Django)
 - Response bodies: `snake_case` (Django) → `camelCase` (frontend)
 
