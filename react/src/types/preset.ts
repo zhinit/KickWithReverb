@@ -9,11 +9,11 @@ export interface PresetData {
   noiseSample: string;
   noiseLowPassFreq: number;
   noiseHighPassFreq: number;
-  noiseDistAmt: number;
+  noiseVolume: number;
   reverbSample: string;
   reverbLowPassFreq: number;
   reverbHighPassFreq: number;
-  reverbPhaserAmt: number;
+  reverbVolume: number;
   masterOttAmt: number;
   masterDistAmt: number;
   masterLimiterAmt: number;

@@ -17,26 +17,25 @@ export interface UseNoiseLayerReturn {
     setSample: (value: string) => void;
     setLowPassFreq: (value: number) => void;
     setHighPassFreq: (value: number) => void;
-    setDistAmt: (value: number) => void;
+    setVolume: (value: number) => void;
   };
   getState: () => {
     noiseSample: string;
     noiseLowPassFreq: number;
     noiseHighPassFreq: number;
-    noiseDistAmt: number;
+    noiseVolume: number;
   };
 }
 
 export const useNoiseLayer = (): UseNoiseLayerReturn => {
   // Audio node refs
   const playerRef = useRef<Tone.Player | null>(null);
-  const distortionRef = useRef<Tone.Distortion | null>(null);
   const lowPassRef = useRef<Tone.Filter | null>(null);
   const highPassRef = useRef<Tone.Filter | null>(null);
 
   // State for UI
   const [sample, setSample] = useState(noiseNames[0] || "greyNoise");
-  const [distortionAmt, setDistortionAmt] = useState(0);
+  const [volume, setVolume] = useState(-10);
   const [lowPassFreq, setLowPassFreq] = useState(30);
   const [highPassFreq, setHighPassFreq] = useState(7000);
 
@@ -49,23 +48,20 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
       noiseFiles[noiseNames[0]] || Object.values(noiseFiles)[0];
 
     playerRef.current = new Tone.Player(initialUrl);
-    playerRef.current.volume.value = -12;
+    playerRef.current.volume.value = volume;
     playerRef.current.fadeOut = 0.1;
 
-    distortionRef.current = new Tone.Distortion(0.3);
     lowPassRef.current = new Tone.Filter(lowPassFreq, "lowpass");
     highPassRef.current = new Tone.Filter(highPassFreq, "highpass");
 
     // Connect the chain
-    playerRef.current.connect(distortionRef.current);
-    distortionRef.current.connect(lowPassRef.current);
+    playerRef.current.connect(lowPassRef.current);
     lowPassRef.current.connect(highPassRef.current);
 
     setOutput(highPassRef.current);
 
     return () => {
       playerRef.current?.dispose();
-      distortionRef.current?.dispose();
       lowPassRef.current?.dispose();
       highPassRef.current?.dispose();
     };
@@ -92,12 +88,12 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     }
   }, [highPassFreq]);
 
-  // Distortion change effect
+  // Volume change effect
   useEffect(() => {
-    if (distortionRef.current) {
-      distortionRef.current.wet.value = distortionAmt;
+    if (playerRef.current) {
+      playerRef.current.volume.value = volume;
     }
-  }, [distortionAmt]);
+  }, [volume]);
 
   // Stop any currently playing noise
   const stop = () => {
@@ -118,16 +114,16 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     dropdownItems: noiseNames,
     dropdownValue: sample,
     dropdownOnChange: setSample,
-    layerKnobLabels: ["Low Pass", "High Pass", "Distortion"],
+    layerKnobLabels: ["Low Pass", "High Pass", "Volume"],
     knobValues: [
       mapCustomRangeToKnobRange(lowPassFreq, 30, 7000),
       mapCustomRangeToKnobRange(highPassFreq, 30, 7000),
-      mapCustomRangeToKnobRange(distortionAmt, 0, 0.5),
+      mapCustomRangeToKnobRange(volume, -70, -6),
     ],
     knobOnChanges: [
       (value) => setLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
       (value) => setHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-      (value) => setDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
+      (value) => setVolume(mapKnobRangeToCustomRange(value, -70, -6)),
     ],
   };
 
@@ -135,7 +131,7 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     noiseSample: sample,
     noiseLowPassFreq: lowPassFreq,
     noiseHighPassFreq: highPassFreq,
-    noiseDistAmt: distortionAmt,
+    noiseVolume: volume,
   });
 
   return {
@@ -147,7 +143,7 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
       setSample,
       setLowPassFreq,
       setHighPassFreq,
-      setDistAmt: setDistortionAmt,
+      setVolume,
     },
     getState,
   };
