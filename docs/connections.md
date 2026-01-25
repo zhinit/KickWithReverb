@@ -113,6 +113,11 @@ The frontend makes API calls to:
 - `POST /api/token/` - Login (get JWT tokens)
 - `POST /api/token/refresh/` - Refresh access token
 - `POST /api/register/` - Create new user
+- `GET /api/presets/` - List user's presets
+- `POST /api/presets/` - Create a new preset
+- `PUT /api/presets/<id>/` - Update an existing preset
+- `DELETE /api/presets/<id>/` - Delete a preset
+- `GET /api/presets/shared/` - List shared presets
 
 ### Backend → Database
 
