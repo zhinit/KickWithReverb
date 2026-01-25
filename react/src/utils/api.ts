@@ -7,22 +7,63 @@ export interface ApiResponse<T = unknown> {
   data: T | null;
 }
 
+// Try to refresh the access token using the refresh token
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) return false;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.access);
+      return true;
+    }
+  } catch {
+    // Refresh failed
+  }
+
+  // Clear tokens if refresh failed
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  return false;
+}
+
 async function authenticatedFetch(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = localStorage.getItem("accessToken");
+  const makeRequest = (token: string | null) => {
+    const headers = new Headers(options.headers);
+    headers.set("Content-Type", "application/json");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    return fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  };
 
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+  // First attempt with current token
+  let token = localStorage.getItem("accessToken");
+  let response = await makeRequest(token);
+
+  // If unauthorized, try to refresh and retry
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      token = localStorage.getItem("accessToken");
+      response = await makeRequest(token);
+    }
   }
 
-  return fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  return response;
 }
 
 export async function getPresets(): Promise<ApiResponse<PresetData[]>> {
