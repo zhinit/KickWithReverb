@@ -10,19 +10,19 @@ import type { LayerStripProps } from "../types/types";
 
 export interface UseReverbLayerReturn {
   input: Tone.Convolver | null;
-  output: Tone.Phaser | null;
+  output: Tone.Gain | null;
   uiProps: LayerStripProps;
   setters: {
     setSample: (value: string) => void;
     setLowPassFreq: (value: number) => void;
     setHighPassFreq: (value: number) => void;
-    setPhaserAmt: (value: number) => void;
+    setVolume: (value: number) => void;
   };
   getState: () => {
     reverbSample: string;
     reverbLowPassFreq: number;
     reverbHighPassFreq: number;
-    reverbPhaserAmt: number;
+    reverbVolume: number;
   };
 }
 
@@ -31,17 +31,17 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
   const convolverRef = useRef<Tone.Convolver | null>(null);
   const lowPassRef = useRef<Tone.Filter | null>(null);
   const highPassRef = useRef<Tone.Filter | null>(null);
-  const phaserRef = useRef<Tone.Phaser | null>(null);
+  const gainRef = useRef<Tone.Gain | null>(null);
 
   // State for UI
   const [ir, setIr] = useState(irNames[0] || "JFKUnderpass");
   const [lowPassFreq, setLowPassFreq] = useState(1000);
   const [highPassFreq, setHighPassFreq] = useState(30);
-  const [phaserWetness, setPhaserWetness] = useState(0);
+  const [volume, setVolume] = useState(-6);
 
   // Input/output refs for external connections
   const [input, setInput] = useState<Tone.Convolver | null>(null);
-  const [output, setOutput] = useState<Tone.Phaser | null>(null);
+  const [output, setOutput] = useState<Tone.Gain | null>(null);
 
   // Initialize audio nodes
   useEffect(() => {
@@ -50,26 +50,21 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
     );
     lowPassRef.current = new Tone.Filter(lowPassFreq, "lowpass");
     highPassRef.current = new Tone.Filter(highPassFreq, "highpass");
-    phaserRef.current = new Tone.Phaser({
-      frequency: 0.5,
-      octaves: 3,
-      baseFrequency: 350,
-      wet: phaserWetness,
-    });
+    gainRef.current = new Tone.Gain(Tone.dbToGain(volume));
 
     // Connect the chain
     convolverRef.current.connect(lowPassRef.current);
     lowPassRef.current.connect(highPassRef.current);
-    highPassRef.current.connect(phaserRef.current);
+    highPassRef.current.connect(gainRef.current);
 
     setInput(convolverRef.current);
-    setOutput(phaserRef.current);
+    setOutput(gainRef.current);
 
     return () => {
       convolverRef.current?.dispose();
       lowPassRef.current?.dispose();
       highPassRef.current?.dispose();
-      phaserRef.current?.dispose();
+      gainRef.current?.dispose();
     };
   }, []);
 
@@ -94,12 +89,12 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
     }
   }, [highPassFreq]);
 
-  // Phaser wetness change effect
+  // Volume change effect
   useEffect(() => {
-    if (phaserRef.current) {
-      phaserRef.current.wet.value = phaserWetness;
+    if (gainRef.current) {
+      gainRef.current.gain.value = Tone.dbToGain(volume);
     }
-  }, [phaserWetness]);
+  }, [volume]);
 
   // UI props for LayerStrip
   const uiProps: LayerStripProps = {
@@ -107,16 +102,16 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
     dropdownItems: irNames,
     dropdownValue: ir,
     dropdownOnChange: setIr,
-    layerKnobLabels: ["Low Pass", "High Pass", "Phaser"],
+    layerKnobLabels: ["Low Pass", "High Pass", "Volume"],
     knobValues: [
       mapCustomRangeToKnobRange(lowPassFreq, 30, 7000),
       mapCustomRangeToKnobRange(highPassFreq, 30, 7000),
-      mapCustomRangeToKnobRange(phaserWetness, 0, 1),
+      mapCustomRangeToKnobRange(volume, -60, 0),
     ],
     knobOnChanges: [
       (value) => setLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
       (value) => setHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-      (value) => setPhaserWetness(mapKnobRangeToCustomRange(value, 0, 1)),
+      (value) => setVolume(mapKnobRangeToCustomRange(value, -60, 0)),
     ],
   };
 
@@ -124,7 +119,7 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
     reverbSample: ir,
     reverbLowPassFreq: lowPassFreq,
     reverbHighPassFreq: highPassFreq,
-    reverbPhaserAmt: phaserWetness,
+    reverbVolume: volume,
   });
 
   return {
@@ -135,7 +130,7 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
       setSample: setIr,
       setLowPassFreq,
       setHighPassFreq,
-      setPhaserAmt: setPhaserWetness,
+      setVolume,
     },
     getState,
   };

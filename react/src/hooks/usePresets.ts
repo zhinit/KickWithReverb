@@ -21,14 +21,14 @@ interface NoiseSetters {
   setSample: (value: string) => void;
   setLowPassFreq: (value: number) => void;
   setHighPassFreq: (value: number) => void;
-  setDistAmt: (value: number) => void;
+  setVolume: (value: number) => void;
 }
 
 interface ReverbSetters {
   setSample: (value: string) => void;
   setLowPassFreq: (value: number) => void;
   setHighPassFreq: (value: number) => void;
-  setPhaserAmt: (value: number) => void;
+  setVolume: (value: number) => void;
 }
 
 interface MasterSetters {
@@ -57,7 +57,7 @@ interface LayerRefs {
       noiseSample: string;
       noiseLowPassFreq: number;
       noiseHighPassFreq: number;
-      noiseDistAmt: number;
+      noiseVolume: number;
     };
   };
   reverb: {
@@ -66,7 +66,7 @@ interface LayerRefs {
       reverbSample: string;
       reverbLowPassFreq: number;
       reverbHighPassFreq: number;
-      reverbPhaserAmt: number;
+      reverbVolume: number;
     };
   };
   master: {
@@ -175,13 +175,13 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       layers.noise.setters.setSample(preset.noiseSample);
       layers.noise.setters.setLowPassFreq(preset.noiseLowPassFreq);
       layers.noise.setters.setHighPassFreq(preset.noiseHighPassFreq);
-      layers.noise.setters.setDistAmt(preset.noiseDistAmt);
+      layers.noise.setters.setVolume(preset.noiseVolume);
 
       // Apply to reverb layer
       layers.reverb.setters.setSample(preset.reverbSample);
       layers.reverb.setters.setLowPassFreq(preset.reverbLowPassFreq);
       layers.reverb.setters.setHighPassFreq(preset.reverbHighPassFreq);
-      layers.reverb.setters.setPhaserAmt(preset.reverbPhaserAmt);
+      layers.reverb.setters.setVolume(preset.reverbVolume);
 
       // Apply to master chain
       layers.master.setters.setOttAmt(preset.masterOttAmt);

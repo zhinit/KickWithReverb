@@ -7,7 +7,7 @@ import {
 import type { MasterStripProps } from "../types/types";
 
 export interface UseMasterChainReturn {
-  input: Tone.EQ3 | null;
+  input: Tone.MultibandCompressor | null;
   uiProps: MasterStripProps;
   setters: {
     setOttAmt: (value: number) => void;
@@ -36,7 +36,7 @@ export const useMasterChain = (): UseMasterChainReturn => {
   const [limiterAmt, setLimiterAmt] = useState(1.5);
 
   // Input ref for external connections
-  const [input, setInput] = useState<Tone.EQ3 | null>(null);
+  const [input, setInput] = useState<Tone.MultibandCompressor | null>(null);
 
   // Initialize audio nodes
   useEffect(() => {
@@ -74,15 +74,15 @@ export const useMasterChain = (): UseMasterChainReturn => {
     limiterGainRef.current = new Tone.Gain(limiterAmt);
     limiterRef.current = new Tone.Limiter(0);
 
-    // Connect the chain
-    ottEqRef.current.connect(ottMbRef.current);
-    ottMbRef.current.connect(ottGainRef.current);
+    // Connect the chain: Multiband → EQ → Gain → Distortion → Limiter
+    ottMbRef.current.connect(ottEqRef.current);
+    ottEqRef.current.connect(ottGainRef.current);
     ottGainRef.current.connect(distortionRef.current);
     distortionRef.current.connect(limiterGainRef.current);
     limiterGainRef.current.connect(limiterRef.current);
     limiterRef.current.toDestination();
 
-    setInput(ottEqRef.current);
+    setInput(ottMbRef.current);
 
     return () => {
       ottEqRef.current?.dispose();
@@ -98,10 +98,10 @@ export const useMasterChain = (): UseMasterChainReturn => {
   useEffect(() => {
     if (ottEqRef.current && ottMbRef.current && ottGainRef.current) {
       ottEqRef.current.mid.value = -3 * ottAmt;
-      ottEqRef.current.low.value = 2 * ottAmt;
-      ottMbRef.current.high.ratio.value = 1 + 10 * ottAmt;
-      ottMbRef.current.mid.ratio.value = 1 + 10 * ottAmt;
-      ottMbRef.current.low.ratio.value = 1 + 10 * ottAmt;
+      ottEqRef.current.low.value = 3 * ottAmt;
+      ottMbRef.current.high.ratio.value = 1 + 8 * ottAmt;
+      ottMbRef.current.mid.ratio.value = 1 + 8 * ottAmt;
+      ottMbRef.current.low.ratio.value = 1 + 8 * ottAmt;
       ottGainRef.current.gain.value = 1 + -0.2 * ottAmt;
     }
   }, [ottAmt]);

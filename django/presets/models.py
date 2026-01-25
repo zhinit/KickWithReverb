@@ -17,12 +17,12 @@ class Preset(models.Model):
     noise_sample = models.CharField(max_length=32)
     noise_low_pass_freq = models.FloatField()
     noise_high_pass_freq = models.FloatField()
-    noise_dist_amt = models.FloatField()
+    noise_volume = models.FloatField()
 
     reverb_sample = models.CharField(max_length=32)
     reverb_low_pass_freq = models.FloatField()
     reverb_high_pass_freq = models.FloatField()
-    reverb_phaser_amt = models.FloatField()
+    reverb_volume = models.FloatField()
 
     master_ott_amt = models.FloatField()
     master_dist_amt = models.FloatField()
@@ -52,12 +52,12 @@ class SharedPreset(models.Model):
     noise_sample = models.CharField(max_length=32)
     noise_low_pass_freq = models.FloatField()
     noise_high_pass_freq = models.FloatField()
-    noise_dist_amt = models.FloatField()
+    noise_volume = models.FloatField()
 
     reverb_sample = models.CharField(max_length=32)
     reverb_low_pass_freq = models.FloatField()
     reverb_high_pass_freq = models.FloatField()
-    reverb_phaser_amt = models.FloatField()
+    reverb_volume = models.FloatField()
 
     master_ott_amt = models.FloatField()
     master_dist_amt = models.FloatField()
