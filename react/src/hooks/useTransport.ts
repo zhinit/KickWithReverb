@@ -19,7 +19,9 @@ export interface UseTransportReturn {
   };
 }
 
-export const useTransport = (triggers: TransportTriggers): UseTransportReturn => {
+export const useTransport = (
+  triggers: TransportTriggers
+): UseTransportReturn => {
   const kickLoopRef = useRef<Tone.Loop | null>(null);
   const noiseLoopRef = useRef<Tone.Loop | null>(null);
 
@@ -48,7 +50,7 @@ export const useTransport = (triggers: TransportTriggers): UseTransportReturn =>
 
       noiseLoopRef.current = new Tone.Loop((time) => {
         triggers.noiseTrigger(time);
-      }, "1n").start(0);
+      }, "2m").start(0);
 
       Tone.getTransport().start();
     } else {
