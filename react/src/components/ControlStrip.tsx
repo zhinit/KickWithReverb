@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ControlStripProps } from "../types/types";
 import cueButtonOff from "../assets/buttons/cueButtonOff.png";
 import cueButtonOn from "../assets/buttons/cueButtonOn.png";
@@ -15,6 +15,11 @@ export const ControlStrip = ({
   setBPM,
 }: ControlStripProps) => {
   const [inputValue, setInputValue] = useState(bpm.toString());
+
+  // Sync inputValue when bpm prop changes (e.g., from preset load)
+  useEffect(() => {
+    setInputValue(bpm.toString());
+  }, [bpm]);
 
   const handleLocalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
