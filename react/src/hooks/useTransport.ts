@@ -5,6 +5,7 @@ import type { ControlStripProps } from "../types/types";
 export interface TransportTriggers {
   kickTrigger: (time?: Tone.Unit.Time) => void;
   noiseTrigger: (time?: Tone.Unit.Time) => void;
+  noiseStop: () => void;
 }
 
 export interface UseTransportReturn {
@@ -64,6 +65,7 @@ export const useTransport = (
         noiseLoopRef.current.dispose();
         noiseLoopRef.current = null;
       }
+      triggers.noiseStop();
       Tone.getTransport().stop();
     }
   };

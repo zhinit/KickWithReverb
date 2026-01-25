@@ -24,6 +24,7 @@ export const Daw = () => {
   const transport = useTransport({
     kickTrigger: kick.trigger,
     noiseTrigger: noise.trigger,
+    noiseStop: noise.stop,
   });
 
   // Presets hook

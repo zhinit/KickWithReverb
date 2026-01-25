@@ -11,6 +11,7 @@ import type { LayerStripProps } from "../types/types";
 export interface UseNoiseLayerReturn {
   output: Tone.Filter | null;
   trigger: (time?: Tone.Unit.Time) => void;
+  stop: () => void;
   uiProps: LayerStripProps;
   setters: {
     setSample: (value: string) => void;
@@ -28,13 +29,10 @@ export interface UseNoiseLayerReturn {
 
 export const useNoiseLayer = (): UseNoiseLayerReturn => {
   // Audio node refs
-  const samplerRef = useRef<Tone.Sampler | null>(null);
+  const playerRef = useRef<Tone.Player | null>(null);
   const distortionRef = useRef<Tone.Distortion | null>(null);
   const lowPassRef = useRef<Tone.Filter | null>(null);
   const highPassRef = useRef<Tone.Filter | null>(null);
-
-  // Ref for real-time access in loops
-  const sampleRef = useRef<string>("C1");
 
   // State for UI
   const [sample, setSample] = useState(noiseNames[0] || "greyNoise");
@@ -47,41 +45,37 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
 
   // Initialize audio nodes
   useEffect(() => {
-    const noiseUrls: Record<string, string> = {};
-    noiseNames.forEach((noiseName, index) => {
-      const note = `C${index + 1}`;
-      noiseUrls[note] = noiseFiles[noiseName];
-    });
+    const initialUrl =
+      noiseFiles[noiseNames[0]] || Object.values(noiseFiles)[0];
 
-    samplerRef.current = new Tone.Sampler({ urls: noiseUrls });
-    samplerRef.current.volume.value = -12;
+    playerRef.current = new Tone.Player(initialUrl);
+    playerRef.current.volume.value = -12;
+    playerRef.current.fadeOut = 0.1;
 
     distortionRef.current = new Tone.Distortion(0.3);
     lowPassRef.current = new Tone.Filter(lowPassFreq, "lowpass");
     highPassRef.current = new Tone.Filter(highPassFreq, "highpass");
 
     // Connect the chain
-    samplerRef.current.connect(distortionRef.current);
+    playerRef.current.connect(distortionRef.current);
     distortionRef.current.connect(lowPassRef.current);
     lowPassRef.current.connect(highPassRef.current);
 
     setOutput(highPassRef.current);
 
     return () => {
-      samplerRef.current?.dispose();
+      playerRef.current?.dispose();
       distortionRef.current?.dispose();
       lowPassRef.current?.dispose();
       highPassRef.current?.dispose();
     };
   }, []);
 
-  // Sample change effect
+  // Sample change effect - load new buffer
   useEffect(() => {
-    const noteMap: Record<string, string> = {};
-    noiseNames.forEach((noiseName, index) => {
-      noteMap[noiseName] = `C${index + 1}`;
-    });
-    sampleRef.current = noteMap[sample] || "C1";
+    if (playerRef.current && noiseFiles[sample]) {
+      playerRef.current.load(noiseFiles[sample]);
+    }
   }, [sample]);
 
   // Low pass change effect
@@ -105,9 +99,17 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
     }
   }, [distortionAmt]);
 
+  // Stop any currently playing noise
+  const stop = () => {
+    playerRef.current?.stop();
+  };
+
   // Trigger function for transport
   const trigger = (time?: Tone.Unit.Time) => {
-    samplerRef.current?.triggerAttackRelease(sampleRef.current, 4, time);
+    if (playerRef.current?.loaded) {
+      playerRef.current.stop();
+      playerRef.current.start(time);
+    }
   };
 
   // UI props for LayerStrip
@@ -139,6 +141,7 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
   return {
     output,
     trigger,
+    stop,
     uiProps,
     setters: {
       setSample,
