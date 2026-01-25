@@ -19,6 +19,12 @@ export const ControlStrip = ({
   const handleLocalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+
+    // Update BPM in real-time if valid
+    const numValue = Number(value);
+    if (!isNaN(numValue) && numValue >= 60 && numValue <= 365) {
+      setBPM(numValue);
+    }
   };
 
   const handleBlur = () => {
