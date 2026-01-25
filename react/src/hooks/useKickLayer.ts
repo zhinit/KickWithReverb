@@ -12,6 +12,18 @@ export interface UseKickLayerReturn {
   output: Tone.Gain | null;
   trigger: (time?: Tone.Unit.Time) => void;
   uiProps: LayerStripProps;
+  setters: {
+    setSample: (value: string) => void;
+    setLen: (value: number) => void;
+    setDistAmt: (value: number) => void;
+    setOttAmt: (value: number) => void;
+  };
+  getState: () => {
+    kickSample: string;
+    kickLen: number;
+    kickDistAmt: number;
+    kickOttAmt: number;
+  };
 }
 
 export const useKickLayer = (): UseKickLayerReturn => {
@@ -154,9 +166,23 @@ export const useKickLayer = (): UseKickLayerReturn => {
     ],
   };
 
+  const getState = () => ({
+    kickSample: sample,
+    kickLen: len,
+    kickDistAmt: distortionAmt,
+    kickOttAmt: ottAmt,
+  });
+
   return {
     output,
     trigger,
     uiProps,
+    setters: {
+      setSample,
+      setLen,
+      setDistAmt: setDistortionAmt,
+      setOttAmt,
+    },
+    getState,
   };
 };

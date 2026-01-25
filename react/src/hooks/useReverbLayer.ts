@@ -12,6 +12,18 @@ export interface UseReverbLayerReturn {
   input: Tone.Convolver | null;
   output: Tone.Phaser | null;
   uiProps: LayerStripProps;
+  setters: {
+    setSample: (value: string) => void;
+    setLowPassFreq: (value: number) => void;
+    setHighPassFreq: (value: number) => void;
+    setPhaserAmt: (value: number) => void;
+  };
+  getState: () => {
+    reverbSample: string;
+    reverbLowPassFreq: number;
+    reverbHighPassFreq: number;
+    reverbPhaserAmt: number;
+  };
 }
 
 export const useReverbLayer = (): UseReverbLayerReturn => {
@@ -108,9 +120,23 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
     ],
   };
 
+  const getState = () => ({
+    reverbSample: ir,
+    reverbLowPassFreq: lowPassFreq,
+    reverbHighPassFreq: highPassFreq,
+    reverbPhaserAmt: phaserWetness,
+  });
+
   return {
     input,
     output,
     uiProps,
+    setters: {
+      setSample: setIr,
+      setLowPassFreq,
+      setHighPassFreq,
+      setPhaserAmt: setPhaserWetness,
+    },
+    getState,
   };
 };

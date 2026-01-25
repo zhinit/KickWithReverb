@@ -9,6 +9,16 @@ import type { MasterStripProps } from "../types/types";
 export interface UseMasterChainReturn {
   input: Tone.EQ3 | null;
   uiProps: MasterStripProps;
+  setters: {
+    setOttAmt: (value: number) => void;
+    setDistAmt: (value: number) => void;
+    setLimiterAmt: (value: number) => void;
+  };
+  getState: () => {
+    masterOttAmt: number;
+    masterDistAmt: number;
+    masterLimiterAmt: number;
+  };
 }
 
 export const useMasterChain = (): UseMasterChainReturn => {
@@ -124,8 +134,20 @@ export const useMasterChain = (): UseMasterChainReturn => {
     ],
   };
 
+  const getState = () => ({
+    masterOttAmt: ottAmt,
+    masterDistAmt: distortionAmt,
+    masterLimiterAmt: limiterAmt,
+  });
+
   return {
     input,
     uiProps,
+    setters: {
+      setOttAmt,
+      setDistAmt: setDistortionAmt,
+      setLimiterAmt,
+    },
+    getState,
   };
 };
