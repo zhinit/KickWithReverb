@@ -98,10 +98,11 @@ export const useMasterChain = (): UseMasterChainReturn => {
   useEffect(() => {
     if (ottEqRef.current && ottMbRef.current && ottGainRef.current) {
       ottEqRef.current.mid.value = -3 * ottAmt;
+      ottEqRef.current.low.value = 2 * ottAmt;
       ottMbRef.current.high.ratio.value = 1 + 10 * ottAmt;
       ottMbRef.current.mid.ratio.value = 1 + 10 * ottAmt;
       ottMbRef.current.low.ratio.value = 1 + 10 * ottAmt;
-      ottGainRef.current.gain.value = 1 + 1 * ottAmt;
+      ottGainRef.current.gain.value = 1 + -0.2 * ottAmt;
     }
   }, [ottAmt]);
 
