@@ -52,6 +52,7 @@ interface LayerRefs {
   };
   noise: {
     setters: NoiseSetters;
+    stop: () => void;
     getState: () => {
       noiseSample: string;
       noiseLowPassFreq: number;
@@ -81,6 +82,7 @@ interface LayerRefs {
     getState: () => {
       bpm: number;
     };
+    scheduleNoiseRetrigger: () => void;
   };
 }
 
@@ -168,6 +170,10 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       const allPresets = [...sharedPresets, ...userPresets];
       const preset = allPresets.find((p) => p.id === id);
       if (!preset) return;
+
+      // Stop noise from previous preset and schedule retrigger on next kick
+      layers.noise.stop();
+      layers.transport.scheduleNoiseRetrigger();
 
       // Apply to kick layer
       layers.kick.setters.setSample(preset.kickSample);
