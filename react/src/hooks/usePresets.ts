@@ -220,6 +220,12 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         ...transportState,
       };
 
+      // Check if name matches a shared preset
+      const sharedMatch = sharedPresets.find((p) => p.presetName === name);
+      if (sharedMatch) {
+        return { ok: false, error: "Cannot update shared presets" };
+      }
+
       // Check if updating existing preset with same name
       const existingPreset = userPresets.find((p) => p.presetName === name);
 
@@ -243,7 +249,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         return { ok: false, error: "Failed to create preset" };
       }
     },
-    [userPresets, layers]
+    [userPresets, sharedPresets, layers]
   );
 
   // Delete the current preset

@@ -36,6 +36,14 @@ class PresetDetailView(APIView):
 
     # update existing preset
     def put(self, request, pk):
+        # Block updates to shared presets
+        preset = Preset.objects.filter(id=pk).first()
+        if preset and preset.is_shared:
+            return Response(
+                {"error": "Cannot update shared preset"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         preset_to_update = self.get_object(pk, request.user)
 
         if preset_to_update is None:
@@ -52,6 +60,14 @@ class PresetDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
+        # Block deletes of shared presets
+        preset = Preset.objects.filter(id=pk).first()
+        if preset and preset.is_shared:
+            return Response(
+                {"error": "Cannot delete shared preset"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # find preset to delete
         preset_to_delete = self.get_object(pk, request.user)
 

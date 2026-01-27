@@ -30,6 +30,7 @@ export const PresetsBar = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [sharedMessage, setSharedMessage] = useState("");
 
   // Handle dropdown change
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -62,6 +63,16 @@ export const PresetsBar = ({
     }
     if (!/^[a-zA-Z0-9 ]+$/.test(trimmedName)) {
       setSaveError("Name can only contain letters, numbers, and spaces");
+      return;
+    }
+
+    // Check if name matches a shared preset
+    const isSharedName = presets.some(
+      (p) => p.isShared && p.presetName === trimmedName
+    );
+    if (isSharedName) {
+      setShowSaveModal(false);
+      setSharedMessage("Cannot update shared presets");
       return;
     }
 
@@ -126,9 +137,14 @@ export const PresetsBar = ({
 
         <button
           className="presets-bar-btn"
-          onClick={() => setShowDeleteConfirm(true)}
-          disabled={!canDelete}
-          title={canDelete ? "Delete preset" : "Cannot delete shared presets"}
+          onClick={() => {
+            if (!canDelete) {
+              setSharedMessage("Cannot delete shared presets");
+            } else {
+              setShowDeleteConfirm(true);
+            }
+          }}
+          title="Delete preset"
         >
           🗑️
         </button>
@@ -186,6 +202,21 @@ export const PresetsBar = ({
               >
                 Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shared Preset Info Modal */}
+      {sharedMessage && (
+        <div
+          className="modal-overlay"
+          onClick={() => setSharedMessage("")}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <p>{sharedMessage}</p>
+            <div className="modal-buttons">
+              <button onClick={() => setSharedMessage("")}>OK</button>
             </div>
           </div>
         </div>
