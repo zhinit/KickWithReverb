@@ -57,7 +57,7 @@ export const useTransport = (
 
       noiseLoopRef.current = new Tone.Loop((time) => {
         triggers.noiseTrigger(time);
-      }, "4m").start(0);
+      }, "2m").start(0);
 
       Tone.getTransport().start();
     } else {

@@ -16,8 +16,8 @@ export interface ControlStripProps {
   bpm: number;
   isPlayOn: boolean;
   isCuePressed: boolean;
-  handleCueMouseDown: MouseEventHandler;
-  handleCueMouseUp: MouseEventHandler;
+  handleCueMouseDown: () => void;
+  handleCueMouseUp: () => void;
   handlePlayClick: MouseEventHandler;
   setBPM: Function;
 }
