@@ -1,18 +1,19 @@
-from django.shortcuts import render
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Preset
 from .serializers import PresetSerializer
+from django.db.models import Q
 
 
 class PresetListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user_presets = Preset.objects.filter(user=request.user)  # query user presets
+        user_presets = Preset.objects.filter(
+            Q(user=request.user) | Q(is_shared=True)  # query user and shared presets
+        )
         serializer = PresetSerializer(user_presets, many=True)  # put into json
         return Response(serializer.data, status=status.HTTP_200_OK)  # send it
 
