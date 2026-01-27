@@ -33,7 +33,7 @@ export const Daw = () => {
     noise: { setters: noise.setters, stop: noise.stop, getState: noise.getState },
     reverb: { setters: reverb.setters, getState: reverb.getState },
     master: { setters: master.setters, getState: master.getState },
-    transport: { setters: transport.setters, getState: transport.getState, scheduleNoiseRetrigger: transport.scheduleNoiseRetrigger },
+    transport: { setters: transport.setters, getState: transport.getState, isPlaying: transport.isPlaying, scheduleNoiseRetrigger: transport.scheduleNoiseRetrigger },
   });
 
   // Connect kick output to reverb and master when ready
