@@ -91,10 +91,18 @@ export const PresetsBar = ({
   return (
     <>
       <div className="presets-bar">
-        <button className="presets-bar-btn" onClick={onPrev} title="Previous preset">
+        <button
+          className="presets-bar-btn"
+          onClick={onPrev}
+          title="Previous preset"
+        >
           ⇇
         </button>
-        <button className="presets-bar-btn" onClick={onNext} title="Next preset">
+        <button
+          className="presets-bar-btn"
+          onClick={onNext}
+          title="Next preset"
+        >
           ⇉
         </button>
 
@@ -107,7 +115,6 @@ export const PresetsBar = ({
             <option value="">No presets yet</option>
           ) : (
             <>
-              {currentPresetId === null && <option value="">Unsaved</option>}
               {presets.map((preset) => (
                 <option key={preset.id} value={preset.id}>
                   {preset.presetName}
@@ -125,7 +132,11 @@ export const PresetsBar = ({
         >
           🗑️
         </button>
-        <button className="presets-bar-btn" onClick={handleSaveClick} title="Save preset">
+        <button
+          className="presets-bar-btn"
+          onClick={handleSaveClick}
+          title="Save preset"
+        >
           💾
         </button>
       </div>
@@ -158,13 +169,21 @@ export const PresetsBar = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Delete Preset</h3>
             <p>Are you sure you want to delete "{currentPresetName}"?</p>
             <div className="modal-buttons">
-              <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-              <button onClick={handleDeleteConfirm} className="modal-btn-danger">
+              <button onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="modal-btn-danger"
+              >
                 Delete
               </button>
             </div>

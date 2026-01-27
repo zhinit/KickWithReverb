@@ -143,8 +143,19 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       const [userRes] = await Promise.all([getPresets()]);
 
       if (userRes.ok && userRes.data) {
-        setUserPresets(userRes.data);
+        const shared = userRes.data.filter((p) => p.isShared);
+        const user = userRes.data.filter((p) => !p.isShared);
+        setSharedPresets(shared);
+        setUserPresets(user);
       }
+
+      if (userRes.data) {
+        const initPreset = userRes.data.find((p) => p.presetName == "Init");
+        if (initPreset) {
+          setCurrentPresetId(initPreset.id);
+        }
+      }
+
       setIsLoading(false);
     };
 
