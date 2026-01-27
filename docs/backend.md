@@ -41,7 +41,7 @@ django/
     ├── __init__.py
     ├── admin.py             # Admin site config for presets
     ├── apps.py              # App config
-    ├── models.py            # Preset and SharedPreset models
+    ├── models.py            # Preset model
     ├── serializers.py       # DRF serializers for presets
     ├── views.py             # API views for preset CRUD
     ├── tests.py             # Tests
@@ -87,11 +87,10 @@ Uses JWT via `rest_framework_simplejwt`:
 | POST   | `/api/token/`          | Obtain JWT access and refresh tokens | No            |
 | POST   | `/api/token/refresh/`  | Refresh access token                 | No            |
 | POST   | `/api/register/`       | Create new user account              | No            |
-| GET    | `/api/presets/`        | List user's presets                  | Yes           |
+| GET    | `/api/presets/`        | List user's and shared presets       | Yes           |
 | POST   | `/api/presets/`        | Create a new preset                  | Yes           |
 | PUT    | `/api/presets/<id>/`   | Update an existing preset            | Yes           |
 | DELETE | `/api/presets/<id>/`   | Delete a preset                      | Yes           |
-| GET    | `/api/presets/shared/` | List shared (global) presets         | Yes           |
 | GET    | `/admin/`              | Django admin interface               | Admin         |
 
 ## Users App
@@ -120,52 +119,38 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 
 ### Models (`presets/models.py`)
 
-**Preset** - User-owned presets
+**Preset** - User-owned and shared presets
 
 - `user` - Foreign key to User (CASCADE delete)
 - `preset_name` - Name of the preset (max 32 chars)
+- `is_shared` - Boolean flag; shared presets are visible to all users (default: False)
 - `bpm` - Beats per minute
 - Kick layer: `kick_sample`, `kick_len`, `kick_dist_amt`, `kick_ott_amt`
-- Noise layer: `noise_sample`, `noise_low_pass_freq`, `noise_high_pass_freq`, `noise_voume`
-- Reverb layer: `reverb_sample`, `reverb_low_pass_freq`, `reverb_high_pass_freq`, `reverb_voume`
+- Noise layer: `noise_sample`, `noise_low_pass_freq`, `noise_high_pass_freq`, `noise_volume`
+- Reverb layer: `reverb_sample`, `reverb_low_pass_freq`, `reverb_high_pass_freq`, `reverb_volume`
 - Master chain: `master_ott_amt`, `master_dist_amt`, `master_limiter_amt`
 - Timestamps: `created_at`, `updated_at`
 - Unique constraint on `(user, preset_name)`
-
-**SharedPreset** - Global presets available to all users (admin-managed)
-
-- Same fields as Preset but without `user` foreign key
-- `preset_name` is unique globally
-- Read-only via API (only admins can create/modify via Django admin)
 
 ### Serializers (`presets/serializers.py`)
 
 **PresetSerializer**
 
-- Serializes all preset fields
+- Serializes all preset fields including `is_shared`
 - Read-only: `id`, `created_at`, `updated_at`
 - Validates `preset_name` is alphanumeric (spaces allowed)
-
-**SharedPresetSerializer**
-
-- Read-only serializer for shared presets
-- All fields are read-only
 
 ### Views (`presets/views.py`)
 
 **PresetListCreateView** (`/api/presets/`)
 
-- `GET` - List all presets owned by the authenticated user
+- `GET` - List all presets owned by the authenticated user plus all shared presets
 - `POST` - Create a new preset for the authenticated user
 
 **PresetDetailView** (`/api/presets/<id>/`)
 
 - `PUT` - Update a preset (only if owned by the user)
 - `DELETE` - Delete a preset (only if owned by the user)
-
-**SharedPresetView** (`/api/presets/shared/`)
-
-- `GET` - List all shared presets
 
 ### API Response Format
 
