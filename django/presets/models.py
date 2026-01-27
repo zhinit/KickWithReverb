@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class Preset(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     preset_name = models.CharField(max_length=32)
-    isShared = models.BooleanField(default=False)
+    is_shared = models.BooleanField(default=False)
 
     bpm = models.PositiveSmallIntegerField()
 
