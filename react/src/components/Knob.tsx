@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { KnobProps } from "../types/types";
-import knobImage from "../assets/knobs/whiteMarbleKnob2.png";
+import knobImage from "../assets/knobs/marbleWithNotch.png";
 
 export const Knob = ({ value: propValue = 50, onChange, label }: KnobProps) => {
   const [value, setValue] = useState(propValue);
