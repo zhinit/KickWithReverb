@@ -35,7 +35,7 @@ export const useReverbLayer = (): UseReverbLayerReturn => {
 
   // State for UI
   const [ir, setIr] = useState(irNames[0] || "JFKUnderpass");
-  const [lowPassFreq, setLowPassFreq] = useState(1000);
+  const [lowPassFreq, setLowPassFreq] = useState(7000);
   const [highPassFreq, setHighPassFreq] = useState(30);
   const [volume, setVolume] = useState(-6);
 
