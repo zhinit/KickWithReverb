@@ -56,6 +56,7 @@ export const ControlStrip = ({
         className="cue-button"
         src={isCuePressed ? cueButtonOn : cueButtonOff}
         alt="CUE"
+        draggable={false}
         onMouseDown={handleCueMouseDown}
         onMouseUp={handleCueMouseUp}
       />
@@ -63,6 +64,7 @@ export const ControlStrip = ({
         className="play-button"
         src={isPlayOn ? playButtonOn : playButtonOff}
         alt="PLAY"
+        draggable={false}
         onClick={handlePlayClick}
       />
       <input
