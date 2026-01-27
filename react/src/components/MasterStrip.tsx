@@ -7,7 +7,7 @@ export const MasterStrip = ({
   knobOnChanges,
 }: MasterStripProps) => (
   <>
-    <h2>Fully Deep Mastering Chain</h2>
+    <h2 className="mastering-heading">Fully Deep Mastering Chain</h2>
     <div className="master-strip-knobs">
       {layerKnobLabels.map((knobLabel, index) => (
         <div key={index}>
