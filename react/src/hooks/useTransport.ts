@@ -57,7 +57,7 @@ export const useTransport = (
 
       noiseLoopRef.current = new Tone.Loop((time) => {
         triggers.noiseTrigger(time);
-      }, "2m").start(0);
+      }, "4m").start(0);
 
       Tone.getTransport().start();
     } else {
@@ -86,6 +86,7 @@ export const useTransport = (
 
   const handleCueMouseUp = () => {
     setIsCuePressed(false);
+    triggers.noiseStop();
   };
 
   // Props for ControlStrip component
