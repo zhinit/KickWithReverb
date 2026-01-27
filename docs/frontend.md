@@ -62,7 +62,7 @@ TypeScript interfaces for component props:
 
 - `api.ts` - API functions for authentication and presets. Uses `VITE_API_URL` env var for backend URL.
   - Authentication: `loginUser`, `registerUser`
-  - Presets: `getPresets`, `getSharedPresets`, `createPreset`, `updatePreset`, `deletePreset`
+  - Presets: `getPresets`, `createPreset`, `updatePreset`, `deletePreset`
   - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
 - `audioAssets.ts` - Audio file imports/exports
 
