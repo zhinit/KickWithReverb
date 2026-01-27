@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Preset
-from .serializers import PresetSerializer, SharedPresetSerializer
+from .serializers import PresetSerializer
 
 
 class PresetListCreateView(APIView):
