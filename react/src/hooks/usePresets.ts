@@ -82,6 +82,7 @@ interface LayerRefs {
     getState: () => {
       bpm: number;
     };
+    isPlaying: boolean;
     scheduleNoiseRetrigger: () => void;
   };
 }
@@ -171,9 +172,11 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       const preset = allPresets.find((p) => p.id === id);
       if (!preset) return;
 
-      // Stop noise from previous preset and schedule retrigger on next kick
-      layers.noise.stop();
-      layers.transport.scheduleNoiseRetrigger();
+      // When playing, stop noise and schedule retrigger on next kick for smooth transition
+      if (layers.transport.isPlaying) {
+        layers.noise.stop();
+        layers.transport.scheduleNoiseRetrigger();
+      }
 
       // Apply to kick layer
       layers.kick.setters.setSample(preset.kickSample);
