@@ -32,7 +32,7 @@ class Preset(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username}, {self.preset_name}, {self.isShared}"
+        return f"{self.user.username}, {self.preset_name}, {self.is_shared}"
 
     class Meta:
         unique_together = ["user", "preset_name"]
