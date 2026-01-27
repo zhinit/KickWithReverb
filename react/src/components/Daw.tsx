@@ -80,13 +80,15 @@ export const Daw = () => {
         onNext={presets.nextPreset}
         onPrev={presets.prevPreset}
       />
-      <ControlStrip {...transport.controlProps} />
-      <SoundUnit
-        kickKnobProps={kick.uiProps}
-        noiseKnobProps={noise.uiProps}
-        reverbKnobProps={reverb.uiProps}
-      />
-      <MasterStrip {...master.uiProps} />
+      <div className="daw-grid">
+        <ControlStrip {...transport.controlProps} />
+        <SoundUnit
+          kickKnobProps={kick.uiProps}
+          noiseKnobProps={noise.uiProps}
+          reverbKnobProps={reverb.uiProps}
+        />
+        <MasterStrip {...master.uiProps} />
+      </div>
     </div>
   );
 };

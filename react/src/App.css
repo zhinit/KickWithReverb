@@ -158,13 +158,16 @@ form {
   transform-origin: center center;
 }
 
-.control-strip {
-  display: flex;
-  flex-direction: row;
-  gap: 75px;
-  justify-content: center;
+.daw-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  justify-items: center;
   align-items: center;
-  padding-bottom: 20px;
+  row-gap: 20px;
+}
+
+.control-strip {
+  display: contents;
 }
 
 .layer-strip {
@@ -175,17 +178,15 @@ form {
 }
 
 .sound-unit {
-  display: flex;
-  flex-direction: row;
-  gap: 75px;
-  justify-content: center;
+  display: contents;
+}
+
+.mastering-heading {
+  grid-column: 1 / -1;
 }
 
 .master-strip-knobs {
-  display: flex;
-  flex-direction: row;
-  gap: 75px;
-  justify-content: center;
+  display: contents;
 }
 
 /* Modal styles */
