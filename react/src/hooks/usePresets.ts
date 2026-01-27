@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import {
   getPresets,
-  getSharedPresets,
   createPreset,
   updatePreset,
   deletePreset as apiDeletePreset,
@@ -141,16 +140,10 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
 
     const fetchPresets = async () => {
       setIsLoading(true);
-      const [userRes, sharedRes] = await Promise.all([
-        getPresets(),
-        getSharedPresets(),
-      ]);
+      const [userRes] = await Promise.all([getPresets()]);
 
       if (userRes.ok && userRes.data) {
         setUserPresets(userRes.data);
-      }
-      if (sharedRes.ok && sharedRes.data) {
-        setSharedPresets(sharedRes.data);
       }
       setIsLoading(false);
     };
@@ -208,6 +201,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
 
       const presetData = {
         presetName: name,
+        isShared: false,
         ...kickState,
         ...noiseState,
         ...reverbState,
