@@ -35,9 +35,9 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
 
   // State for UI
   const [sample, setSample] = useState(noiseNames[0] || "greyNoise");
-  const [volume, setVolume] = useState(-10);
-  const [lowPassFreq, setLowPassFreq] = useState(30);
-  const [highPassFreq, setHighPassFreq] = useState(7000);
+  const [volume, setVolume] = useState(-70);
+  const [lowPassFreq, setLowPassFreq] = useState(7000);
+  const [highPassFreq, setHighPassFreq] = useState(30);
 
   // Output ref for external connections
   const [output, setOutput] = useState<Tone.Filter | null>(null);
