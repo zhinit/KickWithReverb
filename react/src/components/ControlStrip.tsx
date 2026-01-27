@@ -21,6 +21,16 @@ export const ControlStrip = ({
     setInputValue(bpm.toString());
   }, [bpm]);
 
+  const handleCuePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    handleCueMouseDown();
+  };
+
+  const handleCuePointerUp = (e: React.PointerEvent<HTMLImageElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    handleCueMouseUp();
+  };
+
   const handleLocalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
@@ -57,8 +67,8 @@ export const ControlStrip = ({
         src={isCuePressed ? cueButtonOn : cueButtonOff}
         alt="CUE"
         draggable={false}
-        onMouseDown={handleCueMouseDown}
-        onMouseUp={handleCueMouseUp}
+        onPointerDown={handleCuePointerDown}
+        onPointerUp={handleCuePointerUp}
       />
       <img
         className="play-button"
