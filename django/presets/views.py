@@ -4,21 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Preset, SharedPreset
+from .models import Preset
 from .serializers import PresetSerializer, SharedPresetSerializer
-
-
-class SharedPresetView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        shared_presets = (
-            SharedPreset.objects.all()
-        )  # get list of python objects with query
-        serializer = SharedPresetSerializer(
-            shared_presets, many=True
-        )  # turn them into JSON
-        return Response(serializer.data, status=status.HTTP_200_OK)  # send them
 
 
 class PresetListCreateView(APIView):
