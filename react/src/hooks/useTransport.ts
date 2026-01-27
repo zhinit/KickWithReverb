@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Tone from "tone";
 import type { ControlStripProps } from "../types/types";
 
@@ -18,6 +18,7 @@ export interface UseTransportReturn {
   getState: () => {
     bpm: number;
   };
+  scheduleNoiseRetrigger: () => void;
 }
 
 export const useTransport = (
@@ -25,6 +26,7 @@ export const useTransport = (
 ): UseTransportReturn => {
   const kickLoopRef = useRef<Tone.Loop | null>(null);
   const noiseLoopRef = useRef<Tone.Loop | null>(null);
+  const noiseRetriggerRef = useRef(false);
 
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
@@ -47,6 +49,10 @@ export const useTransport = (
 
       kickLoopRef.current = new Tone.Loop((time) => {
         triggers.kickTrigger(time);
+        if (noiseRetriggerRef.current) {
+          triggers.noiseTrigger(time);
+          noiseRetriggerRef.current = false;
+        }
       }, "4n").start(0);
 
       noiseLoopRef.current = new Tone.Loop((time) => {
@@ -93,6 +99,10 @@ export const useTransport = (
     setBPM,
   };
 
+  const scheduleNoiseRetrigger = useCallback(() => {
+    noiseRetriggerRef.current = true;
+  }, []);
+
   const getState = () => ({
     bpm,
   });
@@ -105,5 +115,6 @@ export const useTransport = (
       setBpm: setBPM,
     },
     getState,
+    scheduleNoiseRetrigger,
   };
 };

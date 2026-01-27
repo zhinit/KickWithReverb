@@ -30,10 +30,10 @@ export const Daw = () => {
   // Presets hook
   const presets = usePresets({
     kick: { setters: kick.setters, getState: kick.getState },
-    noise: { setters: noise.setters, getState: noise.getState },
+    noise: { setters: noise.setters, stop: noise.stop, getState: noise.getState },
     reverb: { setters: reverb.setters, getState: reverb.getState },
     master: { setters: master.setters, getState: master.getState },
-    transport: { setters: transport.setters, getState: transport.getState },
+    transport: { setters: transport.setters, getState: transport.getState, scheduleNoiseRetrigger: transport.scheduleNoiseRetrigger },
   });
 
   // Connect kick output to reverb and master when ready
