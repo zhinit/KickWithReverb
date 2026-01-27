@@ -11,30 +11,26 @@ function AppContent() {
   const { isAuthenticated } = useAuth();
   const [view, setView] = useState<"main" | "login" | "register">("main");
 
-  if (!isAuthenticated) {
-    if (view === "login") {
-      return <LoginForm onBack={() => setView("main")} />;
-    }
-    if (view === "register") {
-      return <RegisterForm onBack={() => setView("main")} />;
-    }
-    // main view - buttons + daw
-    return (
-      <>
+  const showDaw = isAuthenticated || view === "main";
+
+  return (
+    <>
+      {!isAuthenticated && view === "login" && (
+        <LoginForm onBack={() => setView("main")} />
+      )}
+      {!isAuthenticated && view === "register" && (
+        <RegisterForm onBack={() => setView("main")} />
+      )}
+      {!isAuthenticated && view === "main" && (
         <LoginRegister
           onLogin={() => setView("login")}
           onRegister={() => setView("register")}
         />
+      )}
+      <div style={{ display: showDaw ? undefined : "none" }}>
         <Daw />
-      </>
-    );
-  }
-
-  // logged in - daw + logout at bottom
-  return (
-    <>
-      <Daw />
-      <Logout />
+      </div>
+      {isAuthenticated && <Logout />}
     </>
   );
 }
