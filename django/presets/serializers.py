@@ -8,6 +8,7 @@ class PresetSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "preset_name",
+            "is_shared",
             "bpm",
             "kick_sample",
             "kick_len",
@@ -33,10 +34,3 @@ class PresetSerializer(serializers.ModelSerializer):
         if not value.replace(" ", "").isalnum():
             raise serializers.ValidationError("Preset name must be alphanumeric")
         return value
-
-
-class SharedPresetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SharedPreset
-        fields = "__all__"
-        read_only_fields = "__all__"

@@ -35,6 +35,4 @@ urlpatterns = [
     path(
         "api/presets/<int:pk>/", PresetDetailView.as_view(), name="preset_detail_view"
     ),
-    # shared preset view
-    path("api/presets/shared/", SharedPresetView.as_view(), name="shared_preset_view"),
 ]
