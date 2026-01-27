@@ -7,7 +7,7 @@ export interface ApiResponse<T = unknown> {
   data: T | null;
 }
 
-// Try to refresh the access token using the refresh token
+// Refresh access token
 async function refreshAccessToken(): Promise<boolean> {
   const refreshToken = localStorage.getItem("refreshToken");
   if (!refreshToken) return false;
@@ -34,6 +34,7 @@ async function refreshAccessToken(): Promise<boolean> {
   return false;
 }
 
+// wrapper for fetch using access tokens
 async function authenticatedFetch(
   endpoint: string,
   options: RequestInit = {}
@@ -69,16 +70,6 @@ async function authenticatedFetch(
 export async function getPresets(): Promise<ApiResponse<PresetData[]>> {
   try {
     const response = await authenticatedFetch("/api/presets/");
-    const data = await response.json();
-    return { ok: response.ok, status: response.status, data };
-  } catch {
-    return { ok: false, status: null, data: null };
-  }
-}
-
-export async function getSharedPresets(): Promise<ApiResponse<PresetData[]>> {
-  try {
-    const response = await authenticatedFetch("/api/presets/shared/");
     const data = await response.json();
     return { ok: response.ok, status: response.status, data };
   } catch {
