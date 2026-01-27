@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Preset, SharedPreset
+from .models import Preset
 
 
 class PresetSerializer(serializers.ModelSerializer):
