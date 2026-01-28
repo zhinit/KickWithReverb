@@ -24,6 +24,7 @@ button {
 
 select {
   color: var(--main-color);
+  width: 110px;
 }
 
 form {
@@ -38,9 +39,13 @@ form {
   text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 } */
 
+.daw h1 {
+  margin: 0.25em 0;
+}
+
 .presets-bar {
   --presets-bar-height: 40px;
-  --presets-bar-bkg: rgba(10, 15, 10, 0.781);
+  --presets-bar-bkg: rgba(30, 35, 30, 0.781);
   --presets-bar-color: white;
   --presets-bar-radius: 0px;
 
@@ -88,6 +93,7 @@ form {
   height: var(--presets-bar-height);
   padding: 0 20px;
   border: 1px solid rgba(0, 0, 0, 0.2);
+  margin-bottom: 15px;
 }
 
 .presets-bar-message {
@@ -158,6 +164,11 @@ form {
   transform-origin: center center;
 }
 
+.layer-strip .knob {
+  width: 55px;
+  height: 55px;
+}
+
 .daw-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -168,6 +179,7 @@ form {
 
 .control-strip {
   display: contents;
+  padding-bottom: 20px;
 }
 
 .layer-strip {
@@ -183,6 +195,7 @@ form {
 
 .mastering-heading {
   grid-column: 1 / -1;
+  margin: 0;
 }
 
 .master-strip-knobs {
