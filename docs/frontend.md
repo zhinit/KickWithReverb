@@ -9,7 +9,7 @@ The frontend is a React 19 application built with TypeScript and Vite. It provid
 - **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite 7** - Build tool and dev server
-- **Tone.js** - Web Audio library for sound synthesis
+- **JUCE/WASM** - C++ audio engine compiled to WebAssembly via Emscripten
 
 ## Project Structure
 
@@ -25,7 +25,9 @@ react/
 │   ├── types/                # TypeScript type definitions
 │   ├── utils/                # Utility functions
 │   └── assets/               # Static assets (images, audio)
-├── public/                   # Public static files
+├── public/
+│   ├── audio-engine.js       # WASM engine (built from dsp/)
+│   └── dsp-processor.js      # AudioWorklet processor (bridges React ↔ WASM)
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -38,18 +40,21 @@ react/
 
 Custom hooks that encapsulate audio logic and state management:
 
+- `useAudioEngine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks
 - `useAuth.tsx` - Authentication context and auth state management
-- `useKickLayer.ts` - Kick drum synthesis layer
-- `useNoiseLayer.ts` - Noise generator layer
-- `useReverbLayer.ts` - Reverb effect processing
-- `useMasterChain.ts` - Master output chain with effects
-- `useTransport.ts` - Playback transport controls (play, cue, BPM)
+- `useKickLayer.ts` - Kick drum layer (React state + postMessage to WASM)
+- `useNoiseLayer.ts` - Noise generator layer (React state + postMessage to WASM)
+- `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
+- `useMasterChain.ts` - Master output chain (React state + postMessage to WASM)
+- `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage)
 - `usePresets.ts` - Preset management (load, save, delete, navigate)
 
-Each audio layer hook exposes:
-- `setters` - Functions to update layer parameters programmatically
-- `getState` - Function to retrieve current layer state for saving presets
-- `releaseAll` - Function to stop all playing sounds (kick and noise layers)
+Each audio layer hook:
+- Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter
+- Keeps React state for UI display
+- Sends `postMessage` to the AudioWorklet when state changes
+- Guards postMessage calls with `isReady` check (messages sent once WASM is initialized)
+- Exposes `setters` and `getState` for preset loading/saving
 
 ### `/src/types/`
 
@@ -64,13 +69,15 @@ TypeScript interfaces for component props:
   - Authentication: `loginUser`, `registerUser`
   - Presets: `getPresets`, `createPreset`, `updatePreset`, `deletePreset`
   - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
-- `audioAssets.ts` - Audio file imports/exports
+- `audioAssets.ts` - Audio file imports/exports and knob range mapping utilities
 
 ### `/src/assets/`
 
 Static assets including:
 
 - `/kicks/` - Kick drum samples (WAV files)
+- `/noises/` - Noise samples (MP3 files)
+- `/IRs/` - Impulse response files (WAV files, may be stereo)
 - `/knobs/` - Knob images
 - `/buttons/` - Transport button images
 
@@ -85,23 +92,32 @@ The app uses JWT-based authentication:
 
 ## Audio Architecture
 
-The audio signal flow is managed through hooks:
+All audio routing and DSP is handled inside the C++ WASM engine. The React hooks only manage UI state and send parameter messages to the AudioWorklet.
 
 ```
-              ┌──────────────────────────────┐
-              │                              ▼
-Kick Layer  ──┼──► Reverb Layer ──────► Master Chain ──► Output
-              │          ▲                   ▲
-Noise Layer ──┼──────────┘                   │
-              │                              │
-              └──────────────────────────────┘
+React Hooks ──postMessage──► AudioWorklet (dsp-processor.js) ──► WASM AudioEngine (C++)
+                                                                       │
+                                                                  AudioContext.destination
 ```
 
-Each layer hook returns:
+### Initialization Flow (in `useAudioEngine`)
 
-- `output` - Tone.js audio node for routing
-- `trigger` - Function to trigger the sound
-- `uiProps` - Props for the UI component
+1. Create `AudioContext` (starts suspended)
+2. Fetch `audio-engine.js` (Emscripten glue code)
+3. Load `dsp-processor.js` as AudioWorklet
+4. Create `AudioWorkletNode`, connect to destination
+5. Send glue code to worklet → worklet instantiates WASM → sends "ready"
+6. Decode all kick/noise/IR audio files → send as Float32Array to worklet
+7. Set `isReady = true` → all hooks sync their current state to the engine
+
+### Hook → Engine Message Flow
+
+Each hook watches its React state and sends typed messages:
+- `useKickLayer` → `selectKickSample`, `kickRelease`, `kickDistortion`, `kickOTT`
+- `useNoiseLayer` → `selectNoiseSample`, `noiseVolume`, `noiseLowPass`, `noiseHighPass`
+- `useReverbLayer` → `selectIR`, `reverbLowPass`, `reverbHighPass`, `reverbVolume`
+- `useMasterChain` → `masterOTT`, `masterDistortion`, `masterLimiter`
+- `useTransport` → `bpm`, `loop`, `cue`
 
 ## Environment Variables
 
