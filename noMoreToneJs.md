@@ -136,29 +136,16 @@ private:
 
 ---
 
-### Step 4: Build the AudioEngine Orchestrator
+### Step 4: Build the AudioEngine Orchestrator ✅ DONE
 
-**What:** Top-level C++ class that owns all players, effects, and transport. Single entry point for the AudioWorklet.
-
-**Tasks:**
-- Create `dsp/audio_engine.h` and `dsp/audio_engine.cpp`
-- Own: 2x `SamplePlayer`, 2x `Distortion`, 2x `OTTCompressor`, `StereoConvolutionReverb`, 4x `Filter`, `Limiter`, `Gain`
-- Implement `prepare(sampleRate)` — initializes all components
-- Implement `process(leftPtr, rightPtr, numSamples)` — full signal flow (see diagram above)
-- Implement transport logic:
-  - `setBPM(bpm)` — recalculates `samplesPerBeat_`
-  - `setLooping(bool)` — start/stop loop
-  - `cue()` — single trigger of kick (and noise if appropriate)
-  - Internal sample counters for kick (every beat) and noise (every 8 beats)
-- Implement all parameter setters:
-  - Kick: `loadKickSample()`, `selectKickSample(index)`, `setKickRelease(seconds)`, `setKickDistortion(amount)`, `setKickOTT(amount)`
-  - Noise: `loadNoiseSample()`, `selectNoiseSample(index)`, `setNoiseVolume(db)`, `setNoiseLowPass(hz)`, `setNoiseHighPass(hz)`
-  - Reverb: `loadIR()`, `selectIR(index)`, `setReverbLowPass(hz)`, `setReverbHighPass(hz)`, `setReverbVolume(db)`
-  - Master: `setMasterOTT(amount)`, `setMasterDistortion(amount)`, `setMasterLimiter(amount)`
-  - Transport: `setBPM(bpm)`, `setLooping(bool)`, `cue()`
-- Add `EMSCRIPTEN_BINDINGS` block exposing all public methods
-
-**Verify:** Build compiles. Can instantiate engine, load a sample, trigger, and get non-silent output.
+- `dsp/audio_engine.h` / `dsp/audio_engine.cpp` — Full orchestrator class
+- Owns: 2x SamplePlayer, 2x Distortion, 2x OTTCompressor, StereoConvolutionReverb, 4x Filter, Limiter
+- Signal flow: kick→distortion(wet/dry)→OTT, noise→LP→HP, reverb send(kick+noise→convolution→LP→HP→gain), master(OTT→distortion(wet/dry)→gain→limiter)
+- Transport: BPM-based sample counting, kick every beat, noise every 8 beats, setLooping triggers/stops both players
+- IR storage: multiple IRs stored in vector, selectIR reloads convolution engine
+- SamplePlayer updated with setLooping(bool) for noise layer internal looping
+- All 20 parameter setters + EMSCRIPTEN_BINDINGS
+- Build verified
 
 ---
 
