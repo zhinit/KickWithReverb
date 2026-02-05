@@ -74,7 +74,7 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 - `setMasterOTT(amount)` — Compression amount (0-1)
 - `setMasterDistortion(amount)` — Wet/dry mix (0-0.5)
-- `setMasterLimiter(amount)` — Pre-limiter gain (1-4 linear)
+- `setMasterLimiter(amount)` — Pre-limiter gain (1-8 linear)
 
 ### Transport
 

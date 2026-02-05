@@ -92,8 +92,8 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
       reverbR_[i] = kickR_[i] + noiseR_[i];
     }
     convolution_.process(reverbL_.data(), reverbR_.data(), numSamples);
-    // reverbLowPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
-    // reverbHighPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
+    reverbLowPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
+    reverbHighPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
     for (int i = 0; i < numSamples; ++i) {
       reverbL_[i] *= reverbGain_;
       reverbR_[i] *= reverbGain_;
@@ -256,7 +256,7 @@ AudioEngine::setMasterDistortion(float amount)
 void
 AudioEngine::setMasterLimiter(float amount)
 {
-  masterLimiterGain_ = std::clamp(amount, 1.0f, 4.0f);
+  masterLimiterGain_ = std::clamp(amount, 1.0f, 8.0f);
 }
 
 // --- Transport ---

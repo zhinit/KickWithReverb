@@ -47,12 +47,12 @@ export const useMasterChain = (engine: AudioEngine): UseMasterChainReturn => {
     knobValues: [
       mapCustomRangeToKnobRange(ottAmt, 0, 1),
       mapCustomRangeToKnobRange(distortionAmt, 0, 0.5),
-      mapCustomRangeToKnobRange(limiterAmt, 1, 4),
+      mapCustomRangeToKnobRange(limiterAmt, 1, 8),
     ],
     knobOnChanges: [
       (value) => setOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
       (value) => setDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
-      (value) => setLimiterAmt(mapKnobRangeToCustomRange(value, 1, 4)),
+      (value) => setLimiterAmt(mapKnobRangeToCustomRange(value, 1, 8)),
     ],
   };
 

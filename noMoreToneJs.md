@@ -37,7 +37,7 @@ C++ AudioEngine (single class, owns everything)
 ├── Master Chain
 │   ├── OTTCompressor (ratio = 1 + 8 * amount, EQ: low = 3 * amount, mid = -3 * amount)
 │   ├── Distortion (separate instance)
-│   ├── Gain (limiter makeup, range 1-4 linear)
+│   ├── Gain (limiter makeup, range 1-8 linear)
 │   └── Limiter (juce::dsp::Limiter, 0dB ceiling)
 │
 └── Transport (internal sample counting)
@@ -120,7 +120,7 @@ All hooks rewritten to take `AudioEngine` handle, postMessage on state change, `
 
 - [ ] **Noise doesn't play on cue button** — the `cue` message only triggers the kick in the C++ engine. The noise player may not be triggered by `cue`, only by the transport loop. Need to add noise triggering to the cue handler in `AudioEngine`.
 
-- [ ] **Limiter gain range too low** — current range is 1-4 linear. Should be able to push higher for more aggressive limiting/loudness. Increase the max value in both the C++ setter and the React hook's knob mapping.
+- [x] **Limiter gain range too low** — ✅ FIXED: Increased from 1-4 to 1-8 linear gain for more aggressive limiting/loudness.
 
 ---
 
@@ -148,7 +148,7 @@ reverbHighPass          → { value: number }        (30-7000 Hz)
 reverbVolume            → { value: number }        (-60 to 0 dB)
 masterOTT               → { value: number }        (0-1)
 masterDistortion        → { value: number }        (0-0.5 wet mix)
-masterLimiter           → { value: number }        (1-4 linear gain)
+masterLimiter           → { value: number }        (1-8 linear gain)
 ```
 
 ## Preset Parameter Mapping (20 params)
@@ -170,4 +170,4 @@ masterLimiter           → { value: number }        (1-4 linear gain)
 | reverbVolume       | reverbVolume      | -60 to 0 dB   |
 | masterOttAmt       | masterOTT         | 0-1           |
 | masterDistAmt      | masterDistortion  | 0-0.5         |
-| masterLimiterAmt   | masterLimiter     | 1-4 linear    |
+| masterLimiterAmt   | masterLimiter     | 1-8 linear    |
