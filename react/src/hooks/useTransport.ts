@@ -1,12 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import * as Tone from "tone";
+import { useEffect, useState } from "react";
 import type { ControlStripProps } from "../types/types";
-
-export interface TransportTriggers {
-  kickTrigger: (time?: Tone.Unit.Time) => void;
-  noiseTrigger: (time?: Tone.Unit.Time) => void;
-  noiseStop: () => void;
-}
+import type { AudioEngine } from "./useAudioEngine";
 
 export interface UseTransportReturn {
   isPlaying: boolean;
@@ -18,78 +12,37 @@ export interface UseTransportReturn {
   getState: () => {
     bpm: number;
   };
-  scheduleNoiseRetrigger: () => void;
 }
 
-export const useTransport = (
-  triggers: TransportTriggers
-): UseTransportReturn => {
-  const kickLoopRef = useRef<Tone.Loop | null>(null);
-  const noiseLoopRef = useRef<Tone.Loop | null>(null);
-  const noiseRetriggerRef = useRef(false);
+export const useTransport = (engine: AudioEngine): UseTransportReturn => {
+  const { postMessage, resume, isReady } = engine;
 
   const [isPlayOn, setIsPlayOn] = useState(false);
   const [isCuePressed, setIsCuePressed] = useState(false);
   const [bpm, setBPM] = useState(140);
 
-  // BPM change effect
   useEffect(() => {
-    Tone.getTransport().bpm.value = bpm;
-  }, [bpm]);
+    if (!isReady) return;
+    postMessage({ type: "bpm", value: bpm });
+  }, [bpm, isReady, postMessage]);
 
-  // Play button functionality
   const handlePlayClick = async () => {
+    await resume();
     const newPlayState = !isPlayOn;
     setIsPlayOn(newPlayState);
-
-    if (newPlayState) {
-      await Tone.start();
-
-      Tone.getTransport().bpm.value = bpm;
-
-      kickLoopRef.current = new Tone.Loop((time) => {
-        triggers.kickTrigger(time);
-        if (noiseRetriggerRef.current) {
-          triggers.noiseTrigger(time);
-          noiseRetriggerRef.current = false;
-        }
-      }, "4n").start(0);
-
-      noiseLoopRef.current = new Tone.Loop((time) => {
-        triggers.noiseTrigger(time);
-      }, "2m").start(0);
-
-      Tone.getTransport().start();
-    } else {
-      if (kickLoopRef.current) {
-        kickLoopRef.current.stop();
-        kickLoopRef.current.dispose();
-        kickLoopRef.current = null;
-      }
-      if (noiseLoopRef.current) {
-        noiseLoopRef.current.stop();
-        noiseLoopRef.current.dispose();
-        noiseLoopRef.current = null;
-      }
-      triggers.noiseStop();
-      Tone.getTransport().stop();
-    }
+    postMessage({ type: "loop", enabled: newPlayState });
   };
 
-  // Cue button functionality
   const handleCueMouseDown = async () => {
+    await resume();
     setIsCuePressed(true);
-    await Tone.start();
-    triggers.kickTrigger();
-    triggers.noiseTrigger();
+    postMessage({ type: "cue" });
   };
 
   const handleCueMouseUp = () => {
     setIsCuePressed(false);
-    triggers.noiseStop();
   };
 
-  // Props for ControlStrip component
   const controlProps: ControlStripProps = {
     bpm,
     isPlayOn,
@@ -99,10 +52,6 @@ export const useTransport = (
     handlePlayClick,
     setBPM,
   };
-
-  const scheduleNoiseRetrigger = useCallback(() => {
-    noiseRetriggerRef.current = true;
-  }, []);
 
   const getState = () => ({
     bpm,
@@ -116,6 +65,5 @@ export const useTransport = (
       setBpm: setBPM,
     },
     getState,
-    scheduleNoiseRetrigger,
   };
 };

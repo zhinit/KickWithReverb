@@ -1,17 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import * as Tone from "tone";
+import { useEffect, useState } from "react";
 import {
-  noiseFiles,
   noiseNames,
   mapKnobRangeToCustomRange,
   mapCustomRangeToKnobRange,
 } from "../utils/audioAssets";
 import type { LayerStripProps } from "../types/types";
+import type { AudioEngine } from "./useAudioEngine";
 
 export interface UseNoiseLayerReturn {
-  output: Tone.Filter | null;
-  trigger: (time?: Tone.Unit.Time) => void;
-  stop: () => void;
   uiProps: LayerStripProps;
   setters: {
     setSample: (value: string) => void;
@@ -27,88 +23,37 @@ export interface UseNoiseLayerReturn {
   };
 }
 
-export const useNoiseLayer = (): UseNoiseLayerReturn => {
-  // Audio node refs
-  const playerRef = useRef<Tone.Player | null>(null);
-  const lowPassRef = useRef<Tone.Filter | null>(null);
-  const highPassRef = useRef<Tone.Filter | null>(null);
+export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
+  const { postMessage, isReady, noiseNameToIndex } = engine;
 
-  // State for UI
   const [sample, setSample] = useState(noiseNames[0] || "greyNoise");
   const [volume, setVolume] = useState(-70);
   const [lowPassFreq, setLowPassFreq] = useState(7000);
   const [highPassFreq, setHighPassFreq] = useState(30);
 
-  // Output ref for external connections
-  const [output, setOutput] = useState<Tone.Filter | null>(null);
-
-  // Initialize audio nodes
   useEffect(() => {
-    const initialUrl =
-      noiseFiles[noiseNames[0]] || Object.values(noiseFiles)[0];
+    if (!isReady) return;
+    const index = noiseNameToIndex[sample];
+    if (index !== undefined) {
+      postMessage({ type: "selectNoiseSample", index });
+    }
+  }, [sample, isReady, postMessage, noiseNameToIndex]);
 
-    playerRef.current = new Tone.Player(initialUrl);
-    playerRef.current.volume.value = volume;
-    playerRef.current.fadeOut = 0.1;
-
-    lowPassRef.current = new Tone.Filter(lowPassFreq, "lowpass");
-    highPassRef.current = new Tone.Filter(highPassFreq, "highpass");
-
-    // Connect the chain
-    playerRef.current.connect(lowPassRef.current);
-    lowPassRef.current.connect(highPassRef.current);
-
-    setOutput(highPassRef.current);
-
-    return () => {
-      playerRef.current?.dispose();
-      lowPassRef.current?.dispose();
-      highPassRef.current?.dispose();
-    };
-  }, []);
-
-  // Sample change effect - load new buffer
   useEffect(() => {
-    if (playerRef.current && noiseFiles[sample]) {
-      playerRef.current.load(noiseFiles[sample]);
-    }
-  }, [sample]);
+    if (!isReady) return;
+    postMessage({ type: "noiseVolume", value: volume });
+  }, [volume, isReady, postMessage]);
 
-  // Low pass change effect
   useEffect(() => {
-    if (lowPassRef.current) {
-      lowPassRef.current.frequency.value = lowPassFreq;
-    }
-  }, [lowPassFreq]);
+    if (!isReady) return;
+    postMessage({ type: "noiseLowPass", value: lowPassFreq });
+  }, [lowPassFreq, isReady, postMessage]);
 
-  // High pass change effect
   useEffect(() => {
-    if (highPassRef.current) {
-      highPassRef.current.frequency.value = highPassFreq;
-    }
-  }, [highPassFreq]);
+    if (!isReady) return;
+    postMessage({ type: "noiseHighPass", value: highPassFreq });
+  }, [highPassFreq, isReady, postMessage]);
 
-  // Volume change effect
-  useEffect(() => {
-    if (playerRef.current) {
-      playerRef.current.volume.value = volume;
-    }
-  }, [volume]);
-
-  // Stop any currently playing noise
-  const stop = () => {
-    playerRef.current?.stop();
-  };
-
-  // Trigger function for transport
-  const trigger = (time?: Tone.Unit.Time) => {
-    if (playerRef.current?.loaded) {
-      playerRef.current.stop();
-      playerRef.current.start(time);
-    }
-  };
-
-  // UI props for LayerStrip
   const uiProps: LayerStripProps = {
     layerLabel: "Noise Layer",
     dropdownItems: noiseNames,
@@ -135,9 +80,6 @@ export const useNoiseLayer = (): UseNoiseLayerReturn => {
   });
 
   return {
-    output,
-    trigger,
-    stop,
     uiProps,
     setters: {
       setSample,
