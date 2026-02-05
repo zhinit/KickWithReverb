@@ -27,6 +27,7 @@ public:
     void setReleaseDuration(float seconds);
     void setVolume(float gainLinear);
     void setSampleRate(float sampleRate);
+    void setLooping(bool loop);
 
 private:
     float sampleRate_ = 44100.0f;
@@ -43,4 +44,6 @@ private:
     bool releasing_ = false;
     float envelopeLevel_ = 1.0f;
     float envelopeDecrement_ = 0.0f; // per-sample decrement during release
+
+    bool looping_ = false;
 };

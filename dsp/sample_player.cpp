@@ -55,25 +55,32 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
     for (int i = 0; i < numSamples; ++i) {
         float out = 0.0f;
 
-        if (playing_ && position_ < sample.size()) {
-            out = sample[position_] * volume_;
-
-            if (releasing_) {
-                out *= envelopeLevel_;
-                envelopeLevel_ -= envelopeDecrement_;
-
-                if (envelopeLevel_ <= 0.0f) {
-                    envelopeLevel_ = 0.0f;
+        if (playing_) {
+            if (position_ >= sample.size()) {
+                if (looping_) {
+                    position_ = 0;
+                } else {
                     playing_ = false;
                     releasing_ = false;
                 }
             }
 
-            ++position_;
-        } else if (playing_) {
-            // Reached end of sample
-            playing_ = false;
-            releasing_ = false;
+            if (playing_ && position_ < sample.size()) {
+                out = sample[position_] * volume_;
+
+                if (releasing_) {
+                    out *= envelopeLevel_;
+                    envelopeLevel_ -= envelopeDecrement_;
+
+                    if (envelopeLevel_ <= 0.0f) {
+                        envelopeLevel_ = 0.0f;
+                        playing_ = false;
+                        releasing_ = false;
+                    }
+                }
+
+                ++position_;
+            }
         }
 
         left[i] = out;
@@ -94,4 +101,9 @@ void SamplePlayer::setVolume(float gainLinear)
 void SamplePlayer::setSampleRate(float sampleRate)
 {
     sampleRate_ = sampleRate;
+}
+
+void SamplePlayer::setLooping(bool loop)
+{
+    looping_ = loop;
 }
