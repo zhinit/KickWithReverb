@@ -106,15 +106,17 @@ All hooks rewritten to take `AudioEngine` handle, postMessage on state change, `
 
 ---
 
-### Step 9: Testing & Troubleshooting
+### Step 9: Testing & Troubleshooting ✅ DONE
 
 **What:** Ensure audio quality and feature parity.
 
-**Known Issues:**
+**Resolved Issues:**
 
-- [ ] **Reverb not audible** — reverb volume knob may not be connected to a wet/dry mix. The convolution engine has a wet/dry parameter but `reverbVolume` might only control gain, not the mix level. Check that the reverb send path is producing output and that the volume control maps correctly.
+- [x] **Reverb not audible** — Root cause: WASM heap memory limit (16MB default) was too small. Loading all kick/noise/IR samples exceeded the limit, causing `loadIR` calls to fail silently. The convolution engine's `irLoaded_` flag stayed false, so it passed through the dry signal instead of convolving. **Fix:** Added `ALLOW_MEMORY_GROWTH=1` and `INITIAL_MEMORY=67108864` (64MB) to CMakeLists.txt Emscripten flags.
 
-- [ ] **Noise samples slow to load / gray and seasick don't load** — these files may be larger or in a format that `decodeAudioData` struggles with. Check console for decode errors. May need to convert problematic files to WAV or check if they exceed a size limit in the WASM heap transfer.
+- [x] **Noise samples slow to load / gray and seasick don't load** — Same root cause as above. WASM OOM errors during `loadNoiseSample` prevented later samples and all IRs from loading. **Fix:** Same memory flags fix.
+
+**Remaining Issues:**
 
 - [ ] **Noise doesn't play on cue button** — the `cue` message only triggers the kick in the C++ engine. The noise player may not be triggered by `cue`, only by the transport loop. Need to add noise triggering to the cue handler in `AudioEngine`.
 
@@ -151,21 +153,21 @@ masterLimiter           → { value: number }        (1-4 linear gain)
 
 ## Preset Parameter Mapping (20 params)
 
-| Preset Field | Message Type | Value Range |
-|---|---|---|
-| bpm | bpm | 60-365 |
-| kickSample | selectKickSample | index (0-N) |
-| kickLen | kickRelease | 0-0.3 seconds |
-| kickDistAmt | kickDistortion | 0-0.5 |
-| kickOttAmt | kickOTT | 0-1 |
-| noiseSample | selectNoiseSample | index (0-N) |
-| noiseLowPassFreq | noiseLowPass | 30-7000 Hz |
-| noiseHighPassFreq | noiseHighPass | 30-7000 Hz |
-| noiseVolume | noiseVolume | -70 to -6 dB |
-| reverbSample | selectIR | index (0-N) |
-| reverbLowPassFreq | reverbLowPass | 30-7000 Hz |
-| reverbHighPassFreq | reverbHighPass | 30-7000 Hz |
-| reverbVolume | reverbVolume | -60 to 0 dB |
-| masterOttAmt | masterOTT | 0-1 |
-| masterDistAmt | masterDistortion | 0-0.5 |
-| masterLimiterAmt | masterLimiter | 1-4 linear |
+| Preset Field       | Message Type      | Value Range   |
+| ------------------ | ----------------- | ------------- |
+| bpm                | bpm               | 60-365        |
+| kickSample         | selectKickSample  | index (0-N)   |
+| kickLen            | kickRelease       | 0-0.3 seconds |
+| kickDistAmt        | kickDistortion    | 0-0.5         |
+| kickOttAmt         | kickOTT           | 0-1           |
+| noiseSample        | selectNoiseSample | index (0-N)   |
+| noiseLowPassFreq   | noiseLowPass      | 30-7000 Hz    |
+| noiseHighPassFreq  | noiseHighPass     | 30-7000 Hz    |
+| noiseVolume        | noiseVolume       | -70 to -6 dB  |
+| reverbSample       | selectIR          | index (0-N)   |
+| reverbLowPassFreq  | reverbLowPass     | 30-7000 Hz    |
+| reverbHighPassFreq | reverbHighPass    | 30-7000 Hz    |
+| reverbVolume       | reverbVolume      | -60 to 0 dB   |
+| masterOttAmt       | masterOTT         | 0-1           |
+| masterDistAmt      | masterDistortion  | 0-0.5         |
+| masterLimiterAmt   | masterLimiter     | 1-4 linear    |

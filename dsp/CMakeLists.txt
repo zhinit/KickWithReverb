@@ -63,6 +63,8 @@ target_link_options(audio-engine PRIVATE
     "SHELL:-s SINGLE_FILE=1"
     "SHELL:-s EXPORTED_FUNCTIONS=['_malloc','_free']"
     "SHELL:-s EXPORTED_RUNTIME_METHODS=['ccall','cwrap','HEAPF32']"
+    "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+    "SHELL:-s INITIAL_MEMORY=67108864"
 )
 
 # Output into react/public/
