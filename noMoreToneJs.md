@@ -108,61 +108,31 @@ private:
 
 ## Implementation Steps
 
-### Step 1: Set Up WASM Build System
+### Step 1: Set Up WASM Build System ✅ DONE
 
-**What:** Add the Emscripten/CMake build pipeline to KickWithReverb.
-
-**Tasks:**
-- Create `dsp/` directory at project root
-- Add `CMakeLists.txt` adapted from the POC (`ThereminWebJuce/CMakeLists.txt`)
-- Configure CPM to fetch JUCE 8.0.12
-- Include both JUCE patches (thread priorities table + missing emscripten include)
-- Set output path to `react/public/audio-engine.js`
-- Add COOP/COEP headers to `react/vite.config.ts`:
-  ```
-  Cross-Origin-Opener-Policy: same-origin
-  Cross-Origin-Embedder-Policy: require-corp
-  ```
-- Build a minimal test (empty process function) to verify the pipeline works
-
-**Verify:** `emcmake cmake -B build && cmake --build build` produces `react/public/audio-engine.js`
+- `dsp/CMakeLists.txt` — CPM fetches JUCE 8.0.12, includes both WASM patches, outputs to `react/public/audio-engine.js`
+- `react/vite.config.ts` — COOP/COEP headers added
+- `.gitignore` — `dsp/build/` excluded
+- Build verified: `cd dsp && emcmake cmake -B build && cmake --build build`
 
 ---
 
-### Step 2: Build the SamplePlayer Class
+### Step 2: Build the SamplePlayer Class ✅ DONE
 
-**What:** Reusable audio sample player for both kick and noise.
-
-**Tasks:**
-- Create `dsp/sample_player.h` and `dsp/sample_player.cpp`
-- Implement `loadSample()` — copies Float32Array data from WASM heap into internal vector
-- Implement `selectSample(index)` — switches active buffer, resets position
-- Implement `trigger()` — resets position to 0
-- Implement `stop()` — initiates fade-out envelope
-- Implement `process()` — reads from active sample buffer, applies volume and fade envelope
-- Implement `setReleaseDuration()` and `setVolume()`
-- Handle end-of-sample gracefully (output silence)
-
-**Verify:** Unit test or simple worklet test that loads a sample and plays it back
+- `dsp/sample_player.h` / `dsp/sample_player.cpp` — Stores multiple samples in `vector<vector<float>>`, supports `loadSample`, `selectSample`, `trigger`, `stop` (with linear fade-out envelope), `process`, `setReleaseDuration`, `setVolume`, `setSampleRate`
+- `dsp/audio_engine.cpp` — Uses SamplePlayer for kick and noise, exposes `loadKickSample`, `selectKickSample`, `setKickRelease`, `loadNoiseSample`, `selectNoiseSample`, `setNoiseVolume`, `cue` via EMSCRIPTEN_BINDINGS
+- Build verified
 
 ---
 
-### Step 3: Port Effects from POC
+### Step 3: Port Effects from POC ✅ DONE
 
-**What:** Bring over the DSP effects and adapt them for KickWithReverb's parameter scheme.
-
-**Tasks:**
-- Copy `dsp/distortion.h`, `dsp/distortion.cpp` from POC (no changes needed, same waveshaper)
-- Copy `dsp/ott.h`, `dsp/ott.cpp` from POC
-  - Modify `OTTCompressor` to expose per-band EQ control: `setEQ(lowDb, midDb, highDb)`
-  - Add configurable ratio multiplier so kick (10x) and master (8x) can differ
-  - Keep the existing 3-band Linkwitz-Riley crossover and BandCompressor logic
-- Copy `dsp/convolution.h`, `dsp/convolution.cpp` from POC (no changes needed)
-- Create `dsp/filter.h` — thin wrapper around `juce::dsp::StateVariableTPTFilter`
-  - `setFrequency(hz)`, `setType(lowpass/highpass)`, `process(left, right, numSamples)`
-- Add limiter using `juce::dsp::Limiter` (or simple soft-clip if JUCE limiter has issues in WASM)
-
-**Verify:** Each effect processes audio correctly in isolation
+- `dsp/distortion.h/.cpp` — Copied from POC (tanh + asymmetric waveshaper)
+- `dsp/ott.h/.cpp` — Modified from POC: constructor takes `ratioMultiplier` (kick=10, master=8) and per-band EQ scaling (`lowEqPerAmount`, `midEqPerAmount`, `highEqPerAmount`). All bands use same down ratio formula: `1 + ratioMultiplier * amount`. EQ gains applied per-band after compression, scaled by amount.
+- `dsp/convolution.h/.cpp` — Copied from POC (FFT overlap-add, stereo wrapper with wet/dry mix)
+- `dsp/filter.h` — Wrapper around `juce::dsp::StateVariableTPTFilter` with `setType(lowpass/highpass)`, `setFrequency(hz)`, `process()`
+- `dsp/limiter.h` — Wrapper around `juce::dsp::Limiter` with 0dB ceiling, 50ms release
+- Build verified
 
 ---
 
