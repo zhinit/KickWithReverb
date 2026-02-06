@@ -61,6 +61,9 @@ class DSPProcessor extends AudioWorkletProcessor {
       case "cue":
         this.engine.cue();
         break;
+      case "cueRelease":
+        this.engine.cueRelease();
+        break;
       case "loop":
         this.engine.setLooping(data.enabled);
         break;

@@ -41,6 +41,7 @@ export const useTransport = (engine: AudioEngine): UseTransportReturn => {
 
   const handleCueMouseUp = () => {
     setIsCuePressed(false);
+    postMessage({ type: "cueRelease" });
   };
 
   const controlProps: ControlStripProps = {

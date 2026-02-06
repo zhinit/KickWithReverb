@@ -80,7 +80,8 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 - `setBPM(bpm)` — Recalculates samplesPerBeat\_ (60-365)
 - `setLooping(enabled)` — Start: triggers kick+noise, resets counters. Stop: fades out noise.
-- `cue()` — Single kick trigger
+- `cue()` — Single kick+noise trigger (sets noise looping=false so it plays once)
+- `cueRelease()` — Stops noise with 0.1s fade-out, restores looping=true for normal transport playback
 
 ## Key Design Decisions
 
