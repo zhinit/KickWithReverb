@@ -23,7 +23,7 @@ public:
     // Kick
     void loadKickSample(uintptr_t ptr, size_t length);
     void selectKickSample(int index);
-    void setKickRelease(float seconds);
+    void setKickLength(float ratio);
     void setKickDistortion(float amount);
     void setKickOTT(float amount);
 

@@ -27,7 +27,7 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
   const { postMessage, isReady, kickNameToIndex } = engine;
 
   const [sample, setSample] = useState(kickNames[0] || "Kick1");
-  const [len, setLen] = useState(0.3);
+  const [len, setLen] = useState(1.0);
   const [ottAmt, setOttAmt] = useState(0);
   const [distortionAmt, setDistortionAmt] = useState(0);
 
@@ -41,7 +41,7 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
 
   useEffect(() => {
     if (!isReady) return;
-    postMessage({ type: "kickRelease", value: len });
+    postMessage({ type: "kickLength", value: len });
   }, [len, isReady, postMessage]);
 
   useEffect(() => {
@@ -61,12 +61,12 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
     dropdownOnChange: setSample,
     layerKnobLabels: ["Length", "Distortion", "OTT"],
     knobValues: [
-      mapCustomRangeToKnobRange(len, 0, 0.3),
+      mapCustomRangeToKnobRange(len, 0.1, 1.0),
       mapCustomRangeToKnobRange(distortionAmt, 0, 0.5),
       mapCustomRangeToKnobRange(ottAmt, 0, 1),
     ],
     knobOnChanges: [
-      (value) => setLen(mapKnobRangeToCustomRange(value, 0, 0.3)),
+      (value) => setLen(mapKnobRangeToCustomRange(value, 0.1, 1.0)),
       (value) => setDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
       (value) => setOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
     ],
