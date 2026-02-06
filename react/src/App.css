@@ -164,6 +164,18 @@ form {
   padding-top: 40px;
 }
 
+.guest-auth-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.guest-auth-btn {
+  background-color: transparent;
+  cursor: pointer;
+}
+
 .cue-button {
   width: 90px;
   height: 90px;
