@@ -3,6 +3,8 @@ import {
   kickNames,
   mapKnobRangeToCustomRange,
   mapCustomRangeToKnobRange,
+  mapKnobToLengthRatio,
+  mapLengthRatioToKnob,
 } from "../utils/audioAssets";
 import type { LayerStripProps } from "../types/types";
 import type { AudioEngine } from "./useAudioEngine";
@@ -61,12 +63,12 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
     dropdownOnChange: setSample,
     layerKnobLabels: ["Length", "Distortion", "OTT"],
     knobValues: [
-      mapCustomRangeToKnobRange(len, 0.1, 1.0),
+      mapLengthRatioToKnob(len, 0.1, 1.0),
       mapCustomRangeToKnobRange(distortionAmt, 0, 0.5),
       mapCustomRangeToKnobRange(ottAmt, 0, 1),
     ],
     knobOnChanges: [
-      (value) => setLen(mapKnobRangeToCustomRange(value, 0.1, 1.0)),
+      (value) => setLen(mapKnobToLengthRatio(value, 0.1, 1.0)),
       (value) => setDistortionAmt(mapKnobRangeToCustomRange(value, 0, 0.5)),
       (value) => setOttAmt(mapKnobRangeToCustomRange(value, 0, 1)),
     ],

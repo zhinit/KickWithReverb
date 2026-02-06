@@ -32,6 +32,8 @@ Object.keys(irModules).forEach((path) => {
 export const irNames = Object.keys(irFiles);
 
 // Utility functions for knob range mapping
+
+// Linear mapping (default)
 export const mapKnobRangeToCustomRange = (
   knobValue: number,
   min: number,
@@ -46,4 +48,40 @@ export const mapCustomRangeToKnobRange = (
   max: number
 ): number => {
   return ((value - min) / (max - min)) * 100;
+};
+
+// Logarithmic mapping (for frequency controls)
+// Makes low frequencies more controllable
+export const mapKnobToFrequency = (
+  knobValue: number,
+  min: number,
+  max: number
+): number => {
+  return min * Math.pow(max / min, knobValue / 100);
+};
+
+export const mapFrequencyToKnob = (
+  value: number,
+  min: number,
+  max: number
+): number => {
+  return (100 * Math.log(value / min)) / Math.log(max / min);
+};
+
+// Power curve mapping (for kick length - halfway = 25%)
+// Creates a curve where small knob values have more precision
+export const mapKnobToLengthRatio = (
+  knobValue: number,
+  min: number,
+  max: number
+): number => {
+  return min + (max - min) * Math.pow(knobValue / 100, 2);
+};
+
+export const mapLengthRatioToKnob = (
+  value: number,
+  min: number,
+  max: number
+): number => {
+  return 100 * Math.sqrt((value - min) / (max - min));
 };
