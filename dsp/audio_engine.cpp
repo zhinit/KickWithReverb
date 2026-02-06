@@ -294,7 +294,16 @@ AudioEngine::setLooping(bool enabled)
 void
 AudioEngine::cue()
 {
+  noisePlayer_.setLooping(false);
+  noisePlayer_.trigger();
   kickPlayer_.trigger();
+}
+
+void
+AudioEngine::cueRelease()
+{
+  noisePlayer_.stop();
+  noisePlayer_.setLooping(true);
 }
 
 void
@@ -338,5 +347,6 @@ EMSCRIPTEN_BINDINGS(audio_module)
     // Transport
     .function("setBPM", &AudioEngine::setBPM)
     .function("setLooping", &AudioEngine::setLooping)
-    .function("cue", &AudioEngine::cue);
+    .function("cue", &AudioEngine::cue)
+    .function("cueRelease", &AudioEngine::cueRelease);
 }

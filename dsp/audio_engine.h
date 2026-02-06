@@ -50,6 +50,7 @@ public:
     void setBPM(float bpm);
     void setLooping(bool enabled);
     void cue();
+    void cueRelease();
 
 private:
     static constexpr int kBlockSize = 128;
