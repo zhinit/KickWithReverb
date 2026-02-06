@@ -57,7 +57,13 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
       sampleCounter_ -= samplesPerBeat_;
       beatCounter_++;
       kickPlayer_.trigger();
-      if (beatCounter_ % 8 == 0) {
+
+      // If a new noise sample was selected, trigger it now and reset the loop
+      if (pendingNoiseTrigger_) {
+        noisePlayer_.trigger();
+        beatCounter_ = 0;
+        pendingNoiseTrigger_ = false;
+      } else if (beatCounter_ % 8 == 0) {
         noisePlayer_.trigger();
       }
     }
@@ -176,6 +182,9 @@ void
 AudioEngine::selectNoiseSample(int index)
 {
   noisePlayer_.selectSample(index);
+  if (looping_) {
+    pendingNoiseTrigger_ = true;
+  }
 }
 
 void
