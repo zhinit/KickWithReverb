@@ -27,7 +27,7 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 ## Signal Flow (in `AudioEngine::process`)
 
 ```
-1. Transport: advance sample counter, trigger kick every beat, noise every 8 beats (or on next beat if sample changed)
+1. Transport: advance sample counter, trigger kick every beat, noise every 16 beats (or on next beat if sample changed)
 
 2. Kick: SamplePlayer(with length truncation) → Distortion (wet/dry blend by kickDistortionMix_) → OTTCompressor(10, 9, -3, 0)
 
@@ -78,7 +78,7 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 ### Transport
 
-- `setBPM(bpm)` — Recalculates samplesPerBeat\_ (60-365)
+- `setBPM(bpm)` — Recalculates samplesPerBeat\_ (110-365)
 - `setLooping(enabled)` — Start: triggers kick+noise, resets counters. Stop: fades out noise.
 - `cue()` — Single kick+noise trigger (sets noise looping=false so it plays once)
 - `cueRelease()` — Stops noise with 0.1s fade-out, restores looping=true for normal transport playback
@@ -86,7 +86,7 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 ## Key Design Decisions
 
 - **Kick length truncation**: SamplePlayer has `setLengthRatio(float)` which truncates playback at a percentage of sample length. A 512-sample (~12ms) fade-out is applied at the cut point to prevent clicks.
-- **Noise sample switching**: When a new noise sample is selected during playback, it triggers on the next beat (not immediately) and resets the 8-beat loop timer. This keeps changes beat-aligned.
+- **Noise sample switching**: When a new noise sample is selected during playback, it triggers on the next beat (not immediately) and resets the 16-beat loop timer. This keeps changes beat-aligned.
 - **Distortion wet/dry**: AudioEngine saves dry copy, processes through Distortion, blends with `mix` amount. Distortion drive is fixed at 6.0.
 - **Reverb as send**: Convolution set to 100% wet. Dry signals bypass reverb. Reverb output added at master mix point.
 - **IR storage**: Raw IR data stored in `irStorage_` vector. `loadIR` only stores data; `selectIR` must be called to actually load into the convolution engine (involves FFT partitioning). Convolution outputs pass-through until an IR is selected.

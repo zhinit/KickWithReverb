@@ -45,7 +45,7 @@ export const ControlStrip = ({
   const handleBlur = () => {
     const numValue = Number(inputValue);
     if (!isNaN(numValue)) {
-      const clampedValue = Math.min(365, Math.max(60, numValue));
+      const clampedValue = Math.min(365, Math.max(110, numValue));
       setBPM(clampedValue);
       setInputValue(clampedValue.toString());
     } else {
@@ -81,7 +81,7 @@ export const ControlStrip = ({
         className="bpm-box"
         type="number"
         value={inputValue}
-        min="60"
+        min="110"
         max="365" 
         onChange={handleLocalInput}
         onBlur={handleBlur}

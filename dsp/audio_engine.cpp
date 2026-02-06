@@ -63,7 +63,7 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
         noisePlayer_.trigger();
         beatCounter_ = 0;
         pendingNoiseTrigger_ = false;
-      } else if (beatCounter_ % 8 == 0) {
+      } else if (beatCounter_ % 16 == 0) {
         noisePlayer_.trigger();
       }
     }
