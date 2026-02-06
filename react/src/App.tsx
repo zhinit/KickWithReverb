@@ -38,10 +38,10 @@ function AppContent() {
           </button>
         </div>
       )}
-      {userStatus === "member" && <Logout />}
       <div style={{ display: showDaw ? undefined : "none" }}>
         <Daw />
       </div>
+      {userStatus === "member" && <Logout />}
     </>
   );
 }
