@@ -69,7 +69,10 @@ TypeScript interfaces for component props:
   - Authentication: `loginUser`, `registerUser`
   - Presets: `getPresets`, `createPreset`, `updatePreset`, `deletePreset`
   - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
-- `audioAssets.ts` - Audio file imports/exports and knob range mapping utilities
+- `audioAssets.ts` - Audio file imports/exports and knob range mapping utilities:
+  - Linear mapping: `mapKnobRangeToCustomRange`, `mapCustomRangeToKnobRange`
+  - Log scale (for filter frequencies): `mapKnobToFrequency`, `mapFrequencyToKnob`
+  - Power curve (for kick length, where 50% knob = 25% range): `mapKnobToLengthRatio`, `mapLengthRatioToKnob`
 
 ### `/src/assets/`
 
@@ -113,7 +116,7 @@ React Hooks ──postMessage──► AudioWorklet (dsp-processor.js) ──►
 ### Hook → Engine Message Flow
 
 Each hook watches its React state and sends typed messages:
-- `useKickLayer` → `selectKickSample`, `kickRelease`, `kickDistortion`, `kickOTT`
+- `useKickLayer` → `selectKickSample`, `kickLength`, `kickDistortion`, `kickOTT`
 - `useNoiseLayer` → `selectNoiseSample`, `noiseVolume`, `noiseLowPass`, `noiseHighPass`
 - `useReverbLayer` → `selectIR`, `reverbLowPass`, `reverbHighPass`, `reverbVolume`
 - `useMasterChain` → `masterOTT`, `masterDistortion`, `masterLimiter`
