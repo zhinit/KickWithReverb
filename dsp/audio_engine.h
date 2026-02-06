@@ -98,6 +98,7 @@ private:
     int samplesPerBeat_ = 0;
     int sampleCounter_ = 0;
     int beatCounter_ = 0;
+    bool pendingNoiseTrigger_ = false;
 
     // Scratch buffers (fixed at AudioWorklet block size)
     std::array<float, kBlockSize> kickL_{};
