@@ -17,7 +17,7 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 | File                   | Class                                          | Purpose                                                                                                                                                                                      |
 | ---------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `audio_engine.h/.cpp`  | `AudioEngine`                                  | Top-level orchestrator. Owns all players/effects/transport. EMSCRIPTEN_BINDINGS here.                                                                                                        |
-| `sample_player.h/.cpp` | `SamplePlayer`                                 | Stores multiple samples in `vector<vector<float>>`. Supports trigger/stop, fade-out envelope, looping. Used for kick and noise.                                                              |
+| `sample_player.h/.cpp` | `SamplePlayer`                                 | Stores multiple samples in `vector<vector<float>>`. Supports trigger/stop, fade-out envelope, looping, and length truncation. Used for kick and noise.                                       |
 | `distortion.h/.cpp`    | `Distortion`                                   | `juce::dsp::WaveShaper` with `tanh(x*drive) + 0.1*x*x`. `setDrive(float)`. AudioEngine manages wet/dry mix externally.                                                                       |
 | `ott.h/.cpp`           | `OTTCompressor`, `BandCompressor`              | 3-band Linkwitz-Riley crossover (100Hz/2500Hz). Per-band up/down compression + EQ scaling by amount. Constructor takes `(ratioMultiplier, lowEqPerAmount, midEqPerAmount, highEqPerAmount)`. |
 | `convolution.h/.cpp`   | `ConvolutionEngine`, `StereoConvolutionReverb` | FFT overlap-add convolution (order 9, 512-point FFT, 128-sample blocks). Stereo wrapper with wet/dry mix.                                                                                    |
@@ -27,9 +27,9 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 ## Signal Flow (in `AudioEngine::process`)
 
 ```
-1. Transport: advance sample counter, trigger kick every beat, noise every 8 beats
+1. Transport: advance sample counter, trigger kick every beat, noise every 8 beats (or on next beat if sample changed)
 
-2. Kick: SamplePlayer → Distortion (wet/dry blend by kickDistortionMix_) → OTTCompressor(10, 9, -3, 0)
+2. Kick: SamplePlayer(with length truncation) → Distortion (wet/dry blend by kickDistortionMix_) → OTTCompressor(10, 9, -3, 0)
 
 3. Noise: SamplePlayer(looping=true) → LowpassFilter → HighpassFilter
 
@@ -50,14 +50,14 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 - `loadKickSample(ptr, length)` — Add sample from WASM heap
 - `selectKickSample(index)` — Switch active sample
-- `setKickRelease(seconds)` — Fade-out envelope (0-0.3s)
+- `setKickLength(ratio)` — Truncate sample playback (0.1-1.0, where 1.0 = full sample). Applies short fade-out at cut point.
 - `setKickDistortion(amount)` — Wet/dry mix (0-0.5)
 - `setKickOTT(amount)` — Compression amount (0-1)
 
 ### Noise
 
 - `loadNoiseSample(ptr, length)` — Add sample from WASM heap
-- `selectNoiseSample(index)` — Switch active sample
+- `selectNoiseSample(index)` — Switch active sample. If looping, triggers new sample on next beat and resets 8-beat loop timer.
 - `setNoiseVolume(db)` — Volume in dB (-70 to -6), converted to linear internally
 - `setNoiseLowPass(hz)` — Lowpass cutoff (30-7000)
 - `setNoiseHighPass(hz)` — Highpass cutoff (30-7000)
@@ -84,6 +84,8 @@ Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 ## Key Design Decisions
 
+- **Kick length truncation**: SamplePlayer has `setLengthRatio(float)` which truncates playback at a percentage of sample length. A 512-sample (~12ms) fade-out is applied at the cut point to prevent clicks.
+- **Noise sample switching**: When a new noise sample is selected during playback, it triggers on the next beat (not immediately) and resets the 8-beat loop timer. This keeps changes beat-aligned.
 - **Distortion wet/dry**: AudioEngine saves dry copy, processes through Distortion, blends with `mix` amount. Distortion drive is fixed at 6.0.
 - **Reverb as send**: Convolution set to 100% wet. Dry signals bypass reverb. Reverb output added at master mix point.
 - **IR storage**: Raw IR data stored in `irStorage_` vector. `loadIR` only stores data; `selectIR` must be called to actually load into the convolution engine (involves FFT partitioning). Convolution outputs pass-through until an IR is selected.
