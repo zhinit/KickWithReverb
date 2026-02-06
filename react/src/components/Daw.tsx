@@ -12,7 +12,8 @@ import { usePresets } from "../hooks/usePresets";
 import { useAuth } from "../hooks/useAuth";
 
 export const Daw = () => {
-  const { isAuthenticated } = useAuth();
+  const { userStatus } = useAuth();
+  const isMember = userStatus === "member";
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
@@ -38,14 +39,8 @@ export const Daw = () => {
   return (
     <div className="daw">
       <h1>KICK WITH REVERB</h1>
-      {!isAuthenticated && (
-        <h2>
-          Fully featured fully sophisticated DAW <br />
-          for the modern tik tok techno purist.
-        </h2>
-      )}
       <PresetsBar
-        isAuthenticated={isAuthenticated}
+        isMember={isMember}
         presets={presets.presets}
         currentPresetId={presets.currentPresetId}
         currentPresetName={presets.currentPresetName}

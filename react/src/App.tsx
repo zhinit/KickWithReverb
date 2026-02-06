@@ -1,36 +1,37 @@
 import "./App.css";
 import { useState } from "react";
 import { Daw } from "./components/Daw"
-import { LoginRegister } from "./components/LoginRegister";
 import { Logout } from "./components/Logout";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
+import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
-  const [view, setView] = useState<"main" | "login" | "register">("main");
+  const { userStatus, continueAsGuest } = useAuth();
+  const [view, setView] = useState<"welcome" | "login" | "register">("welcome");
 
-  const showDaw = isAuthenticated || view === "main";
+  const showDaw = userStatus === "member" || userStatus === "guest";
 
   return (
     <>
-      {!isAuthenticated && view === "login" && (
-        <LoginForm onBack={() => setView("main")} />
-      )}
-      {!isAuthenticated && view === "register" && (
-        <RegisterForm onBack={() => setView("main")} />
-      )}
-      {!isAuthenticated && view === "main" && (
-        <LoginRegister
+      {!showDaw && view === "welcome" && (
+        <WelcomeScreen
           onLogin={() => setView("login")}
           onRegister={() => setView("register")}
+          onGuest={() => continueAsGuest()}
         />
+      )}
+      {!showDaw && view === "login" && (
+        <LoginForm onBack={() => setView("welcome")} />
+      )}
+      {!showDaw && view === "register" && (
+        <RegisterForm onBack={() => setView("welcome")} />
       )}
       <div style={{ display: showDaw ? undefined : "none" }}>
         <Daw />
       </div>
-      {isAuthenticated && <Logout />}
+      {userStatus === "member" && <Logout />}
     </>
   );
 }

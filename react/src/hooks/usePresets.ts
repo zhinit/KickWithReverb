@@ -107,7 +107,8 @@ export interface UsePresetsReturn {
 }
 
 export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
-  const { isAuthenticated } = useAuth();
+  const { userStatus } = useAuth();
+  const isMember = userStatus === "member";
 
   const [userPresets, setUserPresets] = useState<PresetData[]>([]);
   const [sharedPresets, setSharedPresets] = useState<PresetData[]>([]);
@@ -131,7 +132,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
 
   // Fetch presets when authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isMember) {
       setUserPresets([]);
       setSharedPresets([]);
       setCurrentPresetId(null);
@@ -160,7 +161,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     };
 
     fetchPresets();
-  }, [isAuthenticated]);
+  }, [isMember]);
 
   // Load a preset by applying its values to all layers
   const loadPreset = useCallback(

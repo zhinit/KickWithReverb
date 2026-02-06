@@ -2,24 +2,32 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { loginUser, registerUser } from "../utils/api";
 import { mapAuthError } from "../utils/authErrors";
 
+export type UserStatus = "unknown" | "guest" | "member";
+
 interface AuthContextType {
-  isAuthenticated: boolean;
+  userStatus: UserStatus;
   login: (username: string, password: string) => Promise<string | null>;
   register: (username: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
+  continueAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function getInitialStatus(): UserStatus {
+  const token = localStorage.getItem("accessToken");
+  return token ? "member" : "unknown";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userStatus, setUserStatus] = useState<UserStatus>(getInitialStatus);
 
   async function login(username: string, password: string): Promise<string | null> {
     const response = await loginUser(username, password);
     if (response.ok && response.data) {
       localStorage.setItem("accessToken", response.data.access);
       localStorage.setItem("refreshToken", response.data.refresh);
-      setIsAuthenticated(true);
+      setUserStatus("member");
       return null;
     }
     return mapAuthError(response.status, response.data, "login");
@@ -37,11 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    setIsAuthenticated(false);
+    setUserStatus("unknown");
+  }
+
+  function continueAsGuest() {
+    setUserStatus("guest");
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ userStatus, login, register, logout, continueAsGuest }}>
       {children}
     </AuthContext.Provider>
   );

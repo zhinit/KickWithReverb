@@ -41,7 +41,7 @@ react/
 Custom hooks that encapsulate audio logic and state management:
 
 - `useAudioEngine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks
-- `useAuth.tsx` - Authentication context and auth state management
+- `useAuth.tsx` - Authentication context with `UserStatus` (`"unknown" | "guest" | "member"`), provides `login`, `register`, `logout`, `continueAsGuest`
 - `useKickLayer.ts` - Kick drum layer (React state + postMessage to WASM)
 - `useNoiseLayer.ts` - Noise generator layer (React state + postMessage to WASM)
 - `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
@@ -86,12 +86,17 @@ Static assets including:
 
 ## Authentication Flow
 
-The app uses JWT-based authentication:
+The app uses JWT-based authentication with a three-state user status model:
 
-1. `AuthProvider` wraps the app and provides auth context
-2. Unauthenticated users see login/register buttons above the DAW
-3. Authenticated users see the DAW with a logout button
-4. Tokens are stored in `localStorage`
+- **`"unknown"`** - Initial state. User sees the welcome screen with login, sign up, and guest options.
+- **`"guest"`** - User chose "Continue as Guest". Sees the DAW without presets or tagline.
+- **`"member"`** - Logged in or registered. Sees the DAW with presets and logout button.
+
+1. `AuthProvider` wraps the app and provides auth context (`userStatus`, `login`, `register`, `logout`, `continueAsGuest`)
+2. On mount, if tokens exist in `localStorage`, status initializes to `"member"` (skips welcome screen)
+3. Otherwise, status is `"unknown"` and the welcome screen is shown
+4. The DAW component is always mounted (hidden) for eager loading of audio samples
+5. Logging out resets status to `"unknown"`, returning to the welcome screen
 
 ## Audio Architecture
 
