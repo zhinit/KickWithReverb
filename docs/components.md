@@ -11,10 +11,11 @@ App
 │       │   ├── LoginForm
 │       │   └── RegisterForm
 │       ├── [guest]
+│       │   ├── Login/Sign Up Buttons (above Daw)
 │       │   └── Daw
 │       └── [member]
 │           ├── Daw
-│           └── Logout
+│           └── Logout (below Daw)
 │       (Daw is always mounted but hidden for eager loading)
 ```
 
@@ -56,8 +57,8 @@ Root component that wraps the app in `AuthProvider` and renders `AppContent`.
 Handles view routing based on `userStatus`:
 
 - `"unknown"`: Shows welcome screen (or login/register forms)
-- `"guest"`: Shows DAW (no presets, no logout)
-- `"member"`: Shows DAW with presets + logout button
+- `"guest"`: Shows Login/Sign Up buttons above the DAW (no presets)
+- `"member"`: Shows DAW with presets + logout button below
 
 The DAW is always mounted but hidden during non-DAW views, so audio samples load eagerly in the background.
 
@@ -135,9 +136,8 @@ Includes two modals:
 Landing page displayed when `userStatus` is `"unknown"`. Shows:
 
 - "KICK WITH REVERB" title
-- Tagline: "Fully featured fully sophisticated DAW for the modern tik tok techno purist."
 - "Welcome to the Loop. What would you like to do?"
-- Three buttons: Login, Sign Up, Continue as Guest
+- Three buttons stacked vertically: Login, Sign Up, Continue as Guest
 
 ### LoginForm (`LoginForm.tsx`)
 

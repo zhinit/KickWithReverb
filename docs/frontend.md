@@ -89,8 +89,8 @@ Static assets including:
 The app uses JWT-based authentication with a three-state user status model:
 
 - **`"unknown"`** - Initial state. User sees the welcome screen with login, sign up, and guest options.
-- **`"guest"`** - User chose "Continue as Guest". Sees the DAW without presets or tagline.
-- **`"member"`** - Logged in or registered. Sees the DAW with presets and logout button.
+- **`"guest"`** - User chose "Continue as Guest". Sees Login/Sign Up buttons above the DAW (no presets).
+- **`"member"`** - Logged in or registered. Sees the DAW with presets and logout button below.
 
 1. `AuthProvider` wraps the app and provides auth context (`userStatus`, `login`, `register`, `logout`, `continueAsGuest`)
 2. On mount, if tokens exist in `localStorage`, status initializes to `"member"` (skips welcome screen)
