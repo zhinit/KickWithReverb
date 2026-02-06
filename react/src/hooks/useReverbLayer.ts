@@ -3,6 +3,8 @@ import {
   irNames,
   mapKnobRangeToCustomRange,
   mapCustomRangeToKnobRange,
+  mapKnobToFrequency,
+  mapFrequencyToKnob,
 } from "../utils/audioAssets";
 import type { LayerStripProps } from "../types/types";
 import type { AudioEngine } from "./useAudioEngine";
@@ -61,13 +63,13 @@ export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
     dropdownOnChange: setIr,
     layerKnobLabels: ["Low Pass", "High Pass", "Volume"],
     knobValues: [
-      mapCustomRangeToKnobRange(lowPassFreq, 30, 7000),
-      mapCustomRangeToKnobRange(highPassFreq, 30, 7000),
+      mapFrequencyToKnob(lowPassFreq, 30, 7000),
+      mapFrequencyToKnob(highPassFreq, 30, 7000),
       mapCustomRangeToKnobRange(volume, -60, 0),
     ],
     knobOnChanges: [
-      (value) => setLowPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
-      (value) => setHighPassFreq(mapKnobRangeToCustomRange(value, 30, 7000)),
+      (value) => setLowPassFreq(mapKnobToFrequency(value, 30, 7000)),
+      (value) => setHighPassFreq(mapKnobToFrequency(value, 30, 7000)),
       (value) => setVolume(mapKnobRangeToCustomRange(value, -60, 0)),
     ],
   };
