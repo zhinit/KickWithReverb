@@ -37,7 +37,6 @@ A web-based DAW (Digital Audio Workstation) for creating and processing kick dru
 - Django 5.2
 - Django REST Framework
 - Simple JWT
-- djangorestframework-camel-case (middleware to convert camleCase to snake_case)
 - PostgreSQL (Supabase)
 - Gunicorn
 
