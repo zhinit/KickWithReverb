@@ -114,12 +114,46 @@ form {
   font-weight: 400;
 }
 
-.login-button {
-  background-color: transparent;
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 8px;
 }
 
-.login-register {
-  pad: 10px;
+.welcome-title {
+  margin: 0;
+}
+
+.welcome-tagline {
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.welcome-prompt {
+  text-shadow: 0 0 6px rgba(0, 255, 156, 0.6);
+  text-transform: uppercase;
+  font-weight: 400;
+  margin-top: 24px;
+  margin-bottom: 4px;
+}
+
+.welcome-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.welcome-btn {
+  background-color: transparent;
+  cursor: pointer;
+  padding: 8px 20px;
+}
+
+.welcome-btn:hover {
+  border-color: aquamarine;
 }
 
 .logout-button {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { PresetItem } from "../hooks/usePresets";
 
 interface PresetsBarProps {
-  isAuthenticated: boolean;
+  isMember: boolean;
   presets: PresetItem[];
   currentPresetId: number | null;
   currentPresetName: string;
@@ -15,7 +15,7 @@ interface PresetsBarProps {
 }
 
 export const PresetsBar = ({
-  isAuthenticated,
+  isMember,
   presets,
   currentPresetId,
   currentPresetName,
@@ -91,7 +91,7 @@ export const PresetsBar = ({
   };
 
   // Unauthenticated state
-  if (!isAuthenticated) {
+  if (!isMember) {
     return (
       <div className="presets-bar presets-bar-disabled">
         <span className="presets-bar-message">Log in to use presets</span>

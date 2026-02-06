@@ -6,14 +6,16 @@
 App
 ├── AuthProvider (context wrapper)
 │   └── AppContent
-│       ├── [Unauthenticated]
-│       │   ├── LoginRegister
+│       ├── [unknown]
+│       │   ├── WelcomeScreen
 │       │   ├── LoginForm
-│       │   ├── RegisterForm
+│       │   └── RegisterForm
+│       ├── [guest]
 │       │   └── Daw
-│       └── [Authenticated]
+│       └── [member]
 │           ├── Daw
 │           └── Logout
+│       (Daw is always mounted but hidden for eager loading)
 ```
 
 ```
@@ -51,17 +53,20 @@ Root component that wraps the app in `AuthProvider` and renders `AppContent`.
 
 ### AppContent (`App.tsx`)
 
-Handles routing based on auth state:
+Handles view routing based on `userStatus`:
 
-- Not authenticated: Shows login/register options + DAW
-- Authenticated: Shows DAW + logout button
+- `"unknown"`: Shows welcome screen (or login/register forms)
+- `"guest"`: Shows DAW (no presets, no logout)
+- `"member"`: Shows DAW with presets + logout button
+
+The DAW is always mounted but hidden during non-DAW views, so audio samples load eagerly in the background.
 
 ### Daw (`Daw.tsx`)
 
 Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Contains:
 
-- Title and description
-- `PresetsBar` - Preset management controls (authenticated users only)
+- Title
+- `PresetsBar` - Preset management controls (members only; guests see "Log in to use presets")
 - `ControlStrip` - Transport controls
 - `SoundUnit` - Sound layer controls
 - `MasterStrip` - Master output controls
@@ -125,12 +130,14 @@ Includes two modals:
 - **Save Modal** - Form to enter preset name with validation (alphanumeric, max 32 chars)
 - **Delete Confirmation Modal** - Confirms before deleting a user preset
 
-### LoginRegister (`LoginRegister.tsx`)
+### WelcomeScreen (`WelcomeScreen.tsx`)
 
-Two buttons displayed when not authenticated:
+Landing page displayed when `userStatus` is `"unknown"`. Shows:
 
-- "Log In" - Navigates to login form
-- "Sign Up" - Navigates to register form
+- "KICK WITH REVERB" title
+- Tagline: "Fully featured fully sophisticated DAW for the modern tik tok techno purist."
+- "Welcome to the Loop. What would you like to do?"
+- Three buttons: Login, Sign Up, Continue as Guest
 
 ### LoginForm (`LoginForm.tsx`)
 
@@ -153,4 +160,4 @@ Registration form with:
 
 ### Logout (`Logout.tsx`)
 
-Simple logout button that clears auth tokens and resets auth state.
+Simple logout button that clears auth tokens and resets `userStatus` to `"unknown"`, returning to the welcome screen.
