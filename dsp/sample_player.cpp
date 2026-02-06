@@ -52,11 +52,17 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
 
     const auto& sample = samples_[activeSampleIndex_];
 
+    // Calculate the endpoint based on lengthRatio_
+    size_t endPosition = static_cast<size_t>(sample.size() * lengthRatio_);
+    size_t fadeStartPosition = endPosition > kFadeOutSamples
+        ? endPosition - kFadeOutSamples
+        : 0;
+
     for (int i = 0; i < numSamples; ++i) {
         float out = 0.0f;
 
         if (playing_) {
-            if (position_ >= sample.size()) {
+            if (position_ >= endPosition) {
                 if (looping_) {
                     position_ = 0;
                 } else {
@@ -65,8 +71,15 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
                 }
             }
 
-            if (playing_ && position_ < sample.size()) {
+            if (playing_ && position_ < endPosition) {
                 out = sample[position_] * volume_;
+
+                // Apply fade-out as we approach the end position
+                if (position_ >= fadeStartPosition && !looping_) {
+                    float fadeProgress = static_cast<float>(position_ - fadeStartPosition)
+                        / static_cast<float>(kFadeOutSamples);
+                    out *= (1.0f - fadeProgress);
+                }
 
                 if (releasing_) {
                     out *= envelopeLevel_;
@@ -106,4 +119,9 @@ void SamplePlayer::setSampleRate(float sampleRate)
 void SamplePlayer::setLooping(bool loop)
 {
     looping_ = loop;
+}
+
+void SamplePlayer::setLengthRatio(float ratio)
+{
+    lengthRatio_ = std::clamp(ratio, 0.1f, 1.0f);
 }

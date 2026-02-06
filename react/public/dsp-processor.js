@@ -69,8 +69,8 @@ class DSPProcessor extends AudioWorkletProcessor {
         break;
 
       // Kick parameters
-      case "kickRelease":
-        this.engine.setKickRelease(data.value);
+      case "kickLength":
+        this.engine.setKickLength(data.value);
         break;
       case "kickDistortion":
         this.engine.setKickDistortion(data.value);

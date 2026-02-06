@@ -147,9 +147,9 @@ AudioEngine::selectKickSample(int index)
 }
 
 void
-AudioEngine::setKickRelease(float seconds)
+AudioEngine::setKickLength(float ratio)
 {
-  kickPlayer_.setReleaseDuration(seconds);
+  kickPlayer_.setLengthRatio(ratio);
 }
 
 void
@@ -307,7 +307,7 @@ EMSCRIPTEN_BINDINGS(audio_module)
     // Kick
     .function("loadKickSample", &AudioEngine::loadKickSample)
     .function("selectKickSample", &AudioEngine::selectKickSample)
-    .function("setKickRelease", &AudioEngine::setKickRelease)
+    .function("setKickLength", &AudioEngine::setKickLength)
     .function("setKickDistortion", &AudioEngine::setKickDistortion)
     .function("setKickOTT", &AudioEngine::setKickOTT)
     // Noise
