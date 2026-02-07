@@ -1,0 +1,15 @@
+[project]
+name = "pytorch"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11.8"
+dependencies = [
+    "numpy>=2.4.2",
+    "pandas>=3.0.0",
+    "soundfile>=0.13.1",
+    "tensorboard>=2.20.0",
+    "torch>=2.10.0",
+    "torchaudio>=2.10.0",
+    "tqdm>=4.67.2",
+]
