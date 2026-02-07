@@ -39,3 +39,4 @@ __pycache__/
 .env
 .claudeignore
 /pytorch
+/django/.venv
