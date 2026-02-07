@@ -20,12 +20,10 @@ pytorch/
 ├── inference/
 │   ├── __init__.py
 │   └── generate.py       # Generation pipeline + CLI
-├── checkpoints/
+├── weights/
 │   ├── vae_epoch_100.pt          # VAE decoder weights (48MB)
 │   ├── diffusion_step_100000.pt  # Diffusion U-Net + text encoder + vocab (91MB)
 │   └── vocoder_epoch_50.pt       # HiFi-GAN generator weights (159MB)
-└── docs/
-    └── userGuide.md       # This file
 ```
 
 The diffusion checkpoint bundles everything needed for text conditioning: the U-Net weights (EMA), text encoder weights, vocabulary list, and model config.
@@ -64,16 +62,16 @@ output_path = generate(
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `diffusion_checkpoint` | `Path` | required | Path to diffusion model checkpoint |
-| `vae_checkpoint` | `Path` | required | Path to VAE checkpoint |
-| `vocoder_checkpoint` | `Path \| None` | `None` | Path to HiFi-GAN checkpoint. `None` falls back to Griffin-Lim |
-| `prompt` | `str` | `""` | Space/comma-separated keywords (e.g. `"punchy 808"`) |
-| `cfg_scale` | `float` | `3.0` | Classifier-free guidance strength. Higher = more prompt adherence |
-| `ddim_steps` | `int` | `50` | DDIM sampling steps. More steps = higher quality, slower |
-| `output_path` | `Path \| None` | `None` | Output WAV path. `None` auto-generates in `generations/` folder |
-| `seed` | `int \| None` | `None` | Random seed for reproducible output |
+| Parameter              | Type           | Default  | Description                                                       |
+| ---------------------- | -------------- | -------- | ----------------------------------------------------------------- |
+| `diffusion_checkpoint` | `Path`         | required | Path to diffusion model checkpoint                                |
+| `vae_checkpoint`       | `Path`         | required | Path to VAE checkpoint                                            |
+| `vocoder_checkpoint`   | `Path \| None` | `None`   | Path to HiFi-GAN checkpoint. `None` falls back to Griffin-Lim     |
+| `prompt`               | `str`          | `""`     | Space/comma-separated keywords (e.g. `"punchy 808"`)              |
+| `cfg_scale`            | `float`        | `3.0`    | Classifier-free guidance strength. Higher = more prompt adherence |
+| `ddim_steps`           | `int`          | `50`     | DDIM sampling steps. More steps = higher quality, slower          |
+| `output_path`          | `Path \| None` | `None`   | Output WAV path. `None` auto-generates in `generations/` folder   |
+| `seed`                 | `int \| None`  | `None`   | Random seed for reproducible output                               |
 
 ### Return Value
 
@@ -176,17 +174,17 @@ uv run inference/generate.py --no-vocoder
 
 ### CLI Arguments
 
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--prompt` | `""` | Text prompt keywords |
-| `--cfg-scale` | `3.0` | Guidance scale |
-| `--steps` | `50` | DDIM steps |
-| `--seed` | None | Random seed |
-| `--output` | auto | Output path (default: `generations/kick_<keywords>_<hash>.wav`) |
-| `--diffusion-ckpt` | `checkpoints/diffusion_step_100000.pt` | Diffusion checkpoint |
-| `--vae-ckpt` | `checkpoints/vae_epoch_100.pt` | VAE checkpoint |
-| `--vocoder-ckpt` | `checkpoints/vocoder.pt` | Vocoder checkpoint |
-| `--no-vocoder` | false | Use Griffin-Lim instead of HiFi-GAN |
+| Argument           | Default                                | Description                                                     |
+| ------------------ | -------------------------------------- | --------------------------------------------------------------- |
+| `--prompt`         | `""`                                   | Text prompt keywords                                            |
+| `--cfg-scale`      | `3.0`                                  | Guidance scale                                                  |
+| `--steps`          | `50`                                   | DDIM steps                                                      |
+| `--seed`           | None                                   | Random seed                                                     |
+| `--output`         | auto                                   | Output path (default: `generations/kick_<keywords>_<hash>.wav`) |
+| `--diffusion-ckpt` | `checkpoints/diffusion_step_100000.pt` | Diffusion checkpoint                                            |
+| `--vae-ckpt`       | `checkpoints/vae_epoch_100.pt`         | VAE checkpoint                                                  |
+| `--vocoder-ckpt`   | `checkpoints/vocoder.pt`               | Vocoder checkpoint                                              |
+| `--no-vocoder`     | false                                  | Use Griffin-Lim instead of HiFi-GAN                             |
 
 ## Text Conditioning
 
@@ -202,6 +200,7 @@ print(ckpt["vocab"])  # list of valid keyword strings
 When no prompt is given (or no keywords match), the model generates unconditionally.
 
 **CFG scale** controls how strongly the output follows the prompt:
+
 - `1.0` = no guidance (unconditional)
 - `3.0` = default, moderate adherence
 - `5.0+` = stronger adherence, may reduce variety
