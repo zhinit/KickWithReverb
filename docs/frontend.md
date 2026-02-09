@@ -40,14 +40,15 @@ react/
 
 Custom hooks that encapsulate audio logic and state management:
 
-- `useAudioEngine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks
+- `useAudioEngine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks. Also exposes `loadKickSample(url)` for dynamically loading AI kick audio into WASM at runtime (returns the WASM index).
 - `useAuth.tsx` - Authentication context with `UserStatus` (`"unknown" | "guest" | "member"`), provides `login`, `register`, `logout`, `continueAsGuest`
-- `useKickLayer.ts` - Kick drum layer (React state + postMessage to WASM)
+- `useKickLayer.ts` - Kick drum layer (React state + postMessage to WASM). Accepts optional `aiKickNameToIndex` map to merge AI kicks into the dropdown and index lookup.
 - `useNoiseLayer.ts` - Noise generator layer (React state + postMessage to WASM)
 - `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
 - `useMasterChain.ts` - Master output chain (React state + postMessage to WASM)
 - `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage)
 - `usePresets.ts` - Preset management (load, save, delete, navigate)
+- `useAiKicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`.
 
 Each audio layer hook:
 - Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter
@@ -60,14 +61,16 @@ Each audio layer hook:
 
 TypeScript interfaces for component props:
 
-- `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps`, `SoundUnitProps`, `MasterStripProps`
+- `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps` (includes optional `customDropdown` for replacing Selectah), `SoundUnitProps`, `MasterStripProps`
 - `preset.ts` - Defines `PresetData` interface for preset state (all layer parameters, BPM, timestamps)
+- `genKick.ts` - Defines `KickData` (id, name, audioUrl), `KickListResponse` (kicks + counts), `GenerateKickResponse` (single kick + counts)
 
 ### `/src/utils/`
 
-- `api.ts` - API functions for authentication and presets. Uses `VITE_API_URL` env var for backend URL.
+- `api.ts` - API functions for authentication, presets, and AI kicks. Uses `VITE_API_URL` env var for backend URL.
   - Authentication: `loginUser`, `registerUser`
   - Presets: `getPresets`, `createPreset`, `updatePreset`, `deletePreset`
+  - AI Kicks: `getKicks`, `generateKick`, `deleteKick(id, confirm?)`
   - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
 - `audioAssets.ts` - Audio file imports/exports and knob range mapping utilities:
   - Linear mapping: `mapKnobRangeToCustomRange`, `mapCustomRangeToKnobRange`
@@ -126,6 +129,35 @@ Each hook watches its React state and sends typed messages:
 - `useReverbLayer` → `selectIR`, `reverbLowPass`, `reverbHighPass`, `reverbVolume`
 - `useMasterChain` → `masterOTT`, `masterDistortion`, `masterLimiter`
 - `useTransport` → `bpm`, `loop`, `cue`
+
+## AI Kick Gen Mode
+
+The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
+
+**DAW mode (default):**
+- PresetsBar shown at top
+- Kick Selectah shows stock kicks + AI kicks (AI kicks appended alphabetically, prefixed with "AI: ")
+- "Generate AI Kick" button shown below MasterStrip (members only)
+
+**KickGen mode:**
+- KickGenBar replaces PresetsBar (same layout: ⇇ ⇉ [dropdown] 🗑️ 🎨)
+- Title changes to "AI KICK GEN MODE"
+- Kick Selectah replaced with "Back To DAW" button
+- All knob/noise/reverb/master settings remain untouched during mode switches
+
+**Mode transitions:**
+- Entering kickGen: loads first AI kick alphabetically into sampler (if any exist)
+- Exiting kickGen: kick stays in sampler, becomes selected in Selectah
+
+**KickGenBar features:**
+- Prev/next arrows to cycle through AI kicks
+- Dropdown listing all AI kicks
+- 🎨 button generates a new kick (calls Modal GPU worker, ~10s). Shows "..." while generating
+- 🗑️ button deletes selected kick. If presets reference the kick, shows confirmation modal listing affected presets
+- Rate limit warnings when remaining daily gens <= 3
+- Total cap message at 30/30
+
+**Rate limits:** 10 generations per day (midnight EST reset), 30 total kicks max.
 
 ## Environment Variables
 

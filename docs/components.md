@@ -20,21 +20,27 @@ App
 ```
 
 ```
-Daw
-├── PresetsBar
+Daw (mode: "daw" | "kickGen")
+├── [daw mode] PresetsBar
 │   ├── Navigation Buttons (prev/next)
 │   ├── Preset Dropdown
 │   ├── Delete Button
 │   ├── Save Button
 │   ├── Save Modal
 │   └── Delete Confirmation Modal
+├── [kickGen mode] KickGenBar
+│   ├── Navigation Buttons (prev/next)
+│   ├── AI Kick Dropdown
+│   ├── Delete Button
+│   ├── Generate Button (🎨)
+│   └── Delete Confirmation Modal (preset conflict)
 ├── ControlStrip
 │   ├── Cue Button (img)
 │   ├── Play Button (img)
 │   └── BPM Input
 ├── SoundUnit
 │   ├── LayerStrip (Kick)
-│   │   ├── Selectah
+│   │   ├── Selectah (daw mode: stock + AI kicks) OR "Back To DAW" button (kickGen mode)
 │   │   └── Knob (multiple)
 │   ├── LayerStrip (Noise)
 │   │   ├── Selectah
@@ -42,8 +48,9 @@ Daw
 │   └── LayerStrip (Reverb)
 │       ├── Selectah
 │       └── Knob (multiple)
-└── MasterStrip
-    └── Knob (multiple)
+├── MasterStrip
+│   └── Knob (multiple)
+└── [daw mode, member only] "Generate AI Kick" Button
 ```
 
 ## Components
@@ -64,13 +71,16 @@ The DAW is always mounted but hidden during non-DAW views, so audio samples load
 
 ### Daw (`Daw.tsx`)
 
-Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Contains:
+Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`) and `selectedAiKickId` state. Contains:
 
-- Title
-- `PresetsBar` - Preset management controls (members only; guests see "Log in to use presets")
+- Title (switches between "KICK WITH REVERB" and "AI KICK GEN MODE")
+- `PresetsBar` (daw mode) or `KickGenBar` (kickGen mode)
 - `ControlStrip` - Transport controls
-- `SoundUnit` - Sound layer controls
+- `SoundUnit` - Sound layer controls (kick Selectah replaced with "Back To DAW" button in kickGen mode via `customDropdown` prop)
 - `MasterStrip` - Master output controls
+- "Generate AI Kick" button (daw mode, members only) — enters kickGen mode
+
+Hooks initialized: `useAudioEngine`, `useAiKicks`, `useKickLayer` (with AI kick map), `useNoiseLayer`, `useReverbLayer`, `useMasterChain`, `useTransport`, `usePresets`.
 
 The Daw component wires up the `usePresets` hook by passing layer setters and getters from all audio hooks, enabling presets to save and restore the complete DAW state.
 
@@ -97,7 +107,7 @@ Each rendered as a `LayerStrip` component.
 Generic layer control strip containing:
 
 - Layer label
-- `Selectah` dropdown (for sample/preset selection)
+- `Selectah` dropdown (for sample/preset selection), or `customDropdown` if provided (used for "Back To DAW" button in kickGen mode)
 - Multiple `Knob` components (for parameters)
 
 ### MasterStrip (`MasterStrip.tsx`)
@@ -125,11 +135,22 @@ Preset management bar displayed at the top of the DAW. Features:
 - Delete button (disabled for shared presets)
 - Save button opens a modal to name the preset
 
-When not authenticated, displays a message prompting users to log in.
+When not authenticated, displays "Login for AI kick generation and presets".
 
 Includes two modals:
 - **Save Modal** - Form to enter preset name with validation (alphanumeric, max 32 chars)
 - **Delete Confirmation Modal** - Confirms before deleting a user preset
+
+### KickGenBar (`KickGenBar.tsx`)
+
+AI kick management bar, replaces PresetsBar when in kickGen mode. Same visual layout (⇇ ⇉ [dropdown] 🗑️ 🎨). Features:
+
+- Previous/Next buttons to cycle through AI kicks (wraps around)
+- Dropdown listing all user's AI kicks alphabetically
+- Delete button — calls `DELETE /api/kicks/<id>/`. If presets reference the kick, shows confirmation modal with affected preset names. After delete, selects the next kick in the list.
+- Generate button (🎨) — calls `POST /api/kicks/generate/`, shows "..." while generating (~10s). On success, new kick is selected. Shows rate limit messages (daily limit, total cap 30).
+
+Props come from `useAiKicks` hook via Daw.tsx.
 
 ### WelcomeScreen (`WelcomeScreen.tsx`)
 
