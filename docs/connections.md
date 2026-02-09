@@ -3,30 +3,35 @@
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              LOCAL DEVELOPMENT                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   Browser ──► React Dev Server ──► Django Dev Server ──► Supabase           │
-│              (localhost:5173)      (localhost:8000)      (PostgreSQL)        │
-│                                                                              │
-│   No VITE_API_URL set              Reads django/.env     Pooler connection   │
-│   (defaults to localhost:8000)                                               │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              LOCAL DEVELOPMENT                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   Browser ──► React Dev Server ──► Django Dev Server ──► Supabase (PostgreSQL)  │
+│              (localhost:5173)      (localhost:8000)       Pooler connection      │
+│                                        │                                         │
+│                                        ├──► Modal (Serverless GPU)              │
+│                                        │    kick-generator-app                   │
+│                                        │                                         │
+│                                        └──► Supabase Storage                    │
+│                                             generated-kicks bucket               │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                PRODUCTION                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   Browser ──► Vercel ─────────────► Railway ─────────────► Supabase          │
-│              (React)                (Django + Gunicorn)    (PostgreSQL)      │
-│                                                                              │
-│   kick-with-reverb    HTTPS API     kickwithreverb-        Pooler connection │
-│   .vercel.app         requests      production.up.         Port 6543         │
-│                                     railway.app:8080                         │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                PRODUCTION                                        │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   Browser ──► Vercel ──────────► Railway ──────────────► Supabase (PostgreSQL)  │
+│              (React)             (Django + Gunicorn)      Pooler, Port 6543     │
+│                                      │                                           │
+│                                      ├──► Modal (Serverless GPU)                │
+│                                      │    kick-generator-app                     │
+│                                      │                                           │
+│                                      └──► Supabase Storage                      │
+│                                           generated-kicks bucket                 │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Environment Variable Locations
@@ -53,8 +58,14 @@
 | `DB_PASSWORD`          | PostgreSQL password               | (from Supabase)                             | (from Supabase)                              |
 | `DB_HOST`              | PostgreSQL host                   | `aws-1-us-east-1.pooler.supabase.com`       | `aws-1-us-east-1.pooler.supabase.com`        |
 | `DB_PORT`              | PostgreSQL port                   | `6543`                                      | `6543`                                       |
+| `MODAL_TOKEN_ID`       | Modal API authentication ID       | (from `~/.modal.toml`)                      | (from Modal dashboard)                       |
+| `MODAL_TOKEN_SECRET`   | Modal API authentication secret   | (from `~/.modal.toml`)                      | (from Modal dashboard)                       |
+| `SUPABASE_URL`         | Supabase project URL              | (from Supabase Settings > API)              | (same as local)                              |
+| `SUPABASE_SERVICE_KEY` | Supabase secret key               | (from Supabase Settings > API > secret key) | (same as local)                              |
 
 **Note**: Both local and production use the same Supabase database via the pooler connection.
+
+**Note**: `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` are read directly by the Modal SDK from environment variables (not explicitly loaded in `settings.py`). `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are loaded in `settings.py`.
 
 ### React Frontend Variables
 
@@ -118,6 +129,32 @@ The frontend makes API calls to:
 - `PUT /api/presets/<id>/` - Update an existing preset
 - `DELETE /api/presets/<id>/` - Delete a preset
 - `GET /api/presets/shared/` - List shared presets
+- `POST /api/kicks/generate/` - Generate an AI kick
+- `GET /api/kicks/` - List user's AI kicks
+- `DELETE /api/kicks/<id>/` - Delete an AI kick
+
+### Backend → Modal (AI Compute)
+
+| Environment | How Django Connects                                               | Modal App                  |
+| ----------- | ----------------------------------------------------------------- | -------------------------- |
+| Local       | `modal.Cls.from_name("kick-generator-app", "KickGenerator")`     | Shared deployed instance   |
+| Production  | `modal.Cls.from_name("kick-generator-app", "KickGenerator")`     | Same shared deployed instance |
+
+Django calls `generate_kick.remote("hit house")` which runs on a T4 GPU in Modal's cloud. The Modal worker:
+- Downloads model weights from HuggingFace (`zhinit/kick-gen-v1`) on first boot (cached on a Volume)
+- Keeps the GPU container warm for 5 minutes between calls (`container_idle_timeout=300`)
+- Returns raw WAV bytes (~354KB, 2-second 44.1kHz kick)
+
+Authentication is handled by `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` env vars.
+
+### Backend → Supabase Storage
+
+| Environment | Upload Path                              | Public URL Format                                          |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------- |
+| Local       | `generated-kicks/{user_id}/{uuid}.wav`   | `{SUPABASE_URL}/storage/v1/object/public/generated-kicks/...` |
+| Production  | `generated-kicks/{user_id}/{uuid}.wav`   | Same pattern                                               |
+
+Django uploads WAV bytes to the `generated-kicks` bucket using the Supabase secret key. The bucket is public, so the frontend can fetch audio directly via the public URL stored in `GeneratedKick.audio_url`.
 
 ### Backend → Database
 
@@ -134,11 +171,14 @@ The frontend makes API calls to:
 
 ## Platform Dashboards
 
-| Platform | URL                                                                           | What to Configure          |
-| -------- | ----------------------------------------------------------------------------- | -------------------------- |
-| Railway  | [railway.app](https://railway.app) → Project → Service → Variables            | Django env vars            |
-| Vercel   | [vercel.com](https://vercel.com) → Project → Settings → Environment Variables | `VITE_API_URL`             |
-| Supabase | [supabase.com](https://supabase.com) → Project → Settings → Database          | Get connection credentials |
+| Platform | URL                                                                           | What to Configure                        |
+| -------- | ----------------------------------------------------------------------------- | ---------------------------------------- |
+| Railway  | [railway.app](https://railway.app) → Project → Service → Variables            | Django env vars (incl. Modal + Supabase) |
+| Vercel   | [vercel.com](https://vercel.com) → Project → Settings → Environment Variables | `VITE_API_URL`                           |
+| Supabase | [supabase.com](https://supabase.com) → Project → Settings → Database          | Get connection credentials               |
+| Supabase | [supabase.com](https://supabase.com) → Project → Storage                      | `generated-kicks` bucket                 |
+| Modal    | [modal.com](https://modal.com) → Settings → API Tokens                        | Get `MODAL_TOKEN_ID/SECRET`              |
+| HuggingFace | [huggingface.co/zhinit/kick-gen-v1](https://huggingface.co/zhinit/kick-gen-v1) | Model weights (~350MB)               |
 
 ## Supabase Connection Info
 
@@ -179,9 +219,13 @@ Found in Supabase Dashboard → Project Settings → Database → Connection str
 
 ## Troubleshooting Connections
 
-| Symptom                       | Likely Cause                                | Solution                                                  |
-| ----------------------------- | ------------------------------------------- | --------------------------------------------------------- |
-| CORS error in browser         | `CORS_ALLOWED_ORIGINS` missing frontend URL | Add frontend URL to Railway's `CORS_ALLOWED_ORIGINS`      |
-| 500 error on API calls        | Database connection failed                  | Check `DB_HOST`, `DB_PORT`, `DB_USER` include project ref |
-| Frontend not reaching backend | Wrong `VITE_API_URL`                        | Check Vercel env var, redeploy after changing             |
-| "Network unreachable" in logs | Using direct Supabase connection            | Switch to pooler connection (host + port 6543)            |
+| Symptom                           | Likely Cause                                | Solution                                                  |
+| --------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| CORS error in browser             | `CORS_ALLOWED_ORIGINS` missing frontend URL | Add frontend URL to Railway's `CORS_ALLOWED_ORIGINS`      |
+| 500 error on API calls            | Database connection failed                  | Check `DB_HOST`, `DB_PORT`, `DB_USER` include project ref |
+| Frontend not reaching backend     | Wrong `VITE_API_URL`                        | Check Vercel env var, redeploy after changing             |
+| "Network unreachable" in logs     | Using direct Supabase connection            | Switch to pooler connection (host + port 6543)            |
+| Kick generation 500 error         | Modal token missing or expired              | Check `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` env vars |
+| Kick generation timeout           | Modal cold start (first call after idle)    | T4 GPU container takes ~60s to boot and load models       |
+| Upload to Storage fails           | Wrong Supabase key                          | Must use secret key (not anon key) for `SUPABASE_SERVICE_KEY` |
+| Audio URL returns 404             | Bucket not public or wrong path             | Verify `generated-kicks` bucket is public in Supabase     |
