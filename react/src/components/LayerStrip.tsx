@@ -10,15 +10,18 @@ export const LayerStrip = ({
   layerKnobLabels,
   knobValues,
   knobOnChanges,
+  customDropdown,
 }: LayerStripProps) => (
   <div className="layer-strip">
     <label>{layerLabel}</label>
     <div>
-      <Selectah
-        dropdownItems={dropdownItems}
-        value={dropdownValue}
-        onChange={dropdownOnChange}
-      />
+      {customDropdown ?? (
+        <Selectah
+          dropdownItems={dropdownItems}
+          value={dropdownValue}
+          onChange={dropdownOnChange}
+        />
+      )}
     </div>
     {layerKnobLabels.map((knobLabel, index) => (
       <div key={index}>

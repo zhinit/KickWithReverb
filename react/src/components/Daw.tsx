@@ -86,7 +86,14 @@ export const Daw = () => {
       <div className="daw-grid">
         <ControlStrip {...transport.controlProps} />
         <SoundUnit
-          kickKnobProps={kick.uiProps}
+          kickKnobProps={{
+            ...kick.uiProps,
+            ...(mode === "kickGen" && {
+              customDropdown: (
+                <button onClick={() => setMode("daw")}>Back To DAW</button>
+              ),
+            }),
+          }}
           noiseKnobProps={noise.uiProps}
           reverbKnobProps={reverb.uiProps}
         />

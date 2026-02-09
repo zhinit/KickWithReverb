@@ -30,6 +30,7 @@ export interface LayerStripProps {
   layerKnobLabels: Array<string>;
   knobValues: Array<number>;
   knobOnChanges: Array<(value: number) => void>;
+  customDropdown?: React.ReactNode;
 }
 
 export interface SoundUnitProps {
