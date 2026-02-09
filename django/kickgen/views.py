@@ -6,8 +6,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from supabase import create_client
-
 from django.conf import settings
 from .models import GeneratedKick
 from presets.models import Preset
@@ -59,6 +57,7 @@ class GenerateKickView(APIView):
         wav_bytes = KickGenerator().generate_kick.remote("hit house")
 
         # Upload to Supabase Storage
+        from supabase import create_client
         file_id = str(uuid.uuid4())
         storage_path = f"{request.user.id}/{file_id}.wav"
         sb = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
@@ -145,6 +144,7 @@ class KickDeleteView(APIView):
             )
 
         # Delete from Supabase Storage
+        from supabase import create_client
         sb = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
         sb.storage.from_("generated-kicks").remove([kick.storage_path])
 
