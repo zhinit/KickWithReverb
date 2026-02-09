@@ -16,7 +16,7 @@ The existing app gains a new "AI Kick Gen Mode" that lets logged-in users genera
 1. User clicks generate in the frontend
 2. Frontend calls `POST /api/kicks/generate/` on Django
 3. Django checks daily limit (10/day) and total cap (30 kicks)
-4. Django calls the Modal worker synchronously via `modal.Function.lookup()`
+4. Django calls the Modal worker synchronously via `modal.Cls.from_name()`
 5. Modal loads model from Hugging Face (cached on a Volume), runs inference, returns raw WAV bytes
 6. Django uploads WAV bytes to Supabase Storage (`generated-kicks/{user_id}/{uuid}.wav`)
 7. Django saves a `GeneratedKick` record in the DB with the storage URL and a random German name
@@ -48,70 +48,70 @@ Lives at `modal/kick_worker.py`. Uses a class-based approach (`@app.cls`) with `
 
 **Tested:** Successfully generates valid WAV bytes (~354KB, 2-second 44.1kHz kick drum)
 
-### 1.3 Environment Variables -- NOT STARTED
+### 1.3 Environment Variables -- COMPLETED
 
-New env vars needed:
+All env vars added to `django/.env`:
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `MODAL_TOKEN_ID` | Railway + django/.env | Django authenticates with Modal |
-| `MODAL_TOKEN_SECRET` | Railway + django/.env | Django authenticates with Modal |
-| `SUPABASE_URL` | Railway + django/.env | Supabase Storage API |
-| `SUPABASE_SERVICE_KEY` | Railway + django/.env | Supabase Storage admin access |
+| `MODAL_TOKEN_ID` | Railway + django/.env | Django authenticates with Modal (from `~/.modal.toml`) |
+| `MODAL_TOKEN_SECRET` | Railway + django/.env | Django authenticates with Modal (from `~/.modal.toml`) |
+| `SUPABASE_URL` | Railway + django/.env | Supabase Storage API (from Settings > API > Project URL) |
+| `SUPABASE_SERVICE_KEY` | Railway + django/.env | Supabase Storage admin access (from Settings > API > secret key) |
 
-New Python dependencies for Django: `modal`, `supabase`
+Python dependencies `modal` and `supabase` added via `uv add`. Settings `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` added to `config/settings.py`.
 
 ---
 
-## Phase 2: Backend
+## Phase 2: Backend -- COMPLETED
 
-### 2.1 New Django App: `kicks`
+### 2.1 New Django App: `kickgen` -- COMPLETED
 
-Create a new Django app called `kicks` alongside `users` and `presets`.
+Created via `python manage.py startapp kickgen`. Added to `INSTALLED_APPS` in `config/settings.py`.
 
-**Model: `GeneratedKick`**
+**Model: `GeneratedKick`** (in `kickgen/models.py`)
 - `user` - FK to User (CASCADE delete)
-- `name` - CharField, the German name (e.g., "AI: Gutenberg")
+- `name` - CharField(max_length=64), the German name (e.g., "AI: Burkhard")
 - `audio_url` - URLField, points to the file in Supabase Storage
-- `storage_path` - CharField, the path within the bucket (for deletion)
-- `created_at` - DateTimeField (auto, used for daily limit counting)
+- `storage_path` - CharField(max_length=256), the path within the bucket (for deletion)
+- `created_at` - DateTimeField (auto_now_add, used for daily limit counting)
+- `Meta: ordering = ["name"]`
 
-### 2.2 API Endpoints
+Migration run on Supabase — `kickgen_generatedkick` table created.
 
-**`POST /api/kicks/generate/`** - Authenticated
-- Check total cap: if user has 30 kicks, return 400 with message "Delete kicks to generate more (30/30)"
-- Check daily limit: count kicks where `created_at >= today midnight EST`. If >= 10, return 429
-- Call Modal worker synchronously with keywords "hit" and "house"
-- Upload returned WAV bytes to Supabase Storage at `generated-kicks/{user_id}/{uuid}.wav`
-- Pick a random German name (avoid duplicates against user's existing kick names)
-- Save `GeneratedKick` record
-- Return kick data (id, name, audio_url) + `remaining_today` + `total_count`
+### 2.2 API Endpoints -- COMPLETED
 
-**`GET /api/kicks/`** - Authenticated
-- Return all of the user's generated kicks (id, name, audio_url), ordered alphabetically
-- Also return `remaining_today` and `total_count` for UI limit display
+All endpoints in `kickgen/views.py`, URLs registered directly in `config/urls.py` (matching existing pattern).
 
-**`DELETE /api/kicks/<id>/`** - Authenticated
-- If `?confirm=true` is NOT set: check if any presets reference this kick's sample name. If presets found, return 409 with the list of affected preset names
-- If `?confirm=true` IS set (or no presets affected): delete the file from Supabase Storage, delete associated presets, delete the DB record
-- Return updated `total_count`
+**`POST /api/kicks/generate/`** (`GenerateKickView`) - Authenticated
+- Checks total cap (30) and daily limit (10, midnight EST reset)
+- Calls Modal worker with `"hit house"` string (not a list — `parse_prompt` expects a string)
+- Uploads WAV to Supabase Storage at `{user_id}/{uuid}.wav`
+- Picks a random German name, saves `GeneratedKick` record
+- Returns: `id`, `name`, `audioUrl`, `remainingGensToday`, `totalGensCount` (camelCase via DRF renderer)
 
-### 2.3 Rate Limiting
+**`GET /api/kicks/`** (`KickListView`) - Authenticated
+- Returns all user's kicks (id, name, audioUrl) + `remainingGensToday` + `totalGensCount`
 
-Two independent limits, both enforced backend-side:
+**`DELETE /api/kicks/<id>/`** (`KickDeleteView`) - Authenticated
+- Without `?confirm=true`: checks for affected presets, returns 409 with preset names if found
+- With `?confirm=true` (or no presets affected): deletes from Supabase Storage, deletes affected presets, deletes DB record
+- Returns updated `totalGensCount`
 
-- **Daily limit:** 10 generations per day. Resets at midnight EST (UTC-5). Counted by querying `GeneratedKick` records where `created_at >= today midnight EST` for the user
-- **Total cap:** 30 AI kicks max per user. Counted by total `GeneratedKick` records for the user
+### 2.3 Rate Limiting -- COMPLETED
 
-The generate endpoint returns `remaining_today` and `total_count` in every response so the frontend can display warnings.
+Implemented in `kickgen/views.py` via `get_user_counts()` and `get_midnight_est()` helper functions. Constants: `DAILY_GEN_LIMIT = 10`, `TOTAL_GEN_CAP = 30`.
 
-### 2.4 German Name Generation
+### 2.4 German Name Generation -- COMPLETED
 
-A hardcoded list of ~50-100 stereotypical German names stored in the `kicks` app (e.g., Gutenberg, Schwarzenegger, Beethoven, Hildegard, Wolfgang, Lieselotte, Dietrich, etc.). On generation, pick a random name, check for duplicates against the user's existing kicks, re-pick if collision. Prefix with "AI: " before saving.
+~50 names in `kickgen/german_names.py`. Function `generate_kick_name(existing_names)` picks a random name prefixed with "AI: ", avoiding duplicates.
 
-### 2.5 Migrations
+### 2.5 Testing -- COMPLETED
 
-Run migrations on Supabase to create the `kicks_generatedkick` table.
+All 3 endpoints tested locally via curl:
+- Generate: successfully calls Modal, uploads to Supabase, returns kick data (e.g., "AI: Burkhard")
+- List: returns user's kicks with counts
+- Delete: removes from Supabase Storage + DB
 
 ---
 
