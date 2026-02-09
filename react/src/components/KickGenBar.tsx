@@ -30,6 +30,19 @@ export const KickGenBar = ({
   const [affectedPresets, setAffectedPresets] = useState<string[]>([]);
 
   const selectedKick = aiKicks.find((k) => k.id === selectedKickId);
+  const selectedIndex = aiKicks.findIndex((k) => k.id === selectedKickId);
+
+  const handlePrev = () => {
+    if (aiKicks.length === 0) return;
+    const prevIndex = selectedIndex <= 0 ? aiKicks.length - 1 : selectedIndex - 1;
+    onSelectKick(aiKicks[prevIndex].id);
+  };
+
+  const handleNext = () => {
+    if (aiKicks.length === 0) return;
+    const nextIndex = selectedIndex >= aiKicks.length - 1 ? 0 : selectedIndex + 1;
+    onSelectKick(aiKicks[nextIndex].id);
+  };
 
   const handleGenerate = async () => {
     setMessage("");
@@ -82,11 +95,17 @@ export const KickGenBar = ({
       <div className="presets-bar">
         <button
           className="presets-bar-btn"
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          title="Generate new AI kick"
+          onClick={handlePrev}
+          title="Previous kick"
         >
-          {isGenerating ? "..." : "\uD83C\uDFA8"}
+          ⇇
+        </button>
+        <button
+          className="presets-bar-btn"
+          onClick={handleNext}
+          title="Next kick"
+        >
+          ⇉
         </button>
 
         <select
@@ -117,6 +136,14 @@ export const KickGenBar = ({
           title="Delete selected kick"
         >
           🗑️
+        </button>
+        <button
+          className="presets-bar-btn"
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          title="Generate new AI kick"
+        >
+          {isGenerating ? "..." : "\uD83C\uDFA8"}
         </button>
       </div>
 

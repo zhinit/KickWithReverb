@@ -2,6 +2,7 @@ import { ControlStrip } from "./ControlStrip";
 import { MasterStrip } from "./MasterStrip";
 import { SoundUnit } from "./SoundUnit";
 import { PresetsBar } from "./PresetsBar";
+import { KickGenBar } from "./KickGenBar";
 import { useAudioEngine } from "../hooks/useAudioEngine";
 import { useKickLayer } from "../hooks/useKickLayer";
 import { useNoiseLayer } from "../hooks/useNoiseLayer";
@@ -18,12 +19,23 @@ export const Daw = () => {
   const isMember = userStatus === "member";
 
   const [mode, setMode] = useState<"daw" | "kickGen">("daw");
+  const [selectedAiKickId, setSelectedAiKickId] = useState<number | null>(null);
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
 
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
+
+  // Select an AI kick in the sampler
+  const selectAiKick = (id: number) => {
+    const kick = aiKicks.aiKicks.find((k) => k.id === id);
+    if (!kick) return;
+    const index = aiKicks.aiKickNameToIndex[kick.name];
+    if (index === undefined) return;
+    engine.postMessage({ type: "selectKickSample", index });
+    setSelectedAiKickId(id);
+  };
 
   // Layer hooks — all routing is internal to the C++ engine
   const kick = useKickLayer(engine);
@@ -45,19 +57,32 @@ export const Daw = () => {
 
   return (
     <div className="daw">
-      <h1>KICK WITH REVERB</h1>
-      <PresetsBar
-        isMember={isMember}
-        presets={presets.presets}
-        currentPresetId={presets.currentPresetId}
-        currentPresetName={presets.currentPresetName}
-        canDelete={presets.canDelete}
-        onLoadPreset={presets.loadPreset}
-        onSave={presets.savePreset}
-        onDelete={presets.deleteCurrentPreset}
-        onNext={presets.nextPreset}
-        onPrev={presets.prevPreset}
-      />
+      <h1>{mode === "kickGen" ? "AI KICK GEN MODE" : "KICK WITH REVERB"}</h1>
+      {mode === "kickGen" ? (
+        <KickGenBar
+          aiKicks={aiKicks.aiKicks}
+          selectedKickId={selectedAiKickId}
+          onSelectKick={selectAiKick}
+          onGenerate={aiKicks.generate}
+          onDelete={aiKicks.remove}
+          isGenerating={aiKicks.isGenerating}
+          remainingGensToday={aiKicks.remainingGensToday}
+          totalGensCount={aiKicks.totalGensCount}
+        />
+      ) : (
+        <PresetsBar
+          isMember={isMember}
+          presets={presets.presets}
+          currentPresetId={presets.currentPresetId}
+          currentPresetName={presets.currentPresetName}
+          canDelete={presets.canDelete}
+          onLoadPreset={presets.loadPreset}
+          onSave={presets.savePreset}
+          onDelete={presets.deleteCurrentPreset}
+          onNext={presets.nextPreset}
+          onPrev={presets.prevPreset}
+        />
+      )}
       <div className="daw-grid">
         <ControlStrip {...transport.controlProps} />
         <SoundUnit
