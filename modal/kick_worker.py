@@ -7,14 +7,14 @@ image = modal.Image.debian_slim(python_version="3.11").pip_install(
 )
 
 app = modal.App("kick-generator-app")
-volume = modal.Volume.persisted("kick-gen-model-cache")
+volume = modal.Volume.from_name("kick-gen-model-cache", create_if_missing=True)
 
 
 @app.cls(
     image=image,
     gpu="T4",
     volumes={"/cache": volume},
-    container_idle_timeout=300,  # Keep GPU warm for 5 minutes
+    scaledown_window=300,  # Keep GPU warm for 5 minutes
     timeout=600,
 )
 class KickGenerator:
