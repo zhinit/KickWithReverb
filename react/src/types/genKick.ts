@@ -3,3 +3,9 @@ export interface KickData {
   name: string;
   audioUrl: string;
 }
+
+export interface KickListResponse {
+  kicks: KickData[];
+  remainingGensToday: number;
+  totalGensCount: number;
+}

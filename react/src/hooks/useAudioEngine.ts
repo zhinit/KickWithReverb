@@ -15,6 +15,7 @@ export interface AudioEngine {
   kickNameToIndex: Record<string, number>;
   noiseNameToIndex: Record<string, number>;
   irNameToIndex: Record<string, number>;
+  loadKickSample: (url: string) => Promise<number>;
 }
 
 // Build name→index maps (stable, computed once)
@@ -36,6 +37,7 @@ irNames.forEach((name, i) => {
 export const useAudioEngine = (): AudioEngine => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const nextKickIndexRef = useRef(kickNames.length);
   const [isReady, setIsReady] = useState(false);
 
   const postMessage = useCallback(
@@ -49,6 +51,21 @@ export const useAudioEngine = (): AudioEngine => {
     if (audioContextRef.current?.state === "suspended") {
       await audioContextRef.current.resume();
     }
+  }, []);
+
+  const loadKickSample = useCallback(async (url: string): Promise<number> => {
+    const ctx = audioContextRef.current;
+    const node = workletNodeRef.current;
+    if (!ctx || !node) throw new Error("Engine not ready");
+
+    const res = await fetch(url);
+    const arrayBuffer = await res.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    const samples = new Float32Array(audioBuffer.getChannelData(0));
+    const index = nextKickIndexRef.current++;
+
+    node.port.postMessage({ type: "loadKickSample", samples }, [samples.buffer]);
+    return index;
   }, []);
 
   useEffect(() => {
@@ -158,5 +175,6 @@ export const useAudioEngine = (): AudioEngine => {
     kickNameToIndex,
     noiseNameToIndex,
     irNameToIndex,
+    loadKickSample,
   };
 };

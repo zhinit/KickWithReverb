@@ -1,4 +1,5 @@
 import type { PresetData } from "../types/preset";
+import type { KickListResponse } from "../types/genKick";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export interface ApiResponse<T = unknown> {
@@ -119,7 +120,7 @@ export async function deletePreset(id: number): Promise<ApiResponse<null>> {
   }
 }
 
-export async function getKicks(): Promise<ApiResponse<KickData[]>> {
+export async function getKicks(): Promise<ApiResponse<KickListResponse>> {
   try {
     const response = await authenticatedFetch("/api/kicks/");
     const data = await response.json();
