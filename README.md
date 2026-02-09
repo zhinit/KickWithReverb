@@ -3,7 +3,7 @@
 A web-based DAW (Digital Audio Workstation) for creating and processing kick drum sounds with reverb effects.
 [kick-with-reverb.vercel.app](https://kick-with-reverb.vercel.app)
 
-<img width="528" height="857" alt="Screenshot 2026-01-16 at 11 44 15 PM" src="https://github.com/user-attachments/assets/d95ed697-beac-47af-b6cf-c14df50fd4f2" />
+<img width="490" height="814" alt="Screenshot 2026-02-09 at 10 09 04 AM" src="https://github.com/user-attachments/assets/ae88eae8-5f13-4533-8c14-348c0a267508" />
 
 ## Features
 
