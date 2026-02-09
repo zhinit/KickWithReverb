@@ -20,6 +20,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from users.views import RegisterView
 from presets.views import PresetListCreateView, PresetDetailView
+from kickgen.views import GenerateKickView, KickListView, KickDeleteView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -35,4 +36,10 @@ urlpatterns = [
     path(
         "api/presets/<int:pk>/", PresetDetailView.as_view(), name="preset_detail_view"
     ),
+    # generate new kick view
+    path("api/kicks/generate/", GenerateKickView.as_view(), name="kick_generate"),
+    # kick list view
+    path("api/kicks/", KickListView.as_view(), name="kick_list"),
+    # kick delete view
+    path("api/kicks/<int:pk>/", KickDeleteView.as_view(), name="kick_delete"),
 ]
