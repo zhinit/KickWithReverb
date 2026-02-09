@@ -71,7 +71,7 @@ The DAW is always mounted but hidden during non-DAW views, so audio samples load
 
 ### Daw (`Daw.tsx`)
 
-Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`) and `selectedAiKickId` state. Contains:
+Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`) and `selectedAiKickId` state. Resets both to defaults on `userStatus` change (since Daw stays mounted across sessions). Contains:
 
 - Title (switches between "KICK WITH REVERB" and "AI KICK GEN MODE")
 - `PresetsBar` (daw mode) or `KickGenBar` (kickGen mode)
@@ -82,7 +82,7 @@ Main DAW interface. Initializes all audio layer hooks and connects the audio rou
 
 Hooks initialized: `useAudioEngine`, `useAiKicks`, `useKickLayer` (with AI kick map), `useNoiseLayer`, `useReverbLayer`, `useMasterChain`, `useTransport`, `usePresets`.
 
-The Daw component wires up the `usePresets` hook by passing layer setters and getters from all audio hooks, enabling presets to save and restore the complete DAW state.
+The Daw component wires up the `usePresets` hook by passing layer setters and getters from all audio hooks, enabling presets to save and restore the complete DAW state. AI kick selection (`selectAiKick`, `handleGenerate`) goes through `kick.setters.setSample()` to keep `useKickLayer` state, the Selectah, and WASM in sync.
 
 ### ControlStrip (`ControlStrip.tsx`)
 

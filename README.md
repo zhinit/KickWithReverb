@@ -14,6 +14,7 @@ A web-based DAW (Digital Audio Workstation) for creating and processing kick dru
 - **Transport Controls** – BPM adjustment, play/stop, and cue functionality
 - **Authentication** – Sign up, login, JWT-based sessions, continue as guest
 - **Presets** – Save, load, and delete your own presets; browse shared presets
+- **AI Kick Generation** – Generate unique kick drums using a PyTorch diffusion model on a Modal serverless GPU. Per-user library with rate limits (10/day, 30 total). Kicks stored in Supabase Storage.
 
 ## Documentation
 
@@ -39,14 +40,18 @@ A web-based DAW (Digital Audio Workstation) for creating and processing kick dru
 - Simple JWT
 - PostgreSQL (Supabase)
 - Gunicorn
+- Modal – Serverless GPU compute (T4) for AI kick generation
+- Supabase Storage – Generated WAV file hosting
 
 ## Deployment
 
-| Role     | Deployed |
-| -------- | -------- |
-| Frontend | Vercel   |
-| Backend  | Railway  |
-| Database | Supabase |
+| Role       | Deployed |
+| ---------- | -------- |
+| Frontend   | Vercel   |
+| Backend    | Railway  |
+| Database   | Supabase |
+| Storage    | Supabase |
+| AI Compute | Modal    |
 
 ## Project Structure
 
@@ -56,6 +61,7 @@ KickWithReverb/
 │   ├── config/      # Django settings, URLs
 │   ├── users/
 │   ├── presets/
+│   ├── kickgen/     # AI kick generation (generate, list, delete + rate limits)
 │   └── manage.py
 ├── react/           # Frontend
 │   ├── public/
@@ -65,6 +71,7 @@ KickWithReverb/
 │       ├── components/
 │       │   ├── Daw
 │       │   ├── PresetsBar
+│       │   ├── KickGenBar    # AI kick mode (generate, browse, delete)
 │       │   ├── ControlStrip  # BPM, play, cue
 │       │   ├── SoundUnit    # useKickLayer, useNoiseLayer, useReverbLayer
 │       │   ├── MasterStrip
@@ -79,11 +86,13 @@ KickWithReverb/
 │       │   ├── useAuth
 │       │   ├── useKickLayer, useNoiseLayer, useReverbLayer
 │       │   ├── useMasterChain, useTransport
-│       │   └── usePresets
-│       ├── types/
-│       ├── utils/   # api.ts, audioAssets.ts
+│       │   ├── usePresets
+│       │   └── useAiKicks     # AI kick lifecycle (fetch, generate, delete)
+│       ├── types/    # types.ts, preset.ts, genKick.ts
+│       ├── utils/    # api.ts, audioAssets.ts
 │       └── assets/ # Kicks, Noises, IRs, knobs, buttons
 ├── dsp/             # C++ JUCE audio engine (Emscripten → WASM)
+├── modal/           # Serverless GPU worker (kick_worker.py)
 └── docs/
 ```
 

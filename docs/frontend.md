@@ -47,8 +47,8 @@ Custom hooks that encapsulate audio logic and state management:
 - `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
 - `useMasterChain.ts` - Master output chain (React state + postMessage to WASM)
 - `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage)
-- `usePresets.ts` - Preset management (load, save, delete, navigate)
-- `useAiKicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`.
+- `usePresets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout or guest entry, resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
+- `useAiKicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
 
 Each audio layer hook:
 - Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter
@@ -146,18 +146,29 @@ The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 - All knob/noise/reverb/master settings remain untouched during mode switches
 
 **Mode transitions:**
-- Entering kickGen: loads first AI kick alphabetically into sampler (if any exist)
-- Exiting kickGen: kick stays in sampler, becomes selected in Selectah
+- Entering kickGen: loads first AI kick alphabetically into sampler (if any exist) via `kick.setters.setSample()`
+- Exiting kickGen: kick stays in sampler, Selectah shows the AI kick name (stays in sync because selection goes through `useKickLayer`)
+- On `userStatus` change (logout/login): mode resets to `"daw"`, `selectedAiKickId` resets to `null`
+
+**Kick selection sync:**
+- `selectAiKick` and `handleGenerate` in Daw.tsx use `kick.setters.setSample(name)` (not direct `engine.postMessage`), which keeps `useKickLayer`'s `sample` state, the Selectah dropdown, and WASM all in sync.
+- After generating, Daw's `handleGenerate` wrapper selects the new kick (KickGenBar does not call `onSelectKick` after generate).
 
 **KickGenBar features:**
 - Prev/next arrows to cycle through AI kicks
 - Dropdown listing all AI kicks
-- 🎨 button generates a new kick (calls Modal GPU worker, ~10s). Shows "..." while generating
+- 🎨 button generates a new kick (calls Modal GPU worker, ~10s). Shows "..." while generating. New kick auto-selected in sampler.
 - 🗑️ button deletes selected kick. If presets reference the kick, shows confirmation modal listing affected presets
 - Rate limit warnings when remaining daily gens <= 3
 - Total cap message at 30/30
 
 **Rate limits:** 10 generations per day (midnight EST reset), 30 total kicks max.
+
+**Session reset:**
+- Since the Daw component stays mounted across login/logout (for eager audio loading), all state must be explicitly reset on user change.
+- `usePresets` resets DAW to Init defaults on logout/guest, loads Init preset on member login.
+- `useAiKicks` clears AI kick state and resets `hasLoadedRef` on logout so kicks are re-fetched per user.
+- Daw resets `mode` and `selectedAiKickId` on `userStatus` change.
 
 ## Environment Variables
 
