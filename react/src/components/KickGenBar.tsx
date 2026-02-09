@@ -1,0 +1,162 @@
+import { useState } from "react";
+import type { KickData } from "../types/genKick";
+
+interface KickGenBarProps {
+  aiKicks: KickData[];
+  selectedKickId: number | null;
+  onSelectKick: (id: number) => void;
+  onGenerate: () => Promise<{ ok: boolean; error?: string; kick?: KickData }>;
+  onDelete: (
+    id: number,
+    confirm?: boolean,
+  ) => Promise<{ ok: boolean; status?: number; error?: string; presets?: string[] }>;
+  isGenerating: boolean;
+  remainingGensToday: number;
+  totalGensCount: number;
+}
+
+export const KickGenBar = ({
+  aiKicks,
+  selectedKickId,
+  onSelectKick,
+  onGenerate,
+  onDelete,
+  isGenerating,
+  remainingGensToday,
+  totalGensCount,
+}: KickGenBarProps) => {
+  const [message, setMessage] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [affectedPresets, setAffectedPresets] = useState<string[]>([]);
+
+  const selectedKick = aiKicks.find((k) => k.id === selectedKickId);
+
+  const handleGenerate = async () => {
+    setMessage("");
+
+    if (totalGensCount >= 30) {
+      setMessage("Delete kicks to generate more (30/30)");
+      return;
+    }
+
+    const result = await onGenerate();
+    if (!result.ok) {
+      setMessage(result.error ?? "Generation failed");
+      return;
+    }
+
+    if (result.kick) {
+      onSelectKick(result.kick.id);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedKickId) return;
+    setMessage("");
+
+    const result = await onDelete(selectedKickId);
+
+    if (result.status === 409 && result.presets) {
+      setAffectedPresets(result.presets);
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    if (!result.ok) {
+      setMessage(result.error ?? "Delete failed");
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedKickId) return;
+    setShowDeleteConfirm(false);
+
+    const result = await onDelete(selectedKickId, true);
+    if (!result.ok) {
+      setMessage(result.error ?? "Delete failed");
+    }
+  };
+
+  return (
+    <>
+      <div className="presets-bar">
+        <button
+          className="presets-bar-btn"
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          title="Generate new AI kick"
+        >
+          {isGenerating ? "..." : "\uD83C\uDFA8"}
+        </button>
+
+        <select
+          className="presets-bar-select"
+          value={selectedKickId ?? ""}
+          onChange={(e) => {
+            const id = parseInt(e.target.value, 10);
+            if (!isNaN(id)) onSelectKick(id);
+          }}
+        >
+          {aiKicks.length === 0 ? (
+            <option value="">
+              Click 🎨 to generate new kick
+            </option>
+          ) : (
+            aiKicks.map((kick) => (
+              <option key={kick.id} value={kick.id}>
+                {kick.name}
+              </option>
+            ))
+          )}
+        </select>
+
+        <button
+          className="presets-bar-btn"
+          onClick={handleDelete}
+          disabled={!selectedKickId}
+          title="Delete selected kick"
+        >
+          🗑️
+        </button>
+      </div>
+
+      {message && <div className="kickgen-message">{message}</div>}
+
+      {remainingGensToday <= 3 && remainingGensToday > 0 && (
+        <div className="kickgen-message">
+          {remainingGensToday} kick generation{remainingGensToday !== 1 ? "s" : ""} left until 12:00 AM EST
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Kick</h3>
+            <p>
+              Deleting "{selectedKick?.name}" will also delete these presets:
+            </p>
+            <ul>
+              {affectedPresets.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+            <div className="modal-buttons">
+              <button onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="modal-btn-danger"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
