@@ -100,7 +100,12 @@ export const Daw = () => {
         <MasterStrip {...master.uiProps} />
       </div>
       {isMember && mode === "daw" && (
-        <button onClick={() => setMode("kickGen")}>
+        <button onClick={() => {
+          setMode("kickGen");
+          if (aiKicks.aiKicks.length > 0) {
+            selectAiKick(aiKicks.aiKicks[0].id);
+          }
+        }}>
           Generate AI Kick
         </button>
       )}

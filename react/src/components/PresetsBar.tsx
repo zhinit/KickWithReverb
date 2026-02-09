@@ -94,7 +94,7 @@ export const PresetsBar = ({
   if (!isMember) {
     return (
       <div className="presets-bar presets-bar-disabled">
-        <span className="presets-bar-message">Log in to use presets</span>
+        <span className="presets-bar-message">Login for AI kick generation and presets</span>
       </div>
     );
   }
