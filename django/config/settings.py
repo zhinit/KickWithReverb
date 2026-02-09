@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "presets",
+    "kickgen",
 ]
 
 REST_FRAMEWORK = {
