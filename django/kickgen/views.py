@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, time
 
-import modal
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -55,6 +54,7 @@ class GenerateKickView(APIView):
             )
 
         # call modal worker
+        import modal
         KickGenerator = modal.Cls.from_name("kick-generator-app", "KickGenerator")
         wav_bytes = KickGenerator().generate_kick.remote("hit house")
 
