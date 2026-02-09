@@ -314,6 +314,17 @@ def generate(
     if peak > 0:
         waveform = waveform * (0.95 / peak)
 
+    # Exponential fade-out (1.0s–1.75s) + silent tail (1.75s–2.0s).
+    # Exponential curve (power=3) drops fast then tapers, keeping OTT from
+    # re-amplifying the tail. 0.25s of hard silence lets OTT fully release.
+    fade_start = int(1.0 * SAMPLE_RATE)
+    fade_end = int(1.75 * SAMPLE_RATE)
+    fade_samples = fade_end - fade_start
+    if fade_start < waveform.shape[-1]:
+        fade = torch.linspace(1.0, 0.0, fade_samples, device=waveform.device) ** 3
+        waveform[..., fade_start:fade_end] *= fade
+        waveform[..., fade_end:] = 0.0
+
     # Save WAV using scipy (avoids torchcodec dependency)
     import scipy.io.wavfile
     waveform_cpu = waveform.cpu()

@@ -161,10 +161,31 @@ class KickGenerator:
             waveform = self.griffin_lim_synthesis(mel_linear)
 
         # 6. Post-Process & Return Bytes
-        # (Standard normalization logic from your script)
+        SAMPLE_RATE = 44100
+        TARGET_SAMPLES = int(2.0 * SAMPLE_RATE)
+
+        # Ensure exactly 2 seconds (trim or pad)
+        if waveform.shape[-1] > TARGET_SAMPLES:
+            waveform = waveform[..., :TARGET_SAMPLES]
+        elif waveform.shape[-1] < TARGET_SAMPLES:
+            pad = TARGET_SAMPLES - waveform.shape[-1]
+            waveform = torch.nn.functional.pad(waveform, (0, pad))
+
+        # Normalize
         peak = waveform.abs().max()
         if peak > 0:
             waveform = waveform * (0.95 / peak)
+
+        # Exponential fade-out (1.0s–1.75s) + silent tail (1.75s–2.0s).
+        # Exponential curve (power=3) drops fast then tapers, keeping OTT from
+        # re-amplifying the tail. 0.25s of hard silence lets OTT fully release.
+        fade_start = int(1.0 * SAMPLE_RATE)
+        fade_end = int(1.75 * SAMPLE_RATE)
+        fade_samples = fade_end - fade_start
+        if fade_start < waveform.shape[-1]:
+            fade = torch.linspace(1.0, 0.0, fade_samples, device=waveform.device) ** 3
+            waveform[..., fade_start:fade_end] *= fade
+            waveform[..., fade_end:] = 0.0
 
         waveform_cpu = waveform.cpu()
         audio_np = waveform_cpu.squeeze(0).numpy().astype(np.float32)
