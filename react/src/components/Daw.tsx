@@ -27,31 +27,29 @@ export const Daw = () => {
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
 
-  // Select an AI kick in the sampler
-  const selectAiKick = (id: number) => {
-    const kick = aiKicks.aiKicks.find((k) => k.id === id);
-    if (!kick) return;
-    const index = aiKicks.aiKickNameToIndex[kick.name];
-    if (index === undefined) return;
-    engine.postMessage({ type: "selectKickSample", index });
-    setSelectedAiKickId(id);
-  };
-
-  // Wrap generate to select the new kick immediately (avoids stale state lookup)
-  const handleGenerate = async () => {
-    const result = await aiKicks.generate();
-    if (result.ok && result.kick && result.wasmIndex !== undefined) {
-      engine.postMessage({ type: "selectKickSample", index: result.wasmIndex });
-      setSelectedAiKickId(result.kick.id);
-    }
-    return result;
-  };
-
   // Layer hooks — all routing is internal to the C++ engine
   const kick = useKickLayer(engine, aiKicks.aiKickNameToIndex);
   const noise = useNoiseLayer(engine);
   const reverb = useReverbLayer(engine);
   const master = useMasterChain(engine);
+
+  // Select an AI kick — updates useKickLayer state so Selectah + WASM stay in sync
+  const selectAiKick = (id: number) => {
+    const found = aiKicks.aiKicks.find((k) => k.id === id);
+    if (!found) return;
+    kick.setters.setSample(found.name);
+    setSelectedAiKickId(id);
+  };
+
+  // Wrap generate to select the new kick after it's created
+  const handleGenerate = async () => {
+    const result = await aiKicks.generate();
+    if (result.ok && result.kick) {
+      kick.setters.setSample(result.kick.name);
+      setSelectedAiKickId(result.kick.id);
+    }
+    return result;
+  };
 
   // Transport hook
   const transport = useTransport(engine);
