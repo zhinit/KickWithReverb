@@ -37,7 +37,7 @@ async function refreshAccessToken(): Promise<boolean> {
 // wrapper for fetch using access tokens
 async function authenticatedFetch(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> {
   const makeRequest = (token: string | null) => {
     const headers = new Headers(options.headers);
@@ -78,7 +78,7 @@ export async function getPresets(): Promise<ApiResponse<PresetData[]>> {
 }
 
 export async function createPreset(
-  preset: Omit<PresetData, "id" | "createdAt" | "updatedAt">
+  preset: Omit<PresetData, "id" | "createdAt" | "updatedAt">,
 ): Promise<ApiResponse<PresetData>> {
   try {
     const response = await authenticatedFetch("/api/presets/", {
@@ -94,7 +94,7 @@ export async function createPreset(
 
 export async function updatePreset(
   id: number,
-  preset: Partial<Omit<PresetData, "id" | "createdAt" | "updatedAt">>
+  preset: Partial<Omit<PresetData, "id" | "createdAt" | "updatedAt">>,
 ): Promise<ApiResponse<PresetData>> {
   try {
     const response = await authenticatedFetch(`/api/presets/${id}/`, {
@@ -119,9 +119,19 @@ export async function deletePreset(id: number): Promise<ApiResponse<null>> {
   }
 }
 
+export async function getKicks(): Promise<ApiResponse<KickData[]>> {
+  try {
+    const response = await authenticatedFetch("/api/kicks/");
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
+  } catch {
+    return { ok: false, status: null, data: null };
+  }
+}
+
 export async function loginUser(
   username: string,
-  password: string
+  password: string,
 ): Promise<ApiResponse<{ access: string; refresh: string }>> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/token/`, {
@@ -139,7 +149,7 @@ export async function loginUser(
 export async function registerUser(
   username: string,
   email: string,
-  password: string
+  password: string,
 ): Promise<ApiResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/register/`, {

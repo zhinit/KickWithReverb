@@ -10,10 +10,13 @@ import { useMasterChain } from "../hooks/useMasterChain";
 import { useTransport } from "../hooks/useTransport";
 import { usePresets } from "../hooks/usePresets";
 import { useAuth } from "../hooks/useAuth";
+import { useState } from "react";
 
 export const Daw = () => {
   const { userStatus } = useAuth();
   const isMember = userStatus === "member";
+
+  const [mode, setMode] = useState<"daw" | "kickGen">("daw");
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
