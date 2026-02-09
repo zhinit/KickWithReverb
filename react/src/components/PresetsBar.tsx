@@ -153,11 +153,6 @@ export const PresetsBar = ({
           💾
         </button>
       </div>
-      {!isMember && (
-        <div className="presets-bar-message">
-          LOGIN FOR AI KICK GEN AND SAVING PRESETS
-        </div>
-      )}
 
       {/* Save Modal */}
       {showSaveModal && (

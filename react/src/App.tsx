@@ -29,14 +29,19 @@ function AppContent() {
         <RegisterForm onBack={() => setView("welcome")} />
       )}
       {userStatus === "guest" && (
-        <div className="guest-auth-buttons">
-          <button onClick={() => { logout(); setView("login"); }} className="guest-auth-btn">
-            Log In
-          </button>
-          <button onClick={() => { logout(); setView("register"); }} className="guest-auth-btn">
-            Sign Up
-          </button>
-        </div>
+        <>
+          <div className="presets-bar-message">
+            LOGIN FOR AI KICK GEN AND SAVING PRESETS
+          </div>
+          <div className="guest-auth-buttons">
+            <button onClick={() => { logout(); setView("login"); }} className="guest-auth-btn">
+              Log In
+            </button>
+            <button onClick={() => { logout(); setView("register"); }} className="guest-auth-btn">
+              Sign Up
+            </button>
+          </div>
+        </>
       )}
       <div style={{ display: showDaw ? undefined : "none" }}>
         <Daw />
