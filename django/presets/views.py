@@ -1,20 +1,31 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Preset
 from .serializers import PresetSerializer
 from django.db.models import Q
 
 
 class PresetListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        """
+        Allow GET requests for guests (AllowAny), but require authentication for POST.
+        """
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     def get(self, request):
-        user_presets = Preset.objects.filter(
-            Q(user=request.user) | Q(is_shared=True)  # query user and shared presets
-        )
-        serializer = PresetSerializer(user_presets, many=True)  # put into json
+        # For authenticated users: return user presets + shared presets
+        # For guests: return only shared presets
+        if request.user.is_authenticated:
+            presets = Preset.objects.filter(
+                Q(user=request.user) | Q(is_shared=True)  # query user and shared presets
+            )
+        else:
+            presets = Preset.objects.filter(is_shared=True)  # only shared presets for guests
+        serializer = PresetSerializer(presets, many=True)  # put into json
         return Response(serializer.data, status=status.HTTP_200_OK)  # send it
 
     def post(self, request):

@@ -179,9 +179,11 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     [],
   );
 
-  // Fetch presets when authenticated, reset to Init on any user change
+  // Fetch presets when authenticated or as guest, reset to Init on logout
   useEffect(() => {
-    if (!isMember) {
+    // Reset to defaults only when logging out (going from member to non-member)
+    // Guests can still see shared presets
+    if (userStatus === "unknown") {
       setUserPresets([]);
       setSharedPresets([]);
       setCurrentPresetId(null);
@@ -199,10 +201,23 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         setSharedPresets(shared);
         setUserPresets(user);
 
-        const initPreset = userRes.data.find((p) => p.presetName === "Init");
-        if (initPreset) {
-          applyValues(initPreset);
-          setCurrentPresetId(initPreset.id);
+        // Load Init preset for members and guests (if available)
+        if (isMember) {
+          const initPreset = userRes.data.find((p) => p.presetName === "Init");
+          if (initPreset) {
+            applyValues(initPreset);
+            setCurrentPresetId(initPreset.id);
+          }
+        } else if (shared.length > 0) {
+          // For guests, try to load Init preset first, otherwise first shared preset
+          const initPreset = shared.find((p) => p.presetName === "Init");
+          if (initPreset) {
+            applyValues(initPreset);
+            setCurrentPresetId(initPreset.id);
+          } else {
+            applyValues(shared[0]);
+            setCurrentPresetId(shared[0].id);
+          }
         }
       }
 
@@ -210,7 +225,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     };
 
     fetchPresets();
-  }, [isMember, applyValues]);
+  }, [isMember, userStatus, applyValues]);
 
   // Load a preset by applying its values to all layers
   const loadPreset = useCallback(
@@ -228,6 +243,11 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
   // Save current state as a preset
   const savePreset = useCallback(
     async (name: string): Promise<{ ok: boolean; error?: string }> => {
+      // Guests cannot save presets
+      if (!isMember) {
+        return { ok: false, error: "Please log in" };
+      }
+
       // Gather current state from all layers
       const kickState = layers.kick.getState();
       const noiseState = layers.noise.getState();
@@ -274,7 +294,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         return { ok: false, error: "Failed to create preset" };
       }
     },
-    [userPresets, sharedPresets, layers]
+    [isMember, userPresets, sharedPresets, layers]
   );
 
   // Delete the current preset

@@ -42,6 +42,10 @@ export const PresetsBar = ({
 
   // Handle save button click
   const handleSaveClick = () => {
+    if (!isMember) {
+      setSharedMessage("Please log in");
+      return;
+    }
     setSaveName(currentPresetName === "Unsaved" ? "" : currentPresetName);
     setSaveError("");
     setShowSaveModal(true);
@@ -90,15 +94,6 @@ export const PresetsBar = ({
     setShowDeleteConfirm(false);
   };
 
-  // Unauthenticated state
-  if (!isMember) {
-    return (
-      <div className="presets-bar presets-bar-disabled">
-        <span className="presets-bar-message">Login for AI kick generation and presets</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="presets-bar">
@@ -138,7 +133,9 @@ export const PresetsBar = ({
         <button
           className="presets-bar-btn"
           onClick={() => {
-            if (!canDelete) {
+            if (!isMember) {
+              setSharedMessage("Please log in");
+            } else if (!canDelete) {
               setSharedMessage("Cannot delete shared presets");
             } else {
               setShowDeleteConfirm(true);
@@ -156,6 +153,11 @@ export const PresetsBar = ({
           💾
         </button>
       </div>
+      {!isMember && (
+        <div className="presets-bar-message">
+          LOGIN FOR AI KICK GEN AND SAVING PRESETS
+        </div>
+      )}
 
       {/* Save Modal */}
       {showSaveModal && (
