@@ -25,32 +25,30 @@ The existing app gains a new "AI Kick Gen Mode" that lets logged-in users genera
 
 ---
 
-## Phase 1: Infrastructure
+## Phase 1: Infrastructure -- COMPLETED
 
-### 1.1 Supabase Storage Bucket
+### 1.1 Supabase Storage Bucket -- COMPLETED
 
-Create a new public bucket called `generated-kicks` in Supabase Storage. File path convention: `generated-kicks/{user_id}/{uuid}.wav`. Public access so the frontend can fetch audio URLs directly without signed URLs.
+Public bucket `generated-kicks` created in Supabase Storage. File path convention: `generated-kicks/{user_id}/{uuid}.wav`.
 
-### 1.2 Modal Worker
+### 1.2 Modal Worker -- COMPLETED
 
-Lives in its own directory at the project root: `modal/kick_worker.py`, separate from Django.
+Lives at `modal/kick_worker.py`. Uses a class-based approach (`@app.cls`) with `@modal.enter()` for one-time model loading:
 
-**What it does:**
-- Defines a Modal app with a GPU-enabled function
-- Uses a Modal Volume to cache the model weights from Hugging Face (avoids re-downloading 350MB on every call)
-- Accepts a dict of params (keywords "hit" and "house")
-- Loads the model, runs inference, returns raw WAV bytes
+- **`KickGenerator.setup()`** runs once on container boot: downloads HuggingFace repo via `snapshot_download`, loads all 3 models (diffusion, VAE, vocoder) into GPU memory
+- **`KickGenerator.generate_kick()`** runs per-request: parses prompt, runs DDIM sampling, decodes, returns WAV bytes
+- `container_idle_timeout=300` keeps GPU warm for 5 minutes between calls
+- T4 GPU, 10 min timeout, Debian slim + torch/torchaudio/huggingface_hub/scipy/numpy
 
-**Environment:**
-- Debian slim base with `torch`, `torchaudio`, `huggingface_hub`
-- T4 GPU
-- 10 minute timeout as a safety net
+**HuggingFace repo:** `zhinit/kick-gen-v1` — contains full directory structure matching local `pytorch/` folder (models/, inference/, training/, weights/)
 
-**Deployment:** `modal deploy kick_worker.py` gives a permanent function handle. Django connects via `modal.Function.lookup("kick-generator-app", "generate_kick")`.
+**Deployment:** `cd modal && uv run modal deploy kick_worker.py`
 
-**Cold starts:** First call after idle may take 10-30 seconds (container spin-up + model load from cache). Subsequent calls within the warm window should be 2-5 seconds. Frontend shows "Generating kick..." spinner during the entire process.
+**Django connects via:** `modal.Cls.from_name("kick-generator-app", "KickGenerator")`
 
-### 1.3 Environment Variables
+**Tested:** Successfully generates valid WAV bytes (~354KB, 2-second 44.1kHz kick drum)
+
+### 1.3 Environment Variables -- NOT STARTED
 
 New env vars needed:
 
@@ -62,7 +60,6 @@ New env vars needed:
 | `SUPABASE_SERVICE_KEY` | Railway + django/.env | Supabase Storage admin access |
 
 New Python dependencies for Django: `modal`, `supabase`
-New Python dependencies for Modal worker: `torch`, `torchaudio`, `huggingface_hub`
 
 ---
 
