@@ -63,6 +63,17 @@ export const KickGenBar = ({
     }
   };
 
+  const selectAfterDelete = () => {
+    const remaining = aiKicks.filter((k) => k.id !== selectedKickId);
+    if (remaining.length === 0) {
+      onSelectKick(0); // clears selection (no valid id)
+      return;
+    }
+    // Pick next in list, or previous if we deleted the last one
+    const nextIndex = Math.min(selectedIndex, remaining.length - 1);
+    onSelectKick(remaining[nextIndex].id);
+  };
+
   const handleDelete = async () => {
     if (!selectedKickId) return;
     setMessage("");
@@ -77,7 +88,10 @@ export const KickGenBar = ({
 
     if (!result.ok) {
       setMessage(result.error ?? "Delete failed");
+      return;
     }
+
+    selectAfterDelete();
   };
 
   const handleDeleteConfirm = async () => {
@@ -87,7 +101,10 @@ export const KickGenBar = ({
     const result = await onDelete(selectedKickId, true);
     if (!result.ok) {
       setMessage(result.error ?? "Delete failed");
+      return;
     }
+
+    selectAfterDelete();
   };
 
   return (

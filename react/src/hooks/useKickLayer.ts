@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   kickNames,
   mapKnobRangeToCustomRange,
@@ -25,8 +25,23 @@ export interface UseKickLayerReturn {
   };
 }
 
-export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
+export const useKickLayer = (
+  engine: AudioEngine,
+  aiKickNameToIndex: Record<string, number> = {},
+): UseKickLayerReturn => {
   const { postMessage, isReady, kickNameToIndex } = engine;
+
+  // Merge stock + AI kick maps for index lookup
+  const allKickNameToIndex = useMemo(
+    () => ({ ...kickNameToIndex, ...aiKickNameToIndex }),
+    [kickNameToIndex, aiKickNameToIndex],
+  );
+
+  // Stock kicks + AI kicks (sorted) for the dropdown
+  const allKickNames = useMemo(
+    () => [...kickNames, ...Object.keys(aiKickNameToIndex).sort()],
+    [aiKickNameToIndex],
+  );
 
   const [sample, setSample] = useState(kickNames[0] || "Kick1");
   const [len, setLen] = useState(1.0);
@@ -35,11 +50,11 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
 
   useEffect(() => {
     if (!isReady) return;
-    const index = kickNameToIndex[sample];
+    const index = allKickNameToIndex[sample];
     if (index !== undefined) {
       postMessage({ type: "selectKickSample", index });
     }
-  }, [sample, isReady, postMessage, kickNameToIndex]);
+  }, [sample, isReady, postMessage, allKickNameToIndex]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -58,7 +73,7 @@ export const useKickLayer = (engine: AudioEngine): UseKickLayerReturn => {
 
   const uiProps: LayerStripProps = {
     layerLabel: "Kick Layer",
-    dropdownItems: kickNames,
+    dropdownItems: allKickNames,
     dropdownValue: sample,
     dropdownOnChange: setSample,
     layerKnobLabels: ["Length", "Distortion", "OTT"],

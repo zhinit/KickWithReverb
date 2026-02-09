@@ -38,7 +38,7 @@ export const Daw = () => {
   };
 
   // Layer hooks — all routing is internal to the C++ engine
-  const kick = useKickLayer(engine);
+  const kick = useKickLayer(engine, aiKicks.aiKickNameToIndex);
   const noise = useNoiseLayer(engine);
   const reverb = useReverbLayer(engine);
   const master = useMasterChain(engine);
