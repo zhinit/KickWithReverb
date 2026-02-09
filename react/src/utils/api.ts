@@ -1,5 +1,5 @@
 import type { PresetData } from "../types/preset";
-import type { KickListResponse } from "../types/genKick";
+import type { KickListResponse, GenerateKickResponse } from "../types/genKick";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export interface ApiResponse<T = unknown> {
@@ -123,6 +123,34 @@ export async function deletePreset(id: number): Promise<ApiResponse<null>> {
 export async function getKicks(): Promise<ApiResponse<KickListResponse>> {
   try {
     const response = await authenticatedFetch("/api/kicks/");
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
+  } catch {
+    return { ok: false, status: null, data: null };
+  }
+}
+
+export async function generateKick(): Promise<ApiResponse<GenerateKickResponse>> {
+  try {
+    const response = await authenticatedFetch("/api/kicks/generate/", {
+      method: "POST",
+    });
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
+  } catch {
+    return { ok: false, status: null, data: null };
+  }
+}
+
+export async function deleteKick(
+  id: number,
+  confirm = false,
+): Promise<ApiResponse> {
+  try {
+    const query = confirm ? "?confirm=true" : "";
+    const response = await authenticatedFetch(`/api/kicks/${id}/${query}`, {
+      method: "DELETE",
+    });
     const data = await response.json();
     return { ok: response.ok, status: response.status, data };
   } catch {

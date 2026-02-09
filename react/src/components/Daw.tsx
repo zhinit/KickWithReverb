@@ -67,6 +67,11 @@ export const Daw = () => {
         />
         <MasterStrip {...master.uiProps} />
       </div>
+      {isMember && mode === "daw" && (
+        <button onClick={() => setMode("kickGen")}>
+          Generate AI Kick
+        </button>
+      )}
     </div>
   );
 };

@@ -9,3 +9,8 @@ export interface KickListResponse {
   remainingGensToday: number;
   totalGensCount: number;
 }
+
+export interface GenerateKickResponse extends KickData {
+  remainingGensToday: number;
+  totalGensCount: number;
+}
