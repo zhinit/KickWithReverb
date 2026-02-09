@@ -12,7 +12,7 @@ import { useTransport } from "../hooks/useTransport";
 import { usePresets } from "../hooks/usePresets";
 import { useAiKicks } from "../hooks/useAiKicks";
 import { useAuth } from "../hooks/useAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Daw = () => {
   const { userStatus } = useAuth();
@@ -20,6 +20,12 @@ export const Daw = () => {
 
   const [mode, setMode] = useState<"daw" | "kickGen">("daw");
   const [selectedAiKickId, setSelectedAiKickId] = useState<number | null>(null);
+
+  // Reset kickGen mode on user change (Daw stays mounted across sessions)
+  useEffect(() => {
+    setMode("daw");
+    setSelectedAiKickId(null);
+  }, [userStatus]);
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();

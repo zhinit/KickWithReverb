@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
 import {
   getPresets,
@@ -7,6 +7,27 @@ import {
   deletePreset as apiDeletePreset,
 } from "../utils/api";
 import type { PresetData } from "../types/preset";
+import { kickNames, noiseNames, irNames } from "../utils/audioAssets";
+
+// Default DAW state — matches the hook initial values and the shared "Init" preset
+const INIT_DEFAULTS = {
+  kickSample: kickNames[0] || "Kick1",
+  kickLen: 1.0,
+  kickDistAmt: 0,
+  kickOttAmt: 0,
+  noiseSample: noiseNames[0] || "greyNoise",
+  noiseLowPassFreq: 7000,
+  noiseHighPassFreq: 30,
+  noiseVolume: -70,
+  reverbSample: irNames[0] || "JFKUnderpass",
+  reverbLowPassFreq: 7000,
+  reverbHighPassFreq: 30,
+  reverbVolume: -6,
+  masterOttAmt: 0,
+  masterDistAmt: 0,
+  masterLimiterAmt: 1.5,
+  bpm: 140,
+};
 
 // Types for the layer setters and getState functions
 interface KickSetters {
@@ -130,12 +151,41 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
   const currentPresetName = currentPreset?.presetName ?? "Unsaved";
   const canDelete = currentPreset ? !currentPreset.isShared : false;
 
-  // Fetch presets when authenticated
+  // Stable ref to layers so applyValues doesn't change every render
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
+
+  // Apply a set of DAW values to all layers (stable — no deps)
+  const applyValues = useCallback(
+    (values: typeof INIT_DEFAULTS) => {
+      const l = layersRef.current;
+      l.kick.setters.setSample(values.kickSample);
+      l.kick.setters.setLen(values.kickLen);
+      l.kick.setters.setDistAmt(values.kickDistAmt);
+      l.kick.setters.setOttAmt(values.kickOttAmt);
+      l.noise.setters.setSample(values.noiseSample);
+      l.noise.setters.setLowPassFreq(values.noiseLowPassFreq);
+      l.noise.setters.setHighPassFreq(values.noiseHighPassFreq);
+      l.noise.setters.setVolume(values.noiseVolume);
+      l.reverb.setters.setSample(values.reverbSample);
+      l.reverb.setters.setLowPassFreq(values.reverbLowPassFreq);
+      l.reverb.setters.setHighPassFreq(values.reverbHighPassFreq);
+      l.reverb.setters.setVolume(values.reverbVolume);
+      l.master.setters.setOttAmt(values.masterOttAmt);
+      l.master.setters.setDistAmt(values.masterDistAmt);
+      l.master.setters.setLimiterAmt(values.masterLimiterAmt);
+      l.transport.setters.setBpm(values.bpm);
+    },
+    [],
+  );
+
+  // Fetch presets when authenticated, reset to Init on any user change
   useEffect(() => {
     if (!isMember) {
       setUserPresets([]);
       setSharedPresets([]);
       setCurrentPresetId(null);
+      applyValues(INIT_DEFAULTS);
       return;
     }
 
@@ -148,11 +198,10 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         const user = userRes.data.filter((p) => !p.isShared);
         setSharedPresets(shared);
         setUserPresets(user);
-      }
 
-      if (userRes.data) {
-        const initPreset = userRes.data.find((p) => p.presetName == "Init");
+        const initPreset = userRes.data.find((p) => p.presetName === "Init");
         if (initPreset) {
+          applyValues(initPreset);
           setCurrentPresetId(initPreset.id);
         }
       }
@@ -161,7 +210,7 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     };
 
     fetchPresets();
-  }, [isMember]);
+  }, [isMember, applyValues]);
 
   // Load a preset by applying its values to all layers
   const loadPreset = useCallback(
@@ -170,35 +219,10 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       const preset = allPresets.find((p) => p.id === id);
       if (!preset) return;
 
-      // Apply to kick layer
-      layers.kick.setters.setSample(preset.kickSample);
-      layers.kick.setters.setLen(preset.kickLen);
-      layers.kick.setters.setDistAmt(preset.kickDistAmt);
-      layers.kick.setters.setOttAmt(preset.kickOttAmt);
-
-      // Apply to noise layer
-      layers.noise.setters.setSample(preset.noiseSample);
-      layers.noise.setters.setLowPassFreq(preset.noiseLowPassFreq);
-      layers.noise.setters.setHighPassFreq(preset.noiseHighPassFreq);
-      layers.noise.setters.setVolume(preset.noiseVolume);
-
-      // Apply to reverb layer
-      layers.reverb.setters.setSample(preset.reverbSample);
-      layers.reverb.setters.setLowPassFreq(preset.reverbLowPassFreq);
-      layers.reverb.setters.setHighPassFreq(preset.reverbHighPassFreq);
-      layers.reverb.setters.setVolume(preset.reverbVolume);
-
-      // Apply to master chain
-      layers.master.setters.setOttAmt(preset.masterOttAmt);
-      layers.master.setters.setDistAmt(preset.masterDistAmt);
-      layers.master.setters.setLimiterAmt(preset.masterLimiterAmt);
-
-      // Apply to transport
-      layers.transport.setters.setBpm(preset.bpm);
-
+      applyValues(preset);
       setCurrentPresetId(id);
     },
-    [sharedPresets, userPresets, layers]
+    [sharedPresets, userPresets, applyValues]
   );
 
   // Save current state as a preset
