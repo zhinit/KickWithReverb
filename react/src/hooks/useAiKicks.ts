@@ -32,6 +32,17 @@ export const useAiKicks = (engine: AudioEngine): AiKicksReturn => {
   const [totalGensCount, setTotalGensCount] = useState(0);
   const hasLoadedRef = useRef(false);
 
+  // Clear state on logout so the next user doesn't see stale kicks
+  useEffect(() => {
+    if (userStatus !== "member") {
+      hasLoadedRef.current = false;
+      setAiKicks([]);
+      setAiKickNameToIndex({});
+      setRemainingGensToday(0);
+      setTotalGensCount(0);
+    }
+  }, [userStatus]);
+
   // Fetch and load all AI kicks on startup
   useEffect(() => {
     if (!isReady || userStatus !== "member" || hasLoadedRef.current) return;
