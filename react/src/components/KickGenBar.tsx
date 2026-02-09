@@ -161,6 +161,10 @@ export const KickGenBar = ({
 
       {message && <div className="kickgen-message">{message}</div>}
 
+      {isGenerating && (
+        <div className="kickgen-message">generating from the ether...</div>
+      )}
+
       {remainingGensToday <= 3 && remainingGensToday > 0 && (
         <div className="kickgen-message">
           {remainingGensToday} kick generation{remainingGensToday !== 1 ? "s" : ""} left until 12:00 AM EST
