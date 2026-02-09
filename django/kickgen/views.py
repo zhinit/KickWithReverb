@@ -56,7 +56,7 @@ class GenerateKickView(APIView):
 
         # call modal worker
         KickGenerator = modal.Cls.from_name("kick-generator-app", "KickGenerator")
-        wav_bytes = KickGenerator().generate_kick.remote(["hit", "house"])
+        wav_bytes = KickGenerator().generate_kick.remote("hit house")
 
         # Upload to Supabase Storage
         file_id = str(uuid.uuid4())
