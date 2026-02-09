@@ -9,6 +9,7 @@ import { useReverbLayer } from "../hooks/useReverbLayer";
 import { useMasterChain } from "../hooks/useMasterChain";
 import { useTransport } from "../hooks/useTransport";
 import { usePresets } from "../hooks/usePresets";
+import { useAiKicks } from "../hooks/useAiKicks";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
 
@@ -20,6 +21,9 @@ export const Daw = () => {
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
+
+  // AI kicks (fetch + decode + load into WASM on startup)
+  const aiKicks = useAiKicks(engine);
 
   // Layer hooks — all routing is internal to the C++ engine
   const kick = useKickLayer(engine);
