@@ -55,11 +55,6 @@ export const KickGenBar = ({
     const result = await onGenerate();
     if (!result.ok) {
       setMessage(result.error ?? "Generation failed");
-      return;
-    }
-
-    if (result.kick) {
-      onSelectKick(result.kick.id);
     }
   };
 

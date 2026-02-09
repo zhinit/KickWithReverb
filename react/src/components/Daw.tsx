@@ -37,6 +37,16 @@ export const Daw = () => {
     setSelectedAiKickId(id);
   };
 
+  // Wrap generate to select the new kick immediately (avoids stale state lookup)
+  const handleGenerate = async () => {
+    const result = await aiKicks.generate();
+    if (result.ok && result.kick && result.wasmIndex !== undefined) {
+      engine.postMessage({ type: "selectKickSample", index: result.wasmIndex });
+      setSelectedAiKickId(result.kick.id);
+    }
+    return result;
+  };
+
   // Layer hooks — all routing is internal to the C++ engine
   const kick = useKickLayer(engine, aiKicks.aiKickNameToIndex);
   const noise = useNoiseLayer(engine);
@@ -63,7 +73,7 @@ export const Daw = () => {
           aiKicks={aiKicks.aiKicks}
           selectedKickId={selectedAiKickId}
           onSelectKick={selectAiKick}
-          onGenerate={aiKicks.generate}
+          onGenerate={handleGenerate}
           onDelete={aiKicks.remove}
           isGenerating={aiKicks.isGenerating}
           remainingGensToday={aiKicks.remainingGensToday}
@@ -90,7 +100,7 @@ export const Daw = () => {
             ...kick.uiProps,
             ...(mode === "kickGen" && {
               customDropdown: (
-                <button onClick={() => setMode("daw")}>Back To DAW</button>
+                <button className="back-to-daw-btn" onClick={() => setMode("daw")}>Back To DAW</button>
               ),
             }),
           }}
@@ -100,13 +110,16 @@ export const Daw = () => {
         <MasterStrip {...master.uiProps} />
       </div>
       {isMember && mode === "daw" && (
-        <button onClick={() => {
-          setMode("kickGen");
-          if (aiKicks.aiKicks.length > 0) {
-            selectAiKick(aiKicks.aiKicks[0].id);
-          }
-        }}>
-          Generate AI Kick
+        <button
+          className="generate-ai-kick-btn"
+          onClick={() => {
+            setMode("kickGen");
+            if (aiKicks.aiKicks.length > 0) {
+              selectAiKick(aiKicks.aiKicks[0].id);
+            }
+          }}
+        >
+          Generate AI Kick From The Ether
         </button>
       )}
     </div>

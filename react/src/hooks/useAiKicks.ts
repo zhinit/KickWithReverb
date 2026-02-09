@@ -11,7 +11,7 @@ export interface AiKicksReturn {
   isGenerating: boolean;
   remainingGensToday: number;
   totalGensCount: number;
-  generate: () => Promise<{ ok: boolean; error?: string; kick?: KickData }>;
+  generate: () => Promise<{ ok: boolean; error?: string; kick?: KickData; wasmIndex?: number }>;
   remove: (
     id: number,
     confirm?: boolean,
@@ -89,7 +89,7 @@ export const useAiKicks = (engine: AudioEngine): AiKicksReturn => {
     setTotalGensCount(totalGensCount);
     setIsGenerating(false);
 
-    return { ok: true, kick: newKick };
+    return { ok: true, kick: newKick, wasmIndex: index };
   }, [loadKickSample]);
 
   // Delete an AI kick
