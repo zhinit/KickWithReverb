@@ -58,10 +58,14 @@ export const Daw = () => {
   const transport = useTransport(engine);
 
   // Reset kickGen mode and stop playback on user change (Daw stays mounted across sessions)
+  // Re-show overlay so it covers the preset fetch transition
   useEffect(() => {
     setMode("daw");
     setSelectedAiKickId(null);
     transport.stop();
+    if (userStatus !== "unknown") {
+      setShowOverlay(true);
+    }
   }, [userStatus]);
 
   // Presets hook
