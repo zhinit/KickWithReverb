@@ -12,6 +12,7 @@ import { useTransport } from "../hooks/useTransport";
 import { usePresets } from "../hooks/usePresets";
 import { useAiKicks } from "../hooks/useAiKicks";
 import { useAuth } from "../hooks/useAuth";
+import { LoadingOverlay } from "./LoadingOverlay";
 import { useEffect, useState } from "react";
 
 export const Daw = () => {
@@ -21,6 +22,8 @@ export const Daw = () => {
   const [mode, setMode] = useState<"daw" | "kickGen">("daw");
   const [selectedAiKickId, setSelectedAiKickId] = useState<number | null>(null);
 
+  const [showOverlay, setShowOverlay] = useState(true);
+
   // Reset kickGen mode on user change (Daw stays mounted across sessions)
   useEffect(() => {
     setMode("daw");
@@ -29,6 +32,15 @@ export const Daw = () => {
 
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
+
+  // Fallback: if isReady becomes true while Daw is hidden (display: none),
+  // onTransitionEnd won't fire, so dismiss via timeout
+  useEffect(() => {
+    if (engine.isReady && showOverlay) {
+      const timer = setTimeout(() => setShowOverlay(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [engine.isReady, showOverlay]);
 
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
@@ -71,6 +83,12 @@ export const Daw = () => {
 
   return (
     <div className="daw">
+      {showOverlay && (
+        <LoadingOverlay
+          isReady={engine.isReady}
+          onFaded={() => setShowOverlay(false)}
+        />
+      )}
       <h1>{mode === "kickGen" ? "AI KICK GEN MODE" : "KICK WITH REVERB"}</h1>
       {mode === "kickGen" ? (
         <KickGenBar
