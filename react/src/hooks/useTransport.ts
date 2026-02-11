@@ -6,6 +6,7 @@ export interface UseTransportReturn {
   isPlaying: boolean;
   bpm: number;
   controlProps: ControlStripProps;
+  stop: () => void;
   setters: {
     setBpm: (value: number) => void;
   };
@@ -44,6 +45,13 @@ export const useTransport = (engine: AudioEngine): UseTransportReturn => {
     postMessage({ type: "cueRelease" });
   };
 
+  const stop = () => {
+    if (isPlayOn) {
+      setIsPlayOn(false);
+      postMessage({ type: "loop", enabled: false });
+    }
+  };
+
   const controlProps: ControlStripProps = {
     bpm,
     isPlayOn,
@@ -62,6 +70,7 @@ export const useTransport = (engine: AudioEngine): UseTransportReturn => {
     isPlaying: isPlayOn,
     bpm,
     controlProps,
+    stop,
     setters: {
       setBpm: setBPM,
     },

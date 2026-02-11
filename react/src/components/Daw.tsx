@@ -24,23 +24,8 @@ export const Daw = () => {
 
   const [showOverlay, setShowOverlay] = useState(true);
 
-  // Reset kickGen mode on user change (Daw stays mounted across sessions)
-  useEffect(() => {
-    setMode("daw");
-    setSelectedAiKickId(null);
-  }, [userStatus]);
-
   // Audio engine (AudioContext + WASM worklet)
   const engine = useAudioEngine();
-
-  // Fallback: if isReady becomes true while Daw is hidden (display: none),
-  // onTransitionEnd won't fire, so dismiss via timeout
-  useEffect(() => {
-    if (engine.isReady && showOverlay) {
-      const timer = setTimeout(() => setShowOverlay(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [engine.isReady, showOverlay]);
 
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
@@ -72,6 +57,13 @@ export const Daw = () => {
   // Transport hook
   const transport = useTransport(engine);
 
+  // Reset kickGen mode and stop playback on user change (Daw stays mounted across sessions)
+  useEffect(() => {
+    setMode("daw");
+    setSelectedAiKickId(null);
+    transport.stop();
+  }, [userStatus]);
+
   // Presets hook
   const presets = usePresets({
     kick: { setters: kick.setters, getState: kick.getState },
@@ -81,11 +73,22 @@ export const Daw = () => {
     transport: { setters: transport.setters, getState: transport.getState },
   });
 
+  const allLoaded = engine.isReady && !presets.isLoading;
+
+  // Fallback: if allLoaded becomes true while Daw is hidden (display: none),
+  // onTransitionEnd won't fire, so dismiss via timeout
+  useEffect(() => {
+    if (allLoaded && showOverlay) {
+      const timer = setTimeout(() => setShowOverlay(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [allLoaded, showOverlay]);
+
   return (
     <div className="daw">
       {showOverlay && (
         <LoadingOverlay
-          isReady={engine.isReady}
+          isReady={allLoaded}
           onFaded={() => setShowOverlay(false)}
         />
       )}
