@@ -10,7 +10,7 @@ rm -rf build                          # clean rebuild recommended after CMake ch
 emcmake cmake -B build && cmake --build build
 ```
 
-Output: `react/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
+Output: `frontend/public/audio-engine.js` (SINGLE_FILE with embedded WASM, ~1.5MB)
 
 ## Files
 

@@ -14,7 +14,7 @@ The frontend is a React 19 application built with TypeScript and Vite. It provid
 ## Project Structure
 
 ```
-react/
+frontend/
 ├── src/
 │   ├── main.tsx              # App entry point
 │   ├── App.tsx               # Root component with auth routing
@@ -40,15 +40,15 @@ react/
 
 Custom hooks that encapsulate audio logic and state management:
 
-- `useAudioEngine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks. Also exposes `loadKickSample(url)` for dynamically loading AI kick audio into WASM at runtime (returns the WASM index).
-- `useAuth.tsx` - Authentication context with `UserStatus` (`"unknown" | "guest" | "member"`), provides `login`, `register`, `logout`, `continueAsGuest`
-- `useKickLayer.ts` - Kick drum layer (React state + postMessage to WASM). Accepts optional `aiKickNameToIndex` map to merge AI kicks into the dropdown and index lookup.
-- `useNoiseLayer.ts` - Noise generator layer (React state + postMessage to WASM)
-- `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
-- `useMasterChain.ts` - Master output chain (React state + postMessage to WASM)
-- `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage). Exposes a `stop()` function that stops loop playback (used by Daw on logout).
-- `usePresets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout or guest entry, resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
-- `useAiKicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
+- `use-audio-engine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks. Also exposes `loadKickSample(url)` for dynamically loading AI kick audio into WASM at runtime (returns the WASM index).
+- `use-auth.tsx` - Authentication context with `UserStatus` (`"unknown" | "guest" | "member"`), provides `login`, `register`, `logout`, `continueAsGuest`
+- `use-kick-layer.ts` - Kick drum layer (React state + postMessage to WASM). Accepts optional `aiKickNameToIndex` map to merge AI kicks into the dropdown and index lookup.
+- `use-noise-layer.ts` - Noise generator layer (React state + postMessage to WASM)
+- `use-reverb-layer.ts` - Reverb effect layer (React state + postMessage to WASM)
+- `use-master-chain.ts` - Master output chain (React state + postMessage to WASM)
+- `use-transport.ts` - Playback transport controls (play, cue, BPM via postMessage). Exposes a `stop()` function that stops loop playback (used by Daw on logout).
+- `use-presets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout or guest entry, resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
+- `use-ai-kicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
 
 Each audio layer hook:
 - Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter
@@ -63,7 +63,7 @@ TypeScript interfaces for component props:
 
 - `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps` (includes optional `customDropdown` for replacing Selectah), `SoundUnitProps`, `MasterStripProps`
 - `preset.ts` - Defines `PresetData` interface for preset state (all layer parameters, BPM, timestamps)
-- `genKick.ts` - Defines `KickData` (id, name, audioUrl), `KickListResponse` (kicks + counts), `GenerateKickResponse` (single kick + counts)
+- `gen-kick.ts` - Defines `KickData` (id, name, audioUrl), `KickListResponse` (kicks + counts), `GenerateKickResponse` (single kick + counts)
 
 ### `/src/utils/`
 
@@ -72,7 +72,7 @@ TypeScript interfaces for component props:
   - Presets: `getPresets`, `createPreset`, `updatePreset`, `deletePreset`
   - AI Kicks: `getKicks`, `generateKick`, `deleteKick(id, confirm?)`
   - Includes `authenticatedFetch` helper with automatic token refresh on 401 responses
-- `audioAssets.ts` - Audio file imports/exports and knob range mapping utilities:
+- `audio-assets.ts` - Audio file imports/exports and knob range mapping utilities:
   - Linear mapping: `mapKnobRangeToCustomRange`, `mapCustomRangeToKnobRange`
   - Log scale (for filter frequencies): `mapKnobToFrequency`, `mapFrequencyToKnob`
   - Power curve (for kick length, where 50% knob = 25% range): `mapKnobToLengthRatio`, `mapLengthRatioToKnob`

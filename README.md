@@ -57,13 +57,13 @@ A web-based DAW (Digital Audio Workstation) for creating and processing kick dru
 
 ```
 KickWithReverb/
-├── django/          # Backend API
+├── backend/         # Backend API
 │   ├── config/      # Django settings, URLs
 │   ├── users/
 │   ├── presets/
 │   ├── kickgen/     # AI kick generation (generate, list, delete + rate limits)
 │   └── manage.py
-├── react/           # Frontend
+├── frontend/        # Frontend
 │   ├── public/
 │   │   ├── audio-engine.js   # WASM engine (built from dsp/)
 │   │   └── dsp-processor.js  # AudioWorklet bridge
@@ -73,7 +73,7 @@ KickWithReverb/
 │       │   ├── PresetsBar
 │       │   ├── KickGenBar    # AI kick mode (generate, browse, delete)
 │       │   ├── ControlStrip  # BPM, play, cue
-│       │   ├── SoundUnit    # useKickLayer, useNoiseLayer, useReverbLayer
+│       │   ├── SoundUnit    # use-kick-layer, use-noise-layer, use-reverb-layer
 │       │   ├── MasterStrip
 │       │   ├── LayerStrip
 │       │   ├── Knob
@@ -82,17 +82,17 @@ KickWithReverb/
 │       │   ├── LoginForm, RegisterForm
 │       │   └── Logout
 │       ├── hooks/
-│       │   ├── useAudioEngine  # AudioContext, WASM, sample loading
-│       │   ├── useAuth
-│       │   ├── useKickLayer, useNoiseLayer, useReverbLayer
-│       │   ├── useMasterChain, useTransport
-│       │   ├── usePresets
-│       │   └── useAiKicks     # AI kick lifecycle (fetch, generate, delete)
-│       ├── types/    # types.ts, preset.ts, genKick.ts
-│       ├── utils/    # api.ts, audioAssets.ts
+│       │   ├── use-audio-engine  # AudioContext, WASM, sample loading
+│       │   ├── use-auth
+│       │   ├── use-kick-layer, use-noise-layer, use-reverb-layer
+│       │   ├── use-master-chain, use-transport
+│       │   ├── use-presets
+│       │   └── use-ai-kicks     # AI kick lifecycle (fetch, generate, delete)
+│       ├── types/    # types.ts, preset.ts, gen-kick.ts
+│       ├── utils/    # api.ts, audio-assets.ts
 │       └── assets/ # Kicks, Noises, IRs, knobs, buttons
 ├── dsp/             # C++ JUCE audio engine (Emscripten → WASM)
-├── modal/           # Serverless GPU worker (kick_worker.py)
+├── kick_gen_worker/ # Serverless GPU worker (kick_worker.py)
 └── docs/
 ```
 

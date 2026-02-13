@@ -48,12 +48,12 @@ Nothing here is a showstopper. Most findings are "moderate" severity — things 
 
 | Issue | Severity | Location |
 |-------|----------|----------|
-| **No API rate limiting** — No DRF throttling configured. Login/register endpoints have no brute-force protection. Only app-level generation caps (10/day, 30 total) exist. | **MEDIUM** | `django/config/settings.py` |
-| **No error handling around external calls** — Modal worker and Supabase API calls in views have no try/except. Failures produce raw 500 errors instead of user-friendly messages. | **MEDIUM** | `django/kickgen/views.py:54-66` |
-| **Tokens in localStorage** — JWT tokens stored in localStorage are accessible to any XSS attack. Not critical since there's no XSS vector currently, but httpOnly cookies would be more resilient. | **LOW** | `react/src/hooks/useAuth.tsx`, `react/src/utils/api.ts` |
-| **No token expiry validation on load** — `getInitialStatus()` assumes token exists = valid. An expired token will stay in localStorage until the first 401 response. | **LOW** | `react/src/hooks/useAuth.tsx` |
+| **No API rate limiting** — No DRF throttling configured. Login/register endpoints have no brute-force protection. Only app-level generation caps (10/day, 30 total) exist. | **MEDIUM** | `backend/config/settings.py` |
+| **No error handling around external calls** — Modal worker and Supabase API calls in views have no try/except. Failures produce raw 500 errors instead of user-friendly messages. | **MEDIUM** | `backend/kickgen/views.py:54-66` |
+| **Tokens in localStorage** — JWT tokens stored in localStorage are accessible to any XSS attack. Not critical since there's no XSS vector currently, but httpOnly cookies would be more resilient. | **LOW** | `frontend/src/hooks/use-auth.tsx`, `frontend/src/utils/api.ts` |
+| **No token expiry validation on load** — `getInitialStatus()` assumes token exists = valid. An expired token will stay in localStorage until the first 401 response. | **LOW** | `frontend/src/hooks/use-auth.tsx` |
 | **No logging** — No logging configured for failed auth attempts, failed uploads, or API errors. Makes incident investigation harder. | **LOW** | Django backend generally |
-| **Hardcoded EST offset** — Daily generation limit uses a hardcoded `-5` hour offset instead of Django timezone utilities. | **LOW** | `django/kickgen/views.py:14-16` |
+| **Hardcoded EST offset** — Daily generation limit uses a hardcoded `-5` hour offset instead of Django timezone utilities. | **LOW** | `backend/kickgen/views.py:14-16` |
 
 ---
 
@@ -63,7 +63,7 @@ Nothing here is a showstopper. Most findings are "moderate" severity — things 
 
 **Severity: MEDIUM** — Affects maintainability across multiple files.
 
-Message types like `"selectKickSample"`, `"kickLength"`, `"noiseVolume"`, etc. are hard-coded as string literals scattered across every layer hook (`useKickLayer.ts`, `useNoiseLayer.ts`, `useReverbLayer.ts`, `useMasterChain.ts`, `useTransport.ts`). There is no enum or constants file defining the protocol.
+Message types like `"selectKickSample"`, `"kickLength"`, `"noiseVolume"`, etc. are hard-coded as string literals scattered across every layer hook (`use-kick-layer.ts`, `use-noise-layer.ts`, `use-reverb-layer.ts`, `use-master-chain.ts`, `use-transport.ts`). There is no enum or constants file defining the protocol.
 
 If a message type string is misspelled or the WASM side renames a message, it will fail silently at runtime with no TypeScript help.
 
@@ -169,7 +169,7 @@ This hook handles fetching, caching, loading, saving, deleting presets AND coord
 **Severity: HIGH** — Could break inference if checkpoint name changes.
 
 ```python
-# modal/kick_worker.py:104
+# kick_gen_worker/kick_worker.py:104
 voc_path = os.path.join(self.repo_dir, "weights/vocoder_epoch_50.pt")
 ```
 
@@ -184,7 +184,7 @@ The vocoder training script saves both `"vocoder_epoch_50.pt"` and `"vocoder.pt"
 **Severity: MEDIUM** — Wasteful during training.
 
 ```python
-# pytorch/training/train_vocoder.py:141-156
+# kick_gen_trainer/training/train_vocoder.py:141-156
 def mel_spectrogram_loss(y, y_hat):
     mel_spec = torchaudio.transforms.MelSpectrogram(
         sample_rate=SAMPLE_RATE, n_fft=N_FFT, ...
@@ -236,7 +236,7 @@ None of the three training scripts (`train_autoencoder.py`, `train_diffusion.py`
 **Severity: LOW-MEDIUM** — Affects audio quality.
 
 ```python
-# pytorch/training/train_vocoder.py:74-80
+# kick_gen_trainer/training/train_vocoder.py:74-80
 audio = np.interp(
     np.linspace(0, len(audio) - 1, int(len(audio) * SAMPLE_RATE / sr)),
     np.arange(len(audio)), audio,
@@ -339,7 +339,7 @@ Generally consistent. A few exceptions:
 - `setSample` vs `setIr` — inconsistent setter naming across layer hooks
 
 ### Repetitive Patterns
-The layer hooks (`useKickLayer`, `useNoiseLayer`, `useReverbLayer`, `useMasterChain`) follow nearly identical structures with repeated `useEffect` patterns. A hook factory or shared abstraction could reduce duplication.
+The layer hooks (`use-kick-layer`, `use-noise-layer`, `use-reverb-layer`, `use-master-chain`) follow nearly identical structures with repeated `useEffect` patterns. A hook factory or shared abstraction could reduce duplication.
 
 ### Missing Error Boundaries
 No React error boundary wraps the `Daw` component. If any child component throws during render, the entire app crashes with no recovery.

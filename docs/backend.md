@@ -20,7 +20,7 @@ The backend is a Django REST API that handles user authentication, presets, and 
 ## Project Structure
 
 ```
-django/
+backend/
 ├── manage.py                 # Django CLI entry point
 ├── Procfile                  # Railway/Heroku process definition
 ├── requirements.txt          # Python dependencies
@@ -62,7 +62,7 @@ django/
 ### Modal Worker
 
 ```
-modal/
+kick_gen_worker/
 └── kick_worker.py            # Serverless GPU worker for AI kick generation
 ```
 
@@ -223,7 +223,7 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 
 Kickgen URLs are registered directly in `config/urls.py` (no app-level `urls.py`), matching the pattern used by presets.
 
-## Modal Worker (`modal/kick_worker.py`)
+## Modal Worker (`kick_gen_worker/kick_worker.py`)
 
 Serverless GPU worker that runs the AI kick generation model. Deployed separately from Django.
 
@@ -253,7 +253,7 @@ All use `torch.load(weights_only=False)` because checkpoints contain pickled Pyt
 ### Deployment
 
 ```bash
-cd modal && uv run modal deploy kick_worker.py
+cd kick_gen_worker && uv run modal deploy kick_worker.py
 ```
 
 Django connects via: `modal.Cls.from_name("kick-generator-app", "KickGenerator")`
@@ -270,7 +270,7 @@ This allows the frontend to use JavaScript conventions while Django uses Python 
 ## Running the Server
 
 ```bash
-cd django
+cd backend
 python manage.py runserver
 ```
 
@@ -294,7 +294,7 @@ python manage.py createsuperuser
 Deployed on **Railway** with **Supabase** PostgreSQL.
 
 - **URL**: `https://kickwithreverb-production.up.railway.app`
-- **Root directory**: `django`
+- **Root directory**: `backend`
 - **Port**: `8080`
 
 The `Procfile` tells Railway to start Gunicorn:

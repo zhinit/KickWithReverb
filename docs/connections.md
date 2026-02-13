@@ -38,7 +38,7 @@
 
 | Location          | File/Platform                                       | Used By           |
 | ----------------- | --------------------------------------------------- | ----------------- |
-| Local Django      | `django/.env`                                       | Django dev server |
+| Local Django      | `backend/.env`                                      | Django dev server |
 | Local React       | None (uses defaults)                                | Vite dev server   |
 | Production Django | Railway Dashboard → Variables                       | Gunicorn/Django   |
 | Production React  | Vercel Dashboard → Settings → Environment Variables | Vite build        |
@@ -75,7 +75,7 @@
 
 ## How Variables Are Read
 
-### Django (`django/config/settings.py`)
+### Django (`backend/config/settings.py`)
 
 ```python
 # Loads from .env file locally, from platform env vars in production
@@ -103,7 +103,7 @@ CORS_ALLOWED_ORIGINS = [
 ] + [origin for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin]
 ```
 
-### React (`react/src/utils/api.ts`)
+### React (`frontend/src/utils/api.ts`)
 
 ```typescript
 // Vite exposes env vars prefixed with VITE_ via import.meta.env
@@ -201,7 +201,7 @@ Found in Supabase Dashboard → Project Settings → Database → Connection str
 
 ### Local Development
 
-1. Edit `django/.env`
+1. Edit `backend/.env`
 2. Restart Django dev server
 
 ### Railway (Backend)
