@@ -67,9 +67,9 @@ target_link_options(audio-engine PRIVATE
     "SHELL:-s INITIAL_MEMORY=67108864"
 )
 
-# Output into react/public/
+# Output into frontend/public/
 set_target_properties(audio-engine PROPERTIES
     OUTPUT_NAME "audio-engine"
     SUFFIX ".js"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../react/public"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../frontend/public"
 )

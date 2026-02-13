@@ -38,5 +38,5 @@ __pycache__/
 /notes
 .env
 .claudeignore
-/pytorch/weights
-/django/.venv
+/kick_gen_trainer/weights
+/backend/.venv
