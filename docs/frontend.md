@@ -46,7 +46,7 @@ Custom hooks that encapsulate audio logic and state management:
 - `useNoiseLayer.ts` - Noise generator layer (React state + postMessage to WASM)
 - `useReverbLayer.ts` - Reverb effect layer (React state + postMessage to WASM)
 - `useMasterChain.ts` - Master output chain (React state + postMessage to WASM)
-- `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage)
+- `useTransport.ts` - Playback transport controls (play, cue, BPM via postMessage). Exposes a `stop()` function that stops loop playback (used by Daw on logout).
 - `usePresets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout or guest entry, resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
 - `useAiKicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
 
@@ -168,7 +168,14 @@ The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 - Since the Daw component stays mounted across login/logout (for eager audio loading), all state must be explicitly reset on user change.
 - `usePresets` resets DAW to Init defaults on logout/guest, loads Init preset on member login.
 - `useAiKicks` clears AI kick state and resets `hasLoadedRef` on logout so kicks are re-fetched per user.
-- Daw resets `mode` and `selectedAiKickId` on `userStatus` change.
+- Daw resets `mode`, `selectedAiKickId`, and stops transport playback on `userStatus` change.
+- Daw re-shows the loading overlay on login/guest entry (covers preset fetch transition).
+
+**Loading screen:**
+- `LoadingOverlay` component renders a full-viewport overlay with an animated kick waveform SVG and "Loading..." text.
+- Shown inside Daw whenever audio engine hasn't finished loading OR presets are still being fetched (`engine.isReady && !presets.isLoading`).
+- On `userStatus` change (login/guest), the overlay re-appears to cover the preset fetch.
+- Fades out over 400ms once all loading completes. A `setTimeout` fallback handles the case where the Daw is hidden (`display: none`) and `onTransitionEnd` doesn't fire.
 
 ## Environment Variables
 

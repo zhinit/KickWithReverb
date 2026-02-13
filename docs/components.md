@@ -21,6 +21,7 @@ App
 
 ```
 Daw (mode: "daw" | "kickGen")
+├── LoadingOverlay (shown until engine ready + presets loaded)
 ├── [daw mode] PresetsBar
 │   ├── Navigation Buttons (prev/next)
 │   ├── Preset Dropdown
@@ -71,7 +72,7 @@ The DAW is always mounted but hidden during non-DAW views, so audio samples load
 
 ### Daw (`Daw.tsx`)
 
-Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`) and `selectedAiKickId` state. Resets both to defaults on `userStatus` change (since Daw stays mounted across sessions). Contains:
+Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`), `selectedAiKickId` state, and `showOverlay` state. On `userStatus` change, resets mode, stops transport playback, and re-shows the loading overlay (for non-"unknown" states) to cover the preset fetch transition. Contains:
 
 - Title (switches between "KICK WITH REVERB" and "AI KICK GEN MODE")
 - `PresetsBar` (daw mode) or `KickGenBar` (kickGen mode)
@@ -151,6 +152,17 @@ AI kick management bar, replaces PresetsBar when in kickGen mode. Same visual la
 - Generate button (🎨) — calls `POST /api/kicks/generate/`, shows "..." while generating (~10s). On success, new kick is selected. Shows rate limit messages (daily limit, total cap 30).
 
 Props come from `useAiKicks` hook via Daw.tsx.
+
+### LoadingOverlay (`LoadingOverlay.tsx`)
+
+Full-viewport loading screen shown inside Daw while audio assets and presets are loading. Features:
+
+- Animated kick waveform SVG (scrolling transient, dark theme — from `assets/svgs/kick-wav.svg` adapted inline)
+- "Loading..." text label
+- Fixed positioning covers entire viewport (`z-index: 1000`)
+- Accepts `isReady` prop — when true, triggers a 400ms opacity fade-out
+- `onFaded` callback fires after transition ends to unmount the overlay
+- Re-shown on login/guest entry to cover the preset fetch transition
 
 ### WelcomeScreen (`WelcomeScreen.tsx`)
 
