@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { loginUser, registerUser } from "../utils/api";
-import { mapAuthError } from "../utils/authErrors";
+import { mapAuthError } from "../utils/auth-errors";
 
 export type UserStatus = "unknown" | "guest" | "member";
 

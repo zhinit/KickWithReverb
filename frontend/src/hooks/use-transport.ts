@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ControlStripProps } from "../types/types";
-import type { AudioEngine } from "./useAudioEngine";
+import type { AudioEngine } from "./use-audio-engine";
 
 export interface UseTransportReturn {
   isPlaying: boolean;

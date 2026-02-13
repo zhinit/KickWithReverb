@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { KickData } from "../types/genKick";
+import type { KickData } from "../types/gen-kick";
 
 interface KickGenBarProps {
   aiKicks: KickData[];

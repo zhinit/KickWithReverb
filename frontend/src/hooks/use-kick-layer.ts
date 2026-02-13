@@ -5,9 +5,9 @@ import {
   mapCustomRangeToKnobRange,
   mapKnobToLengthRatio,
   mapLengthRatioToKnob,
-} from "../utils/audioAssets";
+} from "../utils/audio-assets";
 import type { LayerStripProps } from "../types/types";
-import type { AudioEngine } from "./useAudioEngine";
+import type { AudioEngine } from "./use-audio-engine";
 
 export interface UseKickLayerReturn {
   uiProps: LayerStripProps;

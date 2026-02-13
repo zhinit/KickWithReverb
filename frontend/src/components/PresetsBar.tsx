@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PresetItem } from "../hooks/usePresets";
+import type { PresetItem } from "../hooks/use-presets";
 
 interface PresetsBarProps {
   isMember: boolean;

@@ -5,7 +5,7 @@ import { Logout } from "./components/Logout";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { WelcomeScreen } from "./components/WelcomeScreen";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/use-auth";
 
 function AppContent() {
   const { userStatus, continueAsGuest, logout } = useAuth();

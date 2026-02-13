@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "./useAuth";
+import { useAuth } from "./use-auth";
 import {
   getPresets,
   createPreset,
@@ -7,7 +7,7 @@ import {
   deletePreset as apiDeletePreset,
 } from "../utils/api";
 import type { PresetData } from "../types/preset";
-import { kickNames, noiseNames, irNames } from "../utils/audioAssets";
+import { kickNames, noiseNames, irNames } from "../utils/audio-assets";
 
 // Default DAW state — matches the hook initial values and the shared "Init" preset
 const INIT_DEFAULTS = {

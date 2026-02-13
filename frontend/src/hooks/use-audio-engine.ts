@@ -6,7 +6,7 @@ import {
   noiseNames,
   irFiles,
   irNames,
-} from "../utils/audioAssets";
+} from "../utils/audio-assets";
 
 export interface AudioEngine {
   postMessage: (message: { type: string; [key: string]: unknown }) => void;

@@ -1,5 +1,5 @@
 import type { PresetData } from "../types/preset";
-import type { KickListResponse, GenerateKickResponse } from "../types/genKick";
+import type { KickListResponse, GenerateKickResponse } from "../types/gen-kick";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export interface ApiResponse<T = unknown> {

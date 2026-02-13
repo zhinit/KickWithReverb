@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AudioEngine } from "./useAudioEngine";
-import type { KickData } from "../types/genKick";
+import type { AudioEngine } from "./use-audio-engine";
+import type { KickData } from "../types/gen-kick";
 import { getKicks, generateKick, deleteKick } from "../utils/api";
-import { useAuth } from "./useAuth";
+import { useAuth } from "./use-auth";
 
 export interface AiKicksReturn {
   aiKicks: KickData[];
