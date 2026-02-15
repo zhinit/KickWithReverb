@@ -1,0 +1,8 @@
+.mastering-heading {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.master-strip-knobs {
+  display: contents;
+}

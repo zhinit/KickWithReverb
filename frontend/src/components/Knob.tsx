@@ -1,3 +1,4 @@
+import "./knob.css";
 import { useRef, useState } from "react";
 import type { KnobProps } from "../types/types";
 import knobImage from "../assets/knobs/marble-with-notch.png";

@@ -1,3 +1,5 @@
+import "./presets-bar.css";
+import "./modal.css";
 import { useState } from "react";
 import type { PresetItem } from "../hooks/use-presets";
 

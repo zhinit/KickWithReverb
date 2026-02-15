@@ -1,0 +1,59 @@
+.presets-bar {
+  --presets-bar-height: 40px;
+  --presets-bar-bkg: rgba(30, 35, 30, 0.781);
+  --presets-bar-color: white;
+  --presets-bar-radius: 0px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 10px;
+}
+
+.presets-bar-btn {
+  height: var(--presets-bar-height);
+  padding: 0 12px;
+  background-color: var(--presets-bar-bkg);
+  color: var(--presets-bar-color);
+  border-radius: var(--presets-bar-radius);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.presets-bar-btn:hover:not(:disabled) {
+  border-color: aquamarine;
+}
+
+.presets-bar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.presets-bar-select {
+  width: 250px;
+  background-color: var(--presets-bar-bkg);
+  height: var(--presets-bar-height);
+  color: var(--presets-bar-color);
+  border-radius: var(--presets-bar-radius);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.presets-bar-select:hover {
+  border-color: aquamarine;
+}
+
+.presets-bar-disabled {
+  background-color: var(--presets-bar-bkg);
+  height: var(--presets-bar-height);
+  padding: 0 20px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  margin-bottom: 15px;
+}
+
+.presets-bar-message {
+  text-shadow: 0 0 6px rgba(0, 255, 156, 0.6);
+  text-transform: uppercase;
+  font-weight: 400;
+  color: white;
+}

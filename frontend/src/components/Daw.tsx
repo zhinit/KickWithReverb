@@ -1,3 +1,4 @@
+import "./daw.css";
 import { ControlStrip } from "./ControlStrip";
 import { MasterStrip } from "./MasterStrip";
 import { SoundUnit } from "./SoundUnit";

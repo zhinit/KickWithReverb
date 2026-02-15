@@ -1,0 +1,19 @@
+.knob-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.knob {
+  touch-action: none;
+  user-select: none;
+  width: 75px;
+  height: 75px;
+  position: relative;
+  transform-origin: center center;
+}
+
+.layer-strip .knob {
+  width: 55px;
+  height: 55px;
+}

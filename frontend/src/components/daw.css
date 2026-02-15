@@ -1,0 +1,24 @@
+.daw {
+  position: relative;
+}
+
+.daw h1 {
+  margin: 0.25em 0;
+}
+
+.daw-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  justify-items: center;
+  align-items: center;
+  row-gap: 20px;
+}
+
+.generate-ai-kick-btn {
+  margin-top: 24px;
+  padding: 14px 0;
+  width: 80%;
+  background-color: #1a2e22;
+  color: #fff;
+  border: 1px solid #253d2e;
+}

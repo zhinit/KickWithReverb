@@ -1,0 +1,26 @@
+.layer-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.back-to-daw-btn {
+  width: 110px;
+  padding: 4px 0;
+  background-color: #2e1a1a;
+  color: #fff;
+  border: 1px solid #3d2525;
+  font-size: 0.85em;
+}
+
+.back-to-daw-btn:hover {
+  background-color: #4a1f1f;
+  border-color: #8b3333;
+}
+
+.back-to-daw-btn:focus,
+.back-to-daw-btn:focus-visible {
+  outline-color: #8b3333;
+  border-color: #8b3333;
+}

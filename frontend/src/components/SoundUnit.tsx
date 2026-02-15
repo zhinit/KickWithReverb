@@ -1,3 +1,4 @@
+import "./sound-unit.css";
 import type { SoundUnitProps } from "../types/types";
 import { LayerStrip } from "./LayerStrip";
 

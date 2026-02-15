@@ -1,3 +1,5 @@
+import "./presets-bar.css";
+import "./modal.css";
 import { useState } from "react";
 import type { KickData } from "../types/gen-kick";
 

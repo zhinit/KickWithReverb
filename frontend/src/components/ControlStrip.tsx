@@ -1,3 +1,4 @@
+import "./control-strip.css";
 import { useState, useEffect } from "react";
 import type { ControlStripProps } from "../types/types";
 import cueButtonOff from "../assets/buttons/cue-button-off.png";

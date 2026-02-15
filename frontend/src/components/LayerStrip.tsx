@@ -1,3 +1,4 @@
+import "./layer-strip.css";
 import type { LayerStripProps } from "../types/types";
 import { Selectah } from "./Selectah";
 import { Knob } from "./Knob";

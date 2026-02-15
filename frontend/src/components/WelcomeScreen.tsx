@@ -1,3 +1,5 @@
+import "./welcome-screen.css";
+
 interface WelcomeScreenProps {
   onLogin: () => void;
   onRegister: () => void;

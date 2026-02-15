@@ -1,3 +1,5 @@
+import "./loading-overlay.css";
+
 interface LoadingOverlayProps {
   isReady: boolean;
   onFaded: () => void;

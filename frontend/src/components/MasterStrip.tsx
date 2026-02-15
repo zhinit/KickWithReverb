@@ -1,3 +1,4 @@
+import "./master-strip.css";
 import type { MasterStripProps } from "../types/types";
 import { Knob } from "./Knob";
 

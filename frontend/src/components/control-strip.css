@@ -1,0 +1,23 @@
+.control-strip {
+  display: contents;
+  padding-bottom: 20px;
+}
+
+.cue-button {
+  width: 90px;
+  height: 90px;
+  display: block;
+}
+
+.play-button {
+  width: 90px;
+  height: 90px;
+  display: block;
+}
+
+.bpm-box {
+  width: 80px;
+  height: 40px;
+  font-size: 30px;
+  font-family: monospace;
+}

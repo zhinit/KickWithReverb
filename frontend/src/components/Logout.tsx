@@ -1,3 +1,4 @@
+import "./logout.css";
 import { useAuth } from "../hooks/use-auth";
 
 export function Logout() {
