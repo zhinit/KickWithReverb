@@ -54,6 +54,16 @@ Daw (mode: "daw" | "kickGen")
 └── [daw mode, member only] "Generate AI Kick" Button
 ```
 
+## File Organization
+
+Components are organized into three subfolders:
+
+- **`auth/`** — Auth-flow views: WelcomeScreen, LoginForm, RegisterForm, Logout
+- **`daw/`** — DAW interface: Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay
+- **`ui/`** — Reusable primitives: Knob, Selectah, modal.css
+
+Each component has a co-located CSS file (e.g. `daw/knob.css` next to `daw/Knob.tsx`). Shared styles like `modal.css` live in `ui/` and are imported where needed.
+
 ## Components
 
 ### App (`App.tsx`)
@@ -70,7 +80,7 @@ Handles view routing based on `userStatus`:
 
 The DAW is always mounted but hidden during non-DAW views, so audio samples load eagerly in the background.
 
-### Daw (`Daw.tsx`)
+### Daw (`daw/Daw.tsx`)
 
 Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`), `selectedAiKickId` state, and `showOverlay` state. On `userStatus` change, resets mode, stops transport playback, and re-shows the loading overlay (for non-"unknown" states) to cover the preset fetch transition. Contains:
 
@@ -85,7 +95,7 @@ Hooks initialized: `useAudioEngine`, `useAiKicks`, `useKickLayer` (with AI kick 
 
 The Daw component wires up the `usePresets` hook by passing layer setters and getters from all audio hooks, enabling presets to save and restore the complete DAW state. AI kick selection (`selectAiKick`, `handleGenerate`) goes through `kick.setters.setSample()` to keep `useKickLayer` state, the Selectah, and WASM in sync.
 
-### ControlStrip (`ControlStrip.tsx`)
+### ControlStrip (`daw/ControlStrip.tsx`)
 
 Transport controls for playback:
 
@@ -93,7 +103,7 @@ Transport controls for playback:
 - Play button (toggles loop playback)
 - BPM input (60-365 range)
 
-### SoundUnit (`SoundUnit.tsx`)
+### SoundUnit (`daw/SoundUnit.tsx`)
 
 Container for the three sound layer strips:
 
@@ -103,7 +113,7 @@ Container for the three sound layer strips:
 
 Each rendered as a `LayerStrip` component.
 
-### LayerStrip (`LayerStrip.tsx`)
+### LayerStrip (`daw/LayerStrip.tsx`)
 
 Generic layer control strip containing:
 
@@ -111,11 +121,11 @@ Generic layer control strip containing:
 - `Selectah` dropdown (for sample/preset selection), or `customDropdown` if provided (used for "Back To DAW" button in kickGen mode)
 - Multiple `Knob` components (for parameters)
 
-### MasterStrip (`MasterStrip.tsx`)
+### MasterStrip (`daw/MasterStrip.tsx`)
 
 Master output controls section with multiple `Knob` components for master chain parameters.
 
-### Knob (`Knob.tsx`)
+### Knob (`ui/Knob.tsx`)
 
 Rotary knob control with drag interaction:
 
@@ -123,11 +133,11 @@ Rotary knob control with drag interaction:
 - Visual rotation from -135 to +135 degrees
 - Displays label above knob
 
-### Selectah (`Selectah.tsx`)
+### Selectah (`ui/Selectah.tsx`)
 
 Dropdown select component for choosing samples or presets.
 
-### PresetsBar (`PresetsBar.tsx`)
+### PresetsBar (`daw/PresetsBar.tsx`)
 
 Preset management bar displayed at the top of the DAW. Features:
 
@@ -142,7 +152,7 @@ Includes two modals:
 - **Save Modal** - Form to enter preset name with validation (alphanumeric, max 32 chars)
 - **Delete Confirmation Modal** - Confirms before deleting a user preset
 
-### KickGenBar (`KickGenBar.tsx`)
+### KickGenBar (`daw/KickGenBar.tsx`)
 
 AI kick management bar, replaces PresetsBar when in kickGen mode. Same visual layout (⇇ ⇉ [dropdown] 🗑️ 🎨). Features:
 
@@ -153,7 +163,7 @@ AI kick management bar, replaces PresetsBar when in kickGen mode. Same visual la
 
 Props come from `useAiKicks` hook via Daw.tsx.
 
-### LoadingOverlay (`LoadingOverlay.tsx`)
+### LoadingOverlay (`daw/LoadingOverlay.tsx`)
 
 Full-viewport loading screen shown inside Daw while audio assets and presets are loading. Features:
 
@@ -164,7 +174,7 @@ Full-viewport loading screen shown inside Daw while audio assets and presets are
 - `onFaded` callback fires after transition ends to unmount the overlay
 - Re-shown on login/guest entry to cover the preset fetch transition
 
-### WelcomeScreen (`WelcomeScreen.tsx`)
+### WelcomeScreen (`auth/WelcomeScreen.tsx`)
 
 Landing page displayed when `userStatus` is `"unknown"`. Shows:
 
@@ -172,7 +182,7 @@ Landing page displayed when `userStatus` is `"unknown"`. Shows:
 - "Welcome to the Loop. What would you like to do?"
 - Three buttons stacked vertically: Login, Sign Up, Continue as Guest
 
-### LoginForm (`LoginForm.tsx`)
+### LoginForm (`auth/LoginForm.tsx`)
 
 Login form with:
 
@@ -181,7 +191,7 @@ Login form with:
 - Submit button
 - Back button
 
-### RegisterForm (`RegisterForm.tsx`)
+### RegisterForm (`auth/RegisterForm.tsx`)
 
 Registration form with:
 
@@ -191,6 +201,6 @@ Registration form with:
 - Submit button
 - Back button
 
-### Logout (`Logout.tsx`)
+### Logout (`auth/Logout.tsx`)
 
 Simple logout button that clears auth tokens and resets `userStatus` to `"unknown"`, returning to the welcome screen.

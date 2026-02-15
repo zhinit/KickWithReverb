@@ -18,9 +18,12 @@ frontend/
 ├── src/
 │   ├── main.tsx              # App entry point
 │   ├── App.tsx               # Root component with auth routing
-│   ├── App.css               # Global styles
-│   ├── index.css             # Base styles
-│   ├── components/           # UI components
+│   ├── App.css               # App-level styles (layout, form, guest auth)
+│   ├── index.css             # Base resets and variables
+│   ├── components/
+│   │   ├── auth/             # Auth-flow components (WelcomeScreen, LoginForm, RegisterForm, Logout)
+│   │   ├── daw/              # DAW components (Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay)
+│   │   └── ui/               # Reusable primitives (Knob, Selectah, modal.css)
 │   ├── hooks/                # Custom React hooks
 │   ├── types/                # TypeScript type definitions
 │   ├── utils/                # Utility functions
