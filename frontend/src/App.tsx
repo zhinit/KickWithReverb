@@ -1,10 +1,10 @@
 import "./App.css";
 import { useState } from "react";
-import { Daw } from "./components/Daw"
-import { Logout } from "./components/Logout";
-import { LoginForm } from "./components/LoginForm";
-import { RegisterForm } from "./components/RegisterForm";
-import { WelcomeScreen } from "./components/WelcomeScreen";
+import { Daw } from "./components/daw/Daw"
+import { Logout } from "./components/auth/Logout";
+import { LoginForm } from "./components/auth/LoginForm";
+import { RegisterForm } from "./components/auth/RegisterForm";
+import { WelcomeScreen } from "./components/auth/WelcomeScreen";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 
 function AppContent() {

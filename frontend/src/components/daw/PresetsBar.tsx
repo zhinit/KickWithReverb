@@ -1,7 +1,7 @@
 import "./presets-bar.css";
-import "./modal.css";
+import "../ui/modal.css";
 import { useState } from "react";
-import type { PresetItem } from "../hooks/use-presets";
+import type { PresetItem } from "../../hooks/use-presets";
 
 interface PresetsBarProps {
   isMember: boolean;

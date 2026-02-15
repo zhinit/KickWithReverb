@@ -1,7 +1,7 @@
 import "./presets-bar.css";
-import "./modal.css";
+import "../ui/modal.css";
 import { useState } from "react";
-import type { KickData } from "../types/gen-kick";
+import type { KickData } from "../../types/gen-kick";
 
 interface KickGenBarProps {
   aiKicks: KickData[];

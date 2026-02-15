@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { useAuth } from "../hooks/use-auth";
+import { useAuth } from "../../hooks/use-auth";
 
 interface LoginFormProps {
   onBack: () => void;
 }
 
-export function LoginForm({ onBack }: LoginFormProps) {
+export function RegisterForm({ onBack }: LoginFormProps) {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    const errorMessage = await login(username, password);
+    const errorMessage = await register(username, email, password);
     if (errorMessage) {
       setError(errorMessage);
     }
@@ -23,7 +24,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h3 className="form-header">Link Identity To The System</h3>
+      <h3 className="form-header">Create System Persona</h3>
       {error && <p className="error">{error}</p>}
       <input
         type="text"
@@ -32,12 +33,18 @@ export function LoginForm({ onBack }: LoginFormProps) {
         onChange={(e) => setUsername(e.target.value)}
       />
       <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
         type="password"
         placeholder="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <button type="submit">Log In</button>
+      <button type="submit">Sign Up</button>
       <button type="button" onClick={onBack}>
         Back
       </button>

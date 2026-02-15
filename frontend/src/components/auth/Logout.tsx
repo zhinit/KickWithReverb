@@ -1,5 +1,5 @@
 import "./logout.css";
-import { useAuth } from "../hooks/use-auth";
+import { useAuth } from "../../hooks/use-auth";
 
 export function Logout() {
   const { logout } = useAuth();

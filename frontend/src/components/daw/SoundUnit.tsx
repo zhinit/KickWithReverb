@@ -1,5 +1,5 @@
 import "./sound-unit.css";
-import type { SoundUnitProps } from "../types/types";
+import type { SoundUnitProps } from "../../types/types";
 import { LayerStrip } from "./LayerStrip";
 
 export const SoundUnit = ({

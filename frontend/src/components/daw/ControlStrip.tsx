@@ -1,10 +1,10 @@
 import "./control-strip.css";
 import { useState, useEffect } from "react";
-import type { ControlStripProps } from "../types/types";
-import cueButtonOff from "../assets/buttons/cue-button-off.png";
-import cueButtonOn from "../assets/buttons/cue-button-on.png";
-import playButtonOff from "../assets/buttons/play-button-off.png";
-import playButtonOn from "../assets/buttons/play-button-on.png";
+import type { ControlStripProps } from "../../types/types";
+import cueButtonOff from "../../assets/buttons/cue-button-off.png";
+import cueButtonOn from "../../assets/buttons/cue-button-on.png";
+import playButtonOff from "../../assets/buttons/play-button-off.png";
+import playButtonOn from "../../assets/buttons/play-button-on.png";
 
 export const ControlStrip = ({
   bpm,

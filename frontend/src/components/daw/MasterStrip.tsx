@@ -1,6 +1,6 @@
 import "./master-strip.css";
-import type { MasterStripProps } from "../types/types";
-import { Knob } from "./Knob";
+import type { MasterStripProps } from "../../types/types";
+import { Knob } from "../ui/Knob";
 
 export const MasterStrip = ({
   layerKnobLabels,

@@ -1,7 +1,7 @@
 import "./layer-strip.css";
-import type { LayerStripProps } from "../types/types";
-import { Selectah } from "./Selectah";
-import { Knob } from "./Knob";
+import type { LayerStripProps } from "../../types/types";
+import { Selectah } from "../ui/Selectah";
+import { Knob } from "../ui/Knob";
 
 export const LayerStrip = ({
   layerLabel,

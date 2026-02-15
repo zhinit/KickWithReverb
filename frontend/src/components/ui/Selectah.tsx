@@ -1,4 +1,4 @@
-import type { SelectahProps } from "../types/types"
+import type { SelectahProps } from "../../types/types"
 
 export const Selectah = ({ dropdownItems, value, onChange }: SelectahProps) => (
   <select value={value} onChange={(e) => onChange?.(e.target.value)}>
