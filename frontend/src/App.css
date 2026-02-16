@@ -11,16 +11,15 @@ html {
 }
 
 body {
-  --main-color: whitesmoke;
-  color: var(--main-color);
+  color: var(--text-color);
 }
 
 button {
-  color: var(--main-color);
+  color: var(--text-color);
 }
 
 select {
-  color: var(--main-color);
+  color: var(--text-color);
   width: 110px;
 }
 

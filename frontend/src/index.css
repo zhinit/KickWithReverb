@@ -15,6 +15,9 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --text-color: whitesmoke;
+  --strip-background-color: rgb(30, 30, 30);
 }
 
 body {
