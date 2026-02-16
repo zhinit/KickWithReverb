@@ -12,6 +12,8 @@
   justify-items: center;
   align-items: center;
   row-gap: 20px;
+  padding: 10px 10px;
+  border-radius: 30px;
   background: var(--daw-background-color);
 }
 
