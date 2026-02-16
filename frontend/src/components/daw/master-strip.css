@@ -11,6 +11,8 @@
   justify-self: stretch;
   grid-column: 1 / -1;
 
+  padding-bottom: 7px;
+
   background: var(--strip-background-color);
   border-radius: 30px;
 
