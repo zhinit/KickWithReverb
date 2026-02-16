@@ -8,6 +8,8 @@
   align-items: center;
   justify-content: center;
   padding-bottom: 10px;
+
+  grid-column: 1 / -1;
 }
 
 .presets-bar-btn {

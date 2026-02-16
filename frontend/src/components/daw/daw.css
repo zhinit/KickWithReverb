@@ -1,20 +1,19 @@
 .daw {
-  position: relative;
-}
-
-.daw h1 {
-  margin: 0.25em 0;
-}
-
-.daw-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   justify-items: center;
   align-items: center;
-  row-gap: 20px;
+  row-gap: 10px;
+  position: relative;
+
   padding: 10px 10px;
   border-radius: 30px;
   background: var(--daw-background-color);
+}
+
+.daw h1 {
+  margin: 0.25em 0;
+  grid-column: 1 / -1;
 }
 
 .generate-ai-kick-btn {
@@ -24,4 +23,5 @@
   background-color: #1a2e22;
   color: #fff;
   border: 1px solid #253d2e;
+  grid-column: 1 / -1;
 }

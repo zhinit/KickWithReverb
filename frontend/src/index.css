@@ -17,8 +17,8 @@
   -moz-osx-font-smoothing: grayscale;
 
   --text-color: whitesmoke;
-  --strip-background-color: rgb(40, 40, 40);
-  --daw-background-color: rgb(25, 25, 25);
+  --strip-background-color: rgba(40, 40, 40, 0.85);
+  --daw-background-color: rgba(25, 25, 25, 0.7);
 }
 
 body {

@@ -123,22 +123,25 @@ export const Daw = () => {
           onPrev={presets.prevPreset}
         />
       )}
-      <div className="daw-grid">
-        <ControlStrip {...transport.controlProps} />
-        <SoundUnit
-          kickKnobProps={{
-            ...kick.uiProps,
-            ...(mode === "kickGen" && {
-              customDropdown: (
-                <button className="back-to-daw-btn" onClick={() => setMode("daw")}>Back To DAW</button>
-              ),
-            }),
-          }}
-          noiseKnobProps={noise.uiProps}
-          reverbKnobProps={reverb.uiProps}
-        />
-        <MasterStrip {...master.uiProps} />
-      </div>
+      <ControlStrip {...transport.controlProps} />
+      <SoundUnit
+        kickKnobProps={{
+          ...kick.uiProps,
+          ...(mode === "kickGen" && {
+            customDropdown: (
+              <button
+                className="back-to-daw-btn"
+                onClick={() => setMode("daw")}
+              >
+                Back To DAW
+              </button>
+            ),
+          }),
+        }}
+        noiseKnobProps={noise.uiProps}
+        reverbKnobProps={reverb.uiProps}
+      />
+      <MasterStrip {...master.uiProps} />
       {isMember && mode === "daw" && (
         <button
           className="generate-ai-kick-btn"
