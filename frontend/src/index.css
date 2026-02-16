@@ -17,16 +17,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: aquamarine;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: aquamarine;
-}
-
 body {
   margin: 0;
   display: flex;
@@ -68,19 +58,4 @@ textarea:focus-visible,
 select:focus,
 select:focus-visible {
   outline: 1px aquamarine;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: aquamarine;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
 }
