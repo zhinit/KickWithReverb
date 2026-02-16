@@ -9,6 +9,8 @@
   padding: 10px 10px;
   border-radius: 30px;
   background: var(--daw-background-color);
+
+  border: var(--borders-width) solid var(--borders-color);
 }
 
 .daw h1 {

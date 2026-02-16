@@ -1,5 +1,5 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Helvetica;
   line-height: 1.5;
   font-weight: 400;
 
@@ -17,8 +17,10 @@
   -moz-osx-font-smoothing: grayscale;
 
   --text-color: whitesmoke;
-  --strip-background-color: rgba(40, 40, 40, 0.85);
-  --daw-background-color: rgba(25, 25, 25, 0.7);
+  --strip-background-color: rgba(15, 15, 15, 1);
+  --borders-color: rgba(245, 245, 245, 0.5);
+  --borders-width: 2px;
+  --daw-background-color: rgba(10, 10, 10, 0.7);
 }
 
 body {

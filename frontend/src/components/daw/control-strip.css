@@ -8,8 +8,7 @@
 
   background: var(--strip-background-color);
   border-radius: 30px;
-
-  /* margin-bottom: 20px; */
+  border: var(--borders-width) solid var(--borders-color);
 }
 
 .cue-button {

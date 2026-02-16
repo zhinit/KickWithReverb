@@ -13,4 +13,6 @@
 
   background: var(--strip-background-color);
   border-radius: 30px;
+
+  border: var(--borders-width) solid var(--borders-color);
 }

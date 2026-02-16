@@ -2,11 +2,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 15px;
 
   background: var(--strip-background-color);
   border-radius: 30px;
-  padding: 10px 0px;
+  padding: 10px 10px;
+
+  border: var(--borders-width) solid var(--borders-color);
 }
 
 .back-to-daw-btn {
