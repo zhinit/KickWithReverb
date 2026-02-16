@@ -1,6 +1,6 @@
 import "./App.css";
 import { useState } from "react";
-import { Daw } from "./components/daw/Daw"
+import { Daw } from "./components/daw/Daw";
 import { Logout } from "./components/auth/Logout";
 import { LoginForm } from "./components/auth/LoginForm";
 import { RegisterForm } from "./components/auth/RegisterForm";
@@ -30,16 +30,28 @@ function AppContent() {
       )}
       {userStatus === "guest" && (
         <>
-          <div className="presets-bar-message">
-            LOGIN FOR AI KICK GEN AND SAVING PRESETS
-          </div>
           <div className="guest-auth-buttons">
-            <button onClick={() => { logout(); setView("login"); }} className="guest-auth-btn">
+            <button
+              onClick={() => {
+                logout();
+                setView("login");
+              }}
+              className="guest-auth-btn"
+            >
               Log In
             </button>
-            <button onClick={() => { logout(); setView("register"); }} className="guest-auth-btn">
+            <button
+              onClick={() => {
+                logout();
+                setView("register");
+              }}
+              className="guest-auth-btn"
+            >
               Sign Up
             </button>
+          </div>
+          <div className="presets-bar-message">
+            LOGIN FOR AI KICK GEN AND SAVING PRESETS
           </div>
         </>
       )}

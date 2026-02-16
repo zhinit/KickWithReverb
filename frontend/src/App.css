@@ -45,10 +45,17 @@ form {
   display: flex;
   justify-content: center;
   gap: 20px;
-  padding-top: 20px;
 }
 
 .guest-auth-btn {
   background-color: transparent;
   cursor: pointer;
+}
+
+.presets-bar-message {
+  text-shadow: 0 0 6px rgba(0, 255, 156, 0.6);
+  text-transform: uppercase;
+  font-weight: 400;
+  color: white;
+  margin: 10px 0;
 }
