@@ -12,6 +12,7 @@
   justify-items: center;
   align-items: center;
   row-gap: 20px;
+  background: var(--daw-background-color);
 }
 
 .generate-ai-kick-btn {
