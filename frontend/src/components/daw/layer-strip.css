@@ -1,8 +1,12 @@
 .layer-strip {
   display: flex;
   flex-direction: column;
-  gap: 5px;
   align-items: center;
+  gap: 5px;
+
+  background: var(--strip-background-color);
+  border-radius: 30px;
+  padding: 20px 0px;
 }
 
 .back-to-daw-btn {
