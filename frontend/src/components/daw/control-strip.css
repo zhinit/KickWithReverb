@@ -1,6 +1,16 @@
 .control-strip {
-  display: contents;
-  padding-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  justify-items: center;
+  align-items: center;
+  justify-self: stretch;
+  grid-column: 1 / -1;
+
+  background: rgb(30, 30, 30);
+  border-radius: 30px;
+  padding-left: 0 20px;
+
+  margin-bottom: 20px;
 }
 
 .cue-button {
