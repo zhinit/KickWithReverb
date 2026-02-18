@@ -10,8 +10,13 @@ interface KickGenBarProps {
   onGenerate: () => Promise<{ ok: boolean; error?: string; kick?: KickData }>;
   onDelete: (
     id: number,
-    confirm?: boolean,
-  ) => Promise<{ ok: boolean; status?: number; error?: string; presets?: string[] }>;
+    confirm?: boolean
+  ) => Promise<{
+    ok: boolean;
+    status?: number;
+    error?: string;
+    presets?: string[];
+  }>;
   isGenerating: boolean;
   remainingGensToday: number;
   totalGensCount: number;
@@ -36,13 +41,15 @@ export const KickGenBar = ({
 
   const handlePrev = () => {
     if (aiKicks.length === 0) return;
-    const prevIndex = selectedIndex <= 0 ? aiKicks.length - 1 : selectedIndex - 1;
+    const prevIndex =
+      selectedIndex <= 0 ? aiKicks.length - 1 : selectedIndex - 1;
     onSelectKick(aiKicks[prevIndex].id);
   };
 
   const handleNext = () => {
     if (aiKicks.length === 0) return;
-    const nextIndex = selectedIndex >= aiKicks.length - 1 ? 0 : selectedIndex + 1;
+    const nextIndex =
+      selectedIndex >= aiKicks.length - 1 ? 0 : selectedIndex + 1;
     onSelectKick(aiKicks[nextIndex].id);
   };
 
@@ -131,9 +138,7 @@ export const KickGenBar = ({
           }}
         >
           {aiKicks.length === 0 ? (
-            <option value="">
-              Click 🎨 to generate new kick
-            </option>
+            <option value="">Click 🎨 to generate new kick</option>
           ) : (
             aiKicks.map((kick) => (
               <option key={kick.id} value={kick.id}>
@@ -157,7 +162,7 @@ export const KickGenBar = ({
           disabled={isGenerating}
           title="Generate new AI kick"
         >
-          {isGenerating ? "..." : "\uD83C\uDFA8"}
+          {isGenerating ? "..." : "GEN"}
         </button>
       </div>
 
@@ -169,7 +174,8 @@ export const KickGenBar = ({
 
       {remainingGensToday <= 3 && remainingGensToday > 0 && (
         <div className="kickgen-message">
-          {remainingGensToday} kick generation{remainingGensToday !== 1 ? "s" : ""} left until 12:00 AM EST
+          {remainingGensToday} kick generation
+          {remainingGensToday !== 1 ? "s" : ""} left until 12:00 AM EST
         </div>
       )}
 
