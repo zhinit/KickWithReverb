@@ -4,11 +4,13 @@
   --presets-bar-color: white;
   --presets-bar-radius: 0px;
 
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 5fr 1fr 1fr;
   align-items: center;
   justify-content: center;
-
   grid-column: 1 / -1;
+
+  width: var(--strip-h-width);
 }
 
 .presets-bar-btn {
@@ -31,7 +33,7 @@
 }
 
 .presets-bar-select {
-  width: 250px;
+  width: 100%;
   background-color: var(--presets-bar-bkg);
   height: var(--presets-bar-height);
   color: var(--presets-bar-color);

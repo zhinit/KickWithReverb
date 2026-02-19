@@ -19,6 +19,7 @@
 
 .daw h1 {
   margin: 0.1em 0;
+  font-size: 2.8rem;
   grid-column: 1 / -1;
 }
 
