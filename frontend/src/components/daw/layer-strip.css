@@ -10,14 +10,9 @@
 
   border: var(--borders-width) solid var(--borders-color);
 
-  /* width: var(--strip-v-width); */
   box-sizing: border-box;
   width: 100%;
 }
-
-/* .layer-strip select {
-  box-sizing: border-box;
-} */
 
 .back-to-daw-btn {
   width: 110px;
