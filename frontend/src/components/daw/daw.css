@@ -3,23 +3,26 @@
   grid-template-columns: 1fr 1fr 1fr;
   justify-items: center;
   align-items: center;
-  row-gap: 10px;
+  row-gap: 20px;
   position: relative;
 
-  padding: 10px 10px;
+  padding: 20px 20px;
   border-radius: 30px;
   background: var(--daw-background-color);
 
   border: var(--borders-width) solid var(--borders-color);
+
+  --strip-v-width: 133px;
+  --strip-gap: 25px;
+  --strip-h-width: calc(var(--strip-v-width) * 3 + var(--strip-gap) * 2);
 }
 
 .daw h1 {
-  margin: 0.25em 0;
+  margin: 0.1em 0;
   grid-column: 1 / -1;
 }
 
 .generate-ai-kick-btn {
-  margin-top: 24px;
   padding: 14px 0;
   width: 80%;
   background-color: #1a2e22;

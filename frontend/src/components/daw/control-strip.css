@@ -3,12 +3,14 @@
   grid-template-columns: 1fr 1fr 1fr;
   justify-items: center;
   align-items: center;
-  justify-self: stretch;
+  justify-self: center;
   grid-column: 1 / -1;
 
   background: var(--strip-background-color);
   border-radius: 30px;
   border: var(--borders-width) solid var(--borders-color);
+  width: var(--strip-h-width);
+  column-gap: var(--strip-gap);
 }
 
 .cue-button {
