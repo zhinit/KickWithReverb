@@ -2,21 +2,20 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { loginUser, registerUser } from "../utils/api";
 import { mapAuthError } from "../utils/auth-errors";
 
-export type UserStatus = "unknown" | "guest" | "member";
+export type UserStatus = "guest" | "member";
 
 interface AuthContextType {
   userStatus: UserStatus;
   login: (username: string, password: string) => Promise<string | null>;
   register: (username: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
-  continueAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function getInitialStatus(): UserStatus {
   const token = localStorage.getItem("accessToken");
-  return token ? "member" : "unknown";
+  return token ? "member" : "guest";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -45,15 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    setUserStatus("unknown");
-  }
-
-  function continueAsGuest() {
     setUserStatus("guest");
   }
 
   return (
-    <AuthContext.Provider value={{ userStatus, login, register, logout, continueAsGuest }}>
+    <AuthContext.Provider value={{ userStatus, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

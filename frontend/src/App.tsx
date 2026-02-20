@@ -1,50 +1,41 @@
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Daw } from "./components/daw/Daw";
 import { Logout } from "./components/auth/Logout";
 import { LoginForm } from "./components/auth/LoginForm";
 import { RegisterForm } from "./components/auth/RegisterForm";
-import { WelcomeScreen } from "./components/auth/WelcomeScreen";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 
 function AppContent() {
-  const { userStatus, continueAsGuest, logout } = useAuth();
-  const [view, setView] = useState<"welcome" | "login" | "register">("welcome");
+  const { userStatus } = useAuth();
+  const [authForm, setAuthForm] = useState<"none" | "login" | "register">("none");
 
-  const showDaw = userStatus === "member" || userStatus === "guest";
+  // Auto-close auth form on successful login
+  useEffect(() => {
+    if (userStatus === "member") {
+      setAuthForm("none");
+    }
+  }, [userStatus]);
 
   return (
     <>
-      {!showDaw && view === "welcome" && (
-        <WelcomeScreen
-          onLogin={() => setView("login")}
-          onRegister={() => setView("register")}
-          onGuest={() => continueAsGuest()}
-        />
+      {authForm === "login" && (
+        <LoginForm onBack={() => setAuthForm("none")} />
       )}
-      {!showDaw && view === "login" && (
-        <LoginForm onBack={() => setView("welcome")} />
+      {authForm === "register" && (
+        <RegisterForm onBack={() => setAuthForm("none")} />
       )}
-      {!showDaw && view === "register" && (
-        <RegisterForm onBack={() => setView("welcome")} />
-      )}
-      {userStatus === "guest" && (
+      {userStatus === "guest" && authForm === "none" && (
         <>
           <div className="guest-auth-buttons">
             <button
-              onClick={() => {
-                logout();
-                setView("login");
-              }}
+              onClick={() => setAuthForm("login")}
               className="guest-auth-btn"
             >
               Log In
             </button>
             <button
-              onClick={() => {
-                logout();
-                setView("register");
-              }}
+              onClick={() => setAuthForm("register")}
               className="guest-auth-btn"
             >
               Sign Up
@@ -55,7 +46,7 @@ function AppContent() {
           </div>
         </>
       )}
-      <div style={{ display: showDaw ? undefined : "none" }}>
+      <div style={{ display: authForm === "none" ? undefined : "none" }}>
         <Daw />
       </div>
       {userStatus === "member" && <Logout />}

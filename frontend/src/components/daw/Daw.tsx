@@ -64,9 +64,7 @@ export const Daw = () => {
     setMode("daw");
     setSelectedAiKickId(null);
     transport.stop();
-    if (userStatus !== "unknown") {
-      setShowOverlay(true);
-    }
+    setShowOverlay(true);
   }, [userStatus]);
 
   // Presets hook

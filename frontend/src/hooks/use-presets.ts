@@ -179,11 +179,15 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     [],
   );
 
+  const prevStatusRef = useRef(userStatus);
+
   // Fetch presets when authenticated or as guest, reset to Init on logout
   useEffect(() => {
-    // Reset to defaults only when logging out (going from member to non-member)
-    // Guests can still see shared presets
-    if (userStatus === "unknown") {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = userStatus;
+
+    // Reset to defaults when logging out (member → guest)
+    if (prev === "member" && userStatus === "guest") {
       setUserPresets([]);
       setSharedPresets([]);
       setCurrentPresetId(null);
