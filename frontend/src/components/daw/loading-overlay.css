@@ -25,6 +25,15 @@
   gap: 16px;
 }
 
+@keyframes loading-wave-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-400px); }
+}
+
+.loading-wave-path {
+  animation: loading-wave-scroll 2.5s linear infinite;
+}
+
 .loading-text {
   color: whitesmoke;
   font-weight: 400;

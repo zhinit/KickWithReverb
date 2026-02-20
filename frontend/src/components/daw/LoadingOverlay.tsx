@@ -27,6 +27,7 @@ export const LoadingOverlay = ({ isReady, onFaded }: LoadingOverlayProps) => {
           <line x1="0" y1="60" x2="400" y2="60" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
           <g mask="url(#loadingScopeMask)">
             <path
+              className="loading-wave-path"
               fill="none"
               stroke="whitesmoke"
               strokeWidth="2"
@@ -39,17 +40,7 @@ export const LoadingOverlay = ({ isReady, onFaded }: LoadingOverlayProps) => {
                 L 450 60 L 452 10 L 455 110 L 458 20 L 462 100 L 467 35 L 475 85 L 485 45 L 500 70 L 530 55 L 560 60
                 L 800 60
               "
-            >
-              <animateTransform
-                attributeName="transform"
-                type="translate"
-                from="0 0"
-                to="-400 0"
-                dur="2.5s"
-                repeatCount="indefinite"
-                calcMode="linear"
-              />
-            </path>
+            />
           </g>
         </svg>
         <p className="loading-text">Loading...</p>
