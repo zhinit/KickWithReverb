@@ -6,17 +6,17 @@
 App
 ├── AuthProvider (context wrapper)
 │   └── AppContent
-│       ├── [unknown]
-│       │   ├── WelcomeScreen
+│       ├── [authForm open]
 │       │   ├── LoginForm
 │       │   └── RegisterForm
-│       ├── [guest]
+│       ├── [guest, no auth form]
 │       │   ├── Login/Sign Up Buttons (above Daw)
+│       │   ├── "LOGIN FOR AI KICK GEN AND SAVING PRESETS" message
 │       │   └── Daw
 │       └── [member]
 │           ├── Daw
 │           └── Logout (below Daw)
-│       (Daw is always mounted but hidden for eager loading)
+│       (Daw hidden when auth form is open, otherwise always mounted)
 ```
 
 ```
@@ -58,7 +58,7 @@ Daw (mode: "daw" | "kickGen")
 
 Components are organized into three subfolders:
 
-- **`auth/`** — Auth-flow views: WelcomeScreen, LoginForm, RegisterForm, Logout
+- **`auth/`** — Auth-flow views: LoginForm, RegisterForm, Logout
 - **`daw/`** — DAW interface: Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay
 - **`ui/`** — Reusable primitives: Knob, Selectah, modal.css
 
@@ -72,17 +72,17 @@ Root component that wraps the app in `AuthProvider` and renders `AppContent`.
 
 ### AppContent (`App.tsx`)
 
-Handles view routing based on `userStatus`:
+Manages `authForm` state (`"none" | "login" | "register"`) and renders based on `userStatus`:
 
-- `"unknown"`: Shows welcome screen (or login/register forms)
-- `"guest"`: Shows Login/Sign Up buttons above the DAW (no presets)
+- `"guest"` (no auth form): Shows Login/Sign Up buttons and message above the DAW
+- `"guest"` (auth form open): Shows LoginForm or RegisterForm (DAW hidden)
 - `"member"`: Shows DAW with presets + logout button below
 
-The DAW is always mounted but hidden during non-DAW views, so audio samples load eagerly in the background.
+On successful login (`userStatus` becomes `"member"`), the auth form auto-closes via a `useEffect`. The DAW is hidden while auth forms are open but stays mounted for eager audio loading.
 
 ### Daw (`daw/Daw.tsx`)
 
-Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`), `selectedAiKickId` state, and `showOverlay` state. On `userStatus` change, resets mode, stops transport playback, and re-shows the loading overlay (for non-"unknown" states) to cover the preset fetch transition. Contains:
+Main DAW interface. Initializes all audio layer hooks and connects the audio routing. Manages `mode` state (`"daw" | "kickGen"`), `selectedAiKickId` state, and `showOverlay` state. On `userStatus` change, resets mode, stops transport playback, and re-shows the loading overlay to cover the preset fetch transition. Contains:
 
 - Title (switches between "KICK WITH REVERB" and "AI KICK GEN MODE")
 - `PresetsBar` (daw mode) or `KickGenBar` (kickGen mode)
@@ -174,14 +174,6 @@ Full-viewport loading screen shown inside Daw while audio assets and presets are
 - `onFaded` callback fires after transition ends to unmount the overlay
 - Re-shown on login/guest entry to cover the preset fetch transition
 
-### WelcomeScreen (`auth/WelcomeScreen.tsx`)
-
-Landing page displayed when `userStatus` is `"unknown"`. Shows:
-
-- "KICK WITH REVERB" title
-- "Welcome to the Loop. What would you like to do?"
-- Three buttons stacked vertically: Login, Sign Up, Continue as Guest
-
 ### LoginForm (`auth/LoginForm.tsx`)
 
 Login form with:
@@ -203,4 +195,4 @@ Registration form with:
 
 ### Logout (`auth/Logout.tsx`)
 
-Simple logout button that clears auth tokens and resets `userStatus` to `"unknown"`, returning to the welcome screen.
+Simple logout button that clears auth tokens and resets `userStatus` to `"guest"`.

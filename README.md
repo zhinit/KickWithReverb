@@ -12,7 +12,7 @@ A web-based DAW (Digital Audio Workstation) for creating and processing kick dru
 - **Reverb Layer** – Impulse response selection with filtering and volume
 - **Master Chain** – OTT, distortion, and limiter controls
 - **Transport Controls** – BPM adjustment, play/stop, and cue functionality
-- **Authentication** – Sign up, login, JWT-based sessions, continue as guest
+- **Authentication** – Sign up, login, JWT-based sessions, guest mode
 - **Presets** – Save, load, and delete your own presets; browse shared presets
 - **AI Kick Generation** – Generate unique kick drums using a PyTorch diffusion model on a Modal serverless GPU. Per-user library with rate limits (10/day, 30 total). Kicks stored in Supabase Storage.
 
@@ -78,7 +78,6 @@ KickWithReverb/
 │       │   ├── LayerStrip
 │       │   ├── Knob
 │       │   ├── Selectah
-│       │   ├── WelcomeScreen
 │       │   ├── LoginForm, RegisterForm
 │       │   └── Logout
 │       ├── hooks/

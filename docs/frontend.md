@@ -21,7 +21,7 @@ frontend/
 │   ├── App.css               # App-level styles (layout, form, guest auth)
 │   ├── index.css             # Base resets and variables
 │   ├── components/
-│   │   ├── auth/             # Auth-flow components (WelcomeScreen, LoginForm, RegisterForm, Logout)
+│   │   ├── auth/             # Auth-flow components (LoginForm, RegisterForm, Logout)
 │   │   ├── daw/              # DAW components (Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay)
 │   │   └── ui/               # Reusable primitives (Knob, Selectah, modal.css)
 │   ├── hooks/                # Custom React hooks
@@ -44,13 +44,13 @@ frontend/
 Custom hooks that encapsulate audio logic and state management:
 
 - `use-audio-engine.ts` - Central hook: creates AudioContext, loads AudioWorklet + WASM, decodes and loads all samples/IRs upfront, provides `postMessage` and `resume` for child hooks. Also exposes `loadKickSample(url)` for dynamically loading AI kick audio into WASM at runtime (returns the WASM index).
-- `use-auth.tsx` - Authentication context with `UserStatus` (`"unknown" | "guest" | "member"`), provides `login`, `register`, `logout`, `continueAsGuest`
+- `use-auth.tsx` - Authentication context with `UserStatus` (`"guest" | "member"`), provides `login`, `register`, `logout`
 - `use-kick-layer.ts` - Kick drum layer (React state + postMessage to WASM). Accepts optional `aiKickNameToIndex` map to merge AI kicks into the dropdown and index lookup.
 - `use-noise-layer.ts` - Noise generator layer (React state + postMessage to WASM)
 - `use-reverb-layer.ts` - Reverb effect layer (React state + postMessage to WASM)
 - `use-master-chain.ts` - Master output chain (React state + postMessage to WASM)
 - `use-transport.ts` - Playback transport controls (play, cue, BPM via postMessage). Exposes a `stop()` function that stops loop playback (used by Daw on logout).
-- `use-presets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout or guest entry, resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
+- `use-presets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout (member → guest transition, detected via `prevStatusRef`), resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
 - `use-ai-kicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
 
 Each audio layer hook:
@@ -92,17 +92,17 @@ Static assets including:
 
 ## Authentication Flow
 
-The app uses JWT-based authentication with a three-state user status model:
+The app uses JWT-based authentication with a two-state user status model:
 
-- **`"unknown"`** - Initial state. User sees the welcome screen with login, sign up, and guest options.
-- **`"guest"`** - User chose "Continue as Guest". Sees Login/Sign Up buttons above the DAW (no presets).
-- **`"member"`** - Logged in or registered. Sees the DAW with presets and logout button below.
+- **`"guest"`** - Default state (no token). Sees Login/Sign Up buttons above the DAW. Limited features (no presets, no AI kick gen).
+- **`"member"`** - Logged in or registered. Sees the DAW with presets, AI kick gen, and logout button below.
 
-1. `AuthProvider` wraps the app and provides auth context (`userStatus`, `login`, `register`, `logout`, `continueAsGuest`)
-2. On mount, if tokens exist in `localStorage`, status initializes to `"member"` (skips welcome screen)
-3. Otherwise, status is `"unknown"` and the welcome screen is shown
-4. The DAW component is always mounted (hidden) for eager loading of audio samples
-5. Logging out resets status to `"unknown"`, returning to the welcome screen
+1. `AuthProvider` wraps the app and provides auth context (`userStatus`, `login`, `register`, `logout`)
+2. On mount, if tokens exist in `localStorage`, status initializes to `"member"`; otherwise `"guest"`
+3. The app loads directly into the DAW with the loading overlay — no welcome screen gate
+4. Guest users can click Login/Sign Up buttons above the DAW, which shows the auth form (DAW hidden while form is open)
+5. On successful login, the auth form auto-closes and the DAW appears as member
+6. Logging out resets status to `"guest"`, returning to guest mode with presets reset
 
 ## Audio Architecture
 
@@ -169,10 +169,10 @@ The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 
 **Session reset:**
 - Since the Daw component stays mounted across login/logout (for eager audio loading), all state must be explicitly reset on user change.
-- `usePresets` resets DAW to Init defaults on logout/guest, loads Init preset on member login.
+- `usePresets` resets DAW to Init defaults on logout (member → guest, detected via `prevStatusRef`), loads Init preset on member login.
 - `useAiKicks` clears AI kick state and resets `hasLoadedRef` on logout so kicks are re-fetched per user.
 - Daw resets `mode`, `selectedAiKickId`, and stops transport playback on `userStatus` change.
-- Daw re-shows the loading overlay on login/guest entry (covers preset fetch transition).
+- Daw re-shows the loading overlay on any `userStatus` change (covers preset fetch transition).
 
 **Loading screen:**
 - `LoadingOverlay` component renders a full-viewport overlay with an animated kick waveform SVG and "Loading..." text.
