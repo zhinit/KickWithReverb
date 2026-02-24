@@ -40,3 +40,5 @@ __pycache__/
 .claudeignore
 /kick_gen_trainer/weights
 /backend/.venv
+
+interviewPrep.md

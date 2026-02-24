@@ -137,20 +137,24 @@ class DSPProcessor extends AudioWorkletProcessor {
 
     // Copy from WASM heap to JS output buffers
     const wasmLeft = new Float32Array(
-      this.module.HEAPF32.buffer,
-      this.heapBufferLeft,
-      numSamples,
+      this.module.HEAPF32.buffer, // buffer
+      this.heapBufferLeft, // byte offset address
+      numSamples // number of float elements
     );
     const wasmRight = new Float32Array(
       this.module.HEAPF32.buffer,
       this.heapBufferRight,
-      numSamples,
+      numSamples
     );
+
+    // put buffers into browser audio output
     leftOutput.set(wasmLeft);
     rightOutput.set(wasmRight);
 
+    // stayin' alive
     return true;
   }
 }
 
+// register the processor with the browser
 registerProcessor("dsp-processor", DSPProcessor);
