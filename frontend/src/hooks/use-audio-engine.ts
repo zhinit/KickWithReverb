@@ -145,16 +145,12 @@ export const useAudioEngine = (): AudioEngine => {
         const audioBuffer = await decodeAudio(irFiles[name]);
         let samples: Float32Array;
 
-        if (audioBuffer.numberOfChannels === 1) {
-          samples = new Float32Array(audioBuffer.getChannelData(0));
-        } else {
-          const left = audioBuffer.getChannelData(0);
-          const right = audioBuffer.getChannelData(1);
-          samples = new Float32Array(left.length * 2);
-          for (let i = 0; i < left.length; i++) {
-            samples[i * 2] = left[i];
-            samples[i * 2 + 1] = right[i];
-          }
+        const left = audioBuffer.getChannelData(0);
+        const right = audioBuffer.getChannelData(1);
+        samples = new Float32Array(left.length * 2);
+        for (let i = 0; i < left.length; i++) {
+          samples[i * 2] = left[i];
+          samples[i * 2 + 1] = right[i];
         }
 
         node.port.postMessage(
