@@ -1,14 +1,21 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+
+// components
 import { Daw } from "./components/daw/Daw";
 import { Logout } from "./components/auth/Logout";
 import { LoginForm } from "./components/auth/LoginForm";
 import { RegisterForm } from "./components/auth/RegisterForm";
+
+// custom hooks
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 
+// Content For App Component
 function AppContent() {
   const { userStatus } = useAuth();
-  const [authForm, setAuthForm] = useState<"none" | "login" | "register">("none");
+  const [authForm, setAuthForm] = useState<"none" | "login" | "register">(
+    "none"
+  );
 
   // Auto-close auth form on successful login
   useEffect(() => {
@@ -19,13 +26,11 @@ function AppContent() {
 
   return (
     <>
-      {authForm === "login" && (
-        <LoginForm onBack={() => setAuthForm("none")} />
-      )}
+      {authForm === "login" && <LoginForm onBack={() => setAuthForm("none")} />}
       {authForm === "register" && (
         <RegisterForm onBack={() => setAuthForm("none")} />
       )}
-      {userStatus === "guest" && authForm === "none" && (
+      {authForm === "none" && userStatus === "guest" && (
         <>
           <div className="guest-auth-buttons">
             <button
@@ -46,14 +51,13 @@ function AppContent() {
           </div>
         </>
       )}
-      <div style={{ display: authForm === "none" ? undefined : "none" }}>
-        <Daw />
-      </div>
+      {authForm === "none" && <Daw />}
       {userStatus === "member" && <Logout />}
     </>
   );
 }
 
+// App Component
 function App() {
   return (
     <AuthProvider>

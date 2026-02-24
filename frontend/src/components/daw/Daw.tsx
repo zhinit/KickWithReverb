@@ -1,9 +1,17 @@
 import "./daw.css";
+
+import { useEffect, useState } from "react";
+
+// components
 import { ControlStrip } from "./ControlStrip";
 import { MasterStrip } from "./MasterStrip";
 import { SoundUnit } from "./SoundUnit";
 import { PresetsBar } from "./PresetsBar";
 import { KickGenBar } from "./KickGenBar";
+import { LoadingOverlay } from "./LoadingOverlay";
+
+// custom hooks
+import { useAuth } from "../../hooks/use-auth";
 import { useAudioEngine } from "../../hooks/use-audio-engine";
 import { useKickLayer } from "../../hooks/use-kick-layer";
 import { useNoiseLayer } from "../../hooks/use-noise-layer";
@@ -12,9 +20,6 @@ import { useMasterChain } from "../../hooks/use-master-chain";
 import { useTransport } from "../../hooks/use-transport";
 import { usePresets } from "../../hooks/use-presets";
 import { useAiKicks } from "../../hooks/use-ai-kicks";
-import { useAuth } from "../../hooks/use-auth";
-import { LoadingOverlay } from "./LoadingOverlay";
-import { useEffect, useState } from "react";
 
 export const Daw = () => {
   const { userStatus } = useAuth();

@@ -156,28 +156,25 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
   layersRef.current = layers;
 
   // Apply a set of DAW values to all layers (stable — no deps)
-  const applyValues = useCallback(
-    (values: typeof INIT_DEFAULTS) => {
-      const l = layersRef.current;
-      l.kick.setters.setSample(values.kickSample);
-      l.kick.setters.setLen(values.kickLen);
-      l.kick.setters.setDistAmt(values.kickDistAmt);
-      l.kick.setters.setOttAmt(values.kickOttAmt);
-      l.noise.setters.setSample(values.noiseSample);
-      l.noise.setters.setLowPassFreq(values.noiseLowPassFreq);
-      l.noise.setters.setHighPassFreq(values.noiseHighPassFreq);
-      l.noise.setters.setVolume(values.noiseVolume);
-      l.reverb.setters.setSample(values.reverbSample);
-      l.reverb.setters.setLowPassFreq(values.reverbLowPassFreq);
-      l.reverb.setters.setHighPassFreq(values.reverbHighPassFreq);
-      l.reverb.setters.setVolume(values.reverbVolume);
-      l.master.setters.setOttAmt(values.masterOttAmt);
-      l.master.setters.setDistAmt(values.masterDistAmt);
-      l.master.setters.setLimiterAmt(values.masterLimiterAmt);
-      l.transport.setters.setBpm(values.bpm);
-    },
-    [],
-  );
+  const applyValues = useCallback((values: typeof INIT_DEFAULTS) => {
+    const l = layersRef.current;
+    l.kick.setters.setSample(values.kickSample);
+    l.kick.setters.setLen(values.kickLen);
+    l.kick.setters.setDistAmt(values.kickDistAmt);
+    l.kick.setters.setOttAmt(values.kickOttAmt);
+    l.noise.setters.setSample(values.noiseSample);
+    l.noise.setters.setLowPassFreq(values.noiseLowPassFreq);
+    l.noise.setters.setHighPassFreq(values.noiseHighPassFreq);
+    l.noise.setters.setVolume(values.noiseVolume);
+    l.reverb.setters.setSample(values.reverbSample);
+    l.reverb.setters.setLowPassFreq(values.reverbLowPassFreq);
+    l.reverb.setters.setHighPassFreq(values.reverbHighPassFreq);
+    l.reverb.setters.setVolume(values.reverbVolume);
+    l.master.setters.setOttAmt(values.masterOttAmt);
+    l.master.setters.setDistAmt(values.masterDistAmt);
+    l.master.setters.setLimiterAmt(values.masterLimiterAmt);
+    l.transport.setters.setBpm(values.bpm);
+  }, []);
 
   const prevStatusRef = useRef(userStatus);
 
@@ -186,13 +183,12 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     const prev = prevStatusRef.current;
     prevStatusRef.current = userStatus;
 
-    // Reset to defaults when logging out (member → guest)
+    // Reset to defaults when logging out (member -> guest)
     if (prev === "member" && userStatus === "guest") {
       setUserPresets([]);
       setSharedPresets([]);
       setCurrentPresetId(null);
       applyValues(INIT_DEFAULTS);
-      return;
     }
 
     const fetchPresets = async () => {
