@@ -18,7 +18,7 @@ export interface AudioEngine {
   loadKickSample: (url: string) => Promise<number>;
 }
 
-// Build name→index maps (stable, computed once)
+// Build name:index maps (stable, computed once)
 const kickNameToIndex: Record<string, number> = {};
 kickNames.forEach((name, i) => {
   kickNameToIndex[name] = i;
@@ -34,58 +34,71 @@ irNames.forEach((name, i) => {
   irNameToIndex[name] = i;
 });
 
+// Audio engine custom hook which is used in DAW component
 export const useAudioEngine = (): AudioEngine => {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-  const nextKickIndexRef = useRef(kickNames.length);
+  // states
   const [isReady, setIsReady] = useState(false);
 
+  // refs for audio context and audio worklet since we dont want these to restart on render
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+
+  const nextKickIndexRef = useRef(kickNames.length);
+
+  // cache functions so they dont need to be remade on each render
+
+  // function to send msg to WASM DSP
   const postMessage = useCallback(
     (message: { type: string; [key: string]: unknown }) => {
       workletNodeRef.current?.port.postMessage(message);
     },
-    [],
+    []
   );
 
+  // function so that audio can play (browser starts as suspended)
   const resume = useCallback(async () => {
     if (audioContextRef.current?.state === "suspended") {
       await audioContextRef.current.resume();
     }
   }, []);
 
+  // function take sample from url decode raw bytes into a float32 arr and send to worklet
   const loadKickSample = useCallback(async (url: string): Promise<number> => {
     const ctx = audioContextRef.current;
     const node = workletNodeRef.current;
     if (!ctx || !node) throw new Error("Engine not ready");
 
-    const res = await fetch(url);
-    const arrayBuffer = await res.arrayBuffer();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    const samples = new Float32Array(audioBuffer.getChannelData(0));
-    const index = nextKickIndexRef.current++;
+    const response = await fetch(url); // response with header/payload
+    const arrayBuffer = await response.arrayBuffer(); // .wav/.mp3
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer); // channels of samples
+    const samples = new Float32Array(audioBuffer.getChannelData(0)); // samples
+    const nextKickIndex = nextKickIndexRef.current++;
 
-    node.port.postMessage({ type: "loadKickSample", samples }, [samples.buffer]);
-    return index;
+    node.port.postMessage({ type: "loadKickSample", samples }, [
+      samples.buffer,
+    ]);
+    return nextKickIndex;
   }, []);
 
+  // initialization use effect
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
+      // create audio context and connect to ref
       const ctx = new AudioContext({ sampleRate: 44100 });
       audioContextRef.current = ctx;
 
       // Fetch Emscripten glue code
       const response = await fetch("/audio-engine.js");
-      const scriptCode = await response.text();
+      const emscriptenGlueCode = await response.text();
 
-      // Load worklet processor
+      // loads and runs dsp-processor.js in the audio worklet
       await ctx.audioWorklet.addModule("/dsp-processor.js");
 
-      // Create worklet node (stereo output)
+      // creates worklet node on worklet that was just created and connects to ref
       const node = new AudioWorkletNode(ctx, "dsp-processor", {
         outputChannelCount: [2],
-        numberOfOutputs: 1,
       });
       node.connect(ctx.destination);
       workletNodeRef.current = node;
@@ -95,49 +108,48 @@ export const useAudioEngine = (): AudioEngine => {
         node.port.onmessage = (e) => {
           if (e.data.type === "ready") resolve();
         };
-        node.port.postMessage({ type: "init", scriptCode });
+        node.port.postMessage({ type: "init", scriptCode: emscriptenGlueCode });
       });
 
+      // guard to make sure we havent cleaned up while awaiting
       if (cancelled) return;
 
-      // Decode an audio URL to Float32Array
+      // Decode an audio URL
       async function decodeAudio(url: string) {
-        const res = await fetch(url);
-        const arrayBuffer = await res.arrayBuffer();
-        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        const response = await fetch(url); // response with header/payload
+        const arrayBuffer = await response.arrayBuffer(); // mp3/wav
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer); //channels of samples
         return audioBuffer;
       }
 
       // Load all kick samples (mono)
       for (const name of kickNames) {
-        const buf = await decodeAudio(kickFiles[name]);
-        const samples = new Float32Array(buf.getChannelData(0));
-        node.port.postMessage(
-          { type: "loadKickSample", samples },
-          [samples.buffer],
-        );
+        const audioBuffer = await decodeAudio(kickFiles[name]);
+        const samples = new Float32Array(audioBuffer.getChannelData(0));
+        node.port.postMessage({ type: "loadKickSample", samples }, [
+          samples.buffer,
+        ]);
       }
 
       // Load all noise samples (mono)
       for (const name of noiseNames) {
-        const buf = await decodeAudio(noiseFiles[name]);
-        const samples = new Float32Array(buf.getChannelData(0));
-        node.port.postMessage(
-          { type: "loadNoiseSample", samples },
-          [samples.buffer],
-        );
+        const audioBuffer = await decodeAudio(noiseFiles[name]);
+        const samples = new Float32Array(audioBuffer.getChannelData(0));
+        node.port.postMessage({ type: "loadNoiseSample", samples }, [
+          samples.buffer,
+        ]);
       }
 
-      // Load all IRs (may be stereo — interleaved [L0,R0,L1,R1,...])
+      // Load all IRs
       for (const name of irNames) {
-        const buf = await decodeAudio(irFiles[name]);
+        const audioBuffer = await decodeAudio(irFiles[name]);
         let samples: Float32Array;
 
-        if (buf.numberOfChannels === 1) {
-          samples = new Float32Array(buf.getChannelData(0));
+        if (audioBuffer.numberOfChannels === 1) {
+          samples = new Float32Array(audioBuffer.getChannelData(0));
         } else {
-          const left = buf.getChannelData(0);
-          const right = buf.getChannelData(1);
+          const left = audioBuffer.getChannelData(0);
+          const right = audioBuffer.getChannelData(1);
           samples = new Float32Array(left.length * 2);
           for (let i = 0; i < left.length; i++) {
             samples[i * 2] = left[i];
@@ -149,18 +161,20 @@ export const useAudioEngine = (): AudioEngine => {
           {
             type: "loadIR",
             irSamples: samples,
-            irLength: buf.length,
-            numChannels: buf.numberOfChannels,
+            irLength: audioBuffer.length,
+            numChannels: audioBuffer.numberOfChannels,
           },
-          [samples.buffer],
+          [samples.buffer]
         );
       }
 
       if (!cancelled) setIsReady(true);
     }
 
+    // call init function
     init().catch(console.error);
 
+    // cleanup
     return () => {
       cancelled = true;
       workletNodeRef.current?.disconnect();
@@ -168,6 +182,7 @@ export const useAudioEngine = (): AudioEngine => {
     };
   }, []);
 
+  // return items so they can easily be accessed elsewhere
   return {
     postMessage,
     resume,
