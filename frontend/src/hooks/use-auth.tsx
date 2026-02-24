@@ -2,7 +2,6 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { loginUser, registerUser } from "../utils/api";
 import { mapAuthError } from "../utils/auth-errors";
 
-// typescript types/interfaces
 export type UserStatus = "guest" | "member";
 
 interface AuthContextType {
@@ -24,7 +23,9 @@ function getInitialStatus(): UserStatus {
   return token ? "member" : "guest";
 }
 
-//
+// Context.Provider for App component
+// provides userStatus state to entire app
+// note that login, register and logout are in here because they change userStatus state
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [userStatus, setUserStatus] = useState<UserStatus>(getInitialStatus);
 
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// returns auth context if it exists. it should only exist within an auth provider
+// convient helper function to get auth context anyweher in the app
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

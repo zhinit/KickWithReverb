@@ -22,10 +22,12 @@ import { usePresets } from "../../hooks/use-presets";
 import { useAiKicks } from "../../hooks/use-ai-kicks";
 
 export const Daw = () => {
+  // states
   const { userStatus } = useAuth();
   const isMember = userStatus === "member";
 
   const [mode, setMode] = useState<"daw" | "kickGen">("daw");
+
   const [selectedAiKickId, setSelectedAiKickId] = useState<number | null>(null);
 
   const [showOverlay, setShowOverlay] = useState(true);
@@ -36,7 +38,7 @@ export const Daw = () => {
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
 
-  // Layer hooks — all routing is internal to the C++ engine
+  // Layer hooks. Note that routing happens in DSP
   const kick = useKickLayer(engine, aiKicks.aiKickNameToIndex);
   const noise = useNoiseLayer(engine);
   const reverb = useReverbLayer(engine);

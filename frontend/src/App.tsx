@@ -10,14 +10,14 @@ import { RegisterForm } from "./components/auth/RegisterForm";
 // custom hooks
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 
-// Content For App Component
+// Content For App Component. Handles login/register. Places Daw
 function AppContent() {
   const { userStatus } = useAuth();
   const [authForm, setAuthForm] = useState<"none" | "login" | "register">(
     "none"
   );
 
-  // Auto-close auth form on successful login
+  // Close auth form on successful login
   useEffect(() => {
     if (userStatus === "member") {
       setAuthForm("none");
