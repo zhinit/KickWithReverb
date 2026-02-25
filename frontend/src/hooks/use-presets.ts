@@ -11,6 +11,11 @@ import {
 
 import { kickNames, noiseNames, irNames } from "../utils/audio-assets";
 import type { PresetData } from "../types/preset";
+import type { UseKickLayerReturn } from "./use-kick-layer";
+import type { UseNoiseLayerReturn } from "./use-noise-layer";
+import type { UseReverbLayerReturn } from "./use-reverb-layer";
+import type { UseMasterChainReturn } from "./use-master-chain";
+import type { UseTransportReturn } from "./use-transport";
 
 // Default DAW state matches shared "Init" preset
 const INIT_DEFAULTS = {
@@ -32,80 +37,12 @@ const INIT_DEFAULTS = {
   bpm: 140,
 };
 
-// dsp value setters
-interface KickSetters {
-  setSample: (value: string) => void;
-  setLen: (value: number) => void;
-  setDistAmt: (value: number) => void;
-  setOttAmt: (value: number) => void;
-}
-
-interface NoiseSetters {
-  setSample: (value: string) => void;
-  setLowPassFreq: (value: number) => void;
-  setHighPassFreq: (value: number) => void;
-  setVolume: (value: number) => void;
-}
-
-interface ReverbSetters {
-  setSample: (value: string) => void;
-  setLowPassFreq: (value: number) => void;
-  setHighPassFreq: (value: number) => void;
-  setVolume: (value: number) => void;
-}
-
-interface MasterSetters {
-  setOttAmt: (value: number) => void;
-  setDistAmt: (value: number) => void;
-  setLimiterAmt: (value: number) => void;
-}
-
-interface TransportSetters {
-  setBpm: (value: number) => void;
-}
-
 interface LayerRefs {
-  kick: {
-    setters: KickSetters;
-    getState: () => {
-      kickSample: string;
-      kickLen: number;
-      kickDistAmt: number;
-      kickOttAmt: number;
-    };
-  };
-  noise: {
-    setters: NoiseSetters;
-    getState: () => {
-      noiseSample: string;
-      noiseLowPassFreq: number;
-      noiseHighPassFreq: number;
-      noiseVolume: number;
-    };
-  };
-  reverb: {
-    setters: ReverbSetters;
-    getState: () => {
-      reverbSample: string;
-      reverbLowPassFreq: number;
-      reverbHighPassFreq: number;
-      reverbVolume: number;
-    };
-  };
-  master: {
-    setters: MasterSetters;
-    getState: () => {
-      masterOttAmt: number;
-      masterDistAmt: number;
-      masterLimiterAmt: number;
-    };
-  };
-  transport: {
-    setters: TransportSetters;
-    getState: () => {
-      bpm: number;
-    };
-  };
+  kick: Pick<UseKickLayerReturn, "setters" | "getState">;
+  noise: Pick<UseNoiseLayerReturn, "setters" | "getState">;
+  reverb: Pick<UseReverbLayerReturn, "setters" | "getState">;
+  master: Pick<UseMasterChainReturn, "setters" | "getState">;
+  transport: Pick<UseTransportReturn, "setters" | "getState">;
 }
 
 export interface PresetItem {
