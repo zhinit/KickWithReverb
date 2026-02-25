@@ -3,9 +3,9 @@ import type { ControlStripProps } from "../types/types";
 import type { AudioEngine } from "./use-audio-engine";
 
 export interface UseTransportReturn {
+  controlProps: ControlStripProps;
   isPlaying: boolean;
   bpm: number;
-  controlProps: ControlStripProps;
   stop: () => void;
   setters: {
     setBpm: (value: number) => void;
@@ -34,6 +34,13 @@ export const useTransport = (engine: AudioEngine): UseTransportReturn => {
     postMessage({ type: "loop", enabled: newPlayState });
   };
 
+  const stop = () => {
+    if (isPlayOn) {
+      setIsPlayOn(false);
+      postMessage({ type: "loop", enabled: false });
+    }
+  };
+
   const handleCueMouseDown = async () => {
     await resume();
     setIsCuePressed(true);
@@ -43,13 +50,6 @@ export const useTransport = (engine: AudioEngine): UseTransportReturn => {
   const handleCueMouseUp = () => {
     setIsCuePressed(false);
     postMessage({ type: "cueRelease" });
-  };
-
-  const stop = () => {
-    if (isPlayOn) {
-      setIsPlayOn(false);
-      postMessage({ type: "loop", enabled: false });
-    }
   };
 
   const controlProps: ControlStripProps = {

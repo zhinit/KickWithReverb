@@ -38,11 +38,12 @@ export const Daw = () => {
   // AI kicks (fetch + decode + load into WASM on startup)
   const aiKicks = useAiKicks(engine);
 
-  // Layer hooks. Note that routing happens in DSP
+  // custom hooks to commuicate with dsp. note that routing happens in DSP
   const kick = useKickLayer(engine, aiKicks.aiKickNameToIndex);
   const noise = useNoiseLayer(engine);
   const reverb = useReverbLayer(engine);
   const master = useMasterChain(engine);
+  const transport = useTransport(engine);
 
   // Select an AI kick — updates useKickLayer state so Selectah + WASM stay in sync
   const selectAiKick = (id: number) => {
@@ -61,9 +62,6 @@ export const Daw = () => {
     }
     return result;
   };
-
-  // Transport hook
-  const transport = useTransport(engine);
 
   // Reset kickGen mode and stop playback on user change (Daw stays mounted across sessions)
   // Re-show overlay so it covers the preset fetch transition

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+
 import {
   mapKnobRangeToCustomRange,
   mapCustomRangeToKnobRange,
 } from "../utils/audio-assets";
+
 import type { MasterStripProps } from "../types/types";
 import type { AudioEngine } from "./use-audio-engine";
 
@@ -21,11 +23,11 @@ export interface UseMasterChainReturn {
 }
 
 export const useMasterChain = (engine: AudioEngine): UseMasterChainReturn => {
-  const { postMessage, isReady } = engine;
-
   const [ottAmt, setOttAmt] = useState(0);
   const [distortionAmt, setDistortionAmt] = useState(0);
   const [limiterAmt, setLimiterAmt] = useState(1.5);
+
+  const { postMessage, isReady } = engine;
 
   useEffect(() => {
     if (!isReady) return;
