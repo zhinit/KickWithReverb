@@ -27,20 +27,20 @@ export interface UseKickLayerReturn {
 
 export const useKickLayer = (
   engine: AudioEngine,
-  aiKickNameToIndex: Record<string, number> = {},
+  aiKickNameToIndex: Record<string, number> = {}
 ): UseKickLayerReturn => {
   const { postMessage, isReady, kickNameToIndex } = engine;
 
   // Merge stock + AI kick maps for index lookup
   const allKickNameToIndex = useMemo(
     () => ({ ...kickNameToIndex, ...aiKickNameToIndex }),
-    [kickNameToIndex, aiKickNameToIndex],
+    [kickNameToIndex, aiKickNameToIndex]
   );
 
   // Stock kicks + AI kicks (sorted) for the dropdown
   const allKickNames = useMemo(
     () => [...kickNames, ...Object.keys(aiKickNameToIndex).sort()],
-    [aiKickNameToIndex],
+    [aiKickNameToIndex]
   );
 
   const [sample, setSample] = useState(kickNames[0] || "Kick1");
