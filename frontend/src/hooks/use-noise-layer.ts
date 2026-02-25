@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   noiseNames,
   mapKnobRangeToCustomRange,
@@ -6,6 +7,7 @@ import {
   mapKnobToFrequency,
   mapFrequencyToKnob,
 } from "../utils/audio-assets";
+
 import type { LayerStripProps } from "../types/types";
 import type { AudioEngine } from "./use-audio-engine";
 
@@ -26,13 +28,16 @@ export interface UseNoiseLayerReturn {
 }
 
 export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
-  const { postMessage, isReady, noiseNameToIndex } = engine;
-
-  const [sample, setSample] = useState(noiseNames[0] || "greyNoise");
+  // states
+  const [sample, setSample] = useState(noiseNames[0] ?? "");
   const [volume, setVolume] = useState(-70);
   const [lowPassFreq, setLowPassFreq] = useState(7000);
   const [highPassFreq, setHighPassFreq] = useState(30);
 
+  // get items from audio engine hook
+  const { postMessage, isReady, noiseNameToIndex } = engine;
+
+  // send current noise sample to dsp when sample is changed in dropdown
   useEffect(() => {
     if (!isReady) return;
     const index = noiseNameToIndex[sample];
@@ -41,21 +46,25 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     }
   }, [sample, isReady, postMessage, noiseNameToIndex]);
 
+  // send volume to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "noiseVolume", value: volume });
   }, [volume, isReady, postMessage]);
 
+  // send low pass freq to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "noiseLowPass", value: lowPassFreq });
   }, [lowPassFreq, isReady, postMessage]);
 
+  // send high pass freq to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "noiseHighPass", value: highPassFreq });
   }, [highPassFreq, isReady, postMessage]);
 
+  // create noise layer props to pass
   const uiProps: LayerStripProps = {
     layerLabel: "Noise Layer",
     dropdownItems: noiseNames,
@@ -74,6 +83,8 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     ],
   };
 
+  // create function to get the current state of the kick layer
+  // which includes current sample and knob positions
   const getState = () => ({
     noiseSample: sample,
     noiseLowPassFreq: lowPassFreq,
@@ -81,6 +92,7 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     noiseVolume: volume,
   });
 
+  // return helpful info so it can be accessed elsewhere
   return {
     uiProps,
     setters: {
