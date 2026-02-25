@@ -24,12 +24,9 @@ import { useAiKicks } from "../../hooks/use-ai-kicks";
 export const Daw = () => {
   // states
   const { userStatus } = useAuth();
-  const isMember = userStatus === "member";
-
+  const isMember = userStatus === "member"; // im just here for convienence
   const [mode, setMode] = useState<"daw" | "kickGen">("daw");
-
   const [selectedAiKickId, setSelectedAiKickId] = useState<number | null>(null);
-
   const [showOverlay, setShowOverlay] = useState(true);
 
   // Audio engine (AudioContext + WASM worklet)
@@ -45,33 +42,6 @@ export const Daw = () => {
   const master = useMasterChain(engine);
   const transport = useTransport(engine);
 
-  // Select an AI kick — updates useKickLayer state so Selectah + WASM stay in sync
-  const selectAiKick = (id: number) => {
-    const found = aiKicks.aiKicks.find((k) => k.id === id);
-    if (!found) return;
-    kick.setters.setSample(found.name);
-    setSelectedAiKickId(id);
-  };
-
-  // Wrap generate to select the new kick after it's created
-  const handleGenerate = async () => {
-    const result = await aiKicks.generate();
-    if (result.ok && result.kick) {
-      kick.setters.setSample(result.kick.name);
-      setSelectedAiKickId(result.kick.id);
-    }
-    return result;
-  };
-
-  // Reset kickGen mode and stop playback on user change (Daw stays mounted across sessions)
-  // Re-show overlay so it covers the preset fetch transition
-  useEffect(() => {
-    setMode("daw");
-    setSelectedAiKickId(null);
-    transport.stop();
-    setShowOverlay(true);
-  }, [userStatus]);
-
   // Presets hook
   const presets = usePresets({
     kick: { setters: kick.setters, getState: kick.getState },
@@ -81,9 +51,9 @@ export const Daw = () => {
     transport: { setters: transport.setters, getState: transport.getState },
   });
 
+  // loading screen flag
   const allLoaded = engine.isReady && !presets.isLoading;
-
-  // Fallback: if allLoaded becomes true while Daw is hidden (display: none),
+  // if allLoaded becomes true while Daw is hidden
   // onTransitionEnd won't fire, so dismiss via timeout
   useEffect(() => {
     if (allLoaded && showOverlay) {
@@ -91,6 +61,32 @@ export const Daw = () => {
       return () => clearTimeout(timer);
     }
   }, [allLoaded, showOverlay]);
+
+  // reset state of daw when a user logs in/out
+  useEffect(() => {
+    setMode("daw");
+    transport.stop();
+    setSelectedAiKickId(null);
+    setShowOverlay(true);
+  }, [userStatus]);
+
+  // handler for when user selects an AI kick in dropdown in AI mode
+  const selectAiKick = (id: number) => {
+    const found = aiKicks.aiKicks.find((k) => k.id === id);
+    if (!found) return;
+    kick.setters.setSample(found.name);
+    setSelectedAiKickId(id);
+  };
+
+  // handler to generate an ai kick when a user clicks GEN
+  const handleGenerate = async () => {
+    const result = await aiKicks.generate();
+    if (result.ok && result.kick) {
+      kick.setters.setSample(result.kick.name);
+      setSelectedAiKickId(result.kick.id);
+    }
+    return result;
+  };
 
   return (
     <div className="daw">

@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+
 import { useAuth } from "./use-auth";
+
 import {
   getPresets,
   createPreset,
   updatePreset,
   deletePreset as apiDeletePreset,
 } from "../utils/api";
-import type { PresetData } from "../types/preset";
-import { kickNames, noiseNames, irNames } from "../utils/audio-assets";
 
-// Default DAW state — matches the hook initial values and the shared "Init" preset
+import { kickNames, noiseNames, irNames } from "../utils/audio-assets";
+import type { PresetData } from "../types/preset";
+
+// Default DAW state matches shared "Init" preset
 const INIT_DEFAULTS = {
   kickSample: kickNames[0] || "Kick1",
   kickLen: 1.0,
@@ -29,7 +32,7 @@ const INIT_DEFAULTS = {
   bpm: 140,
 };
 
-// Types for the layer setters and getState functions
+// dsp value setters
 interface KickSetters {
   setSample: (value: string) => void;
   setLen: (value: number) => void;
