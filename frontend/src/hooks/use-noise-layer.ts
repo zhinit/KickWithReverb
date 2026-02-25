@@ -46,12 +46,6 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     }
   }, [sample, isReady, postMessage, noiseNameToIndex]);
 
-  // send volume to dsp when knob is moved
-  useEffect(() => {
-    if (!isReady) return;
-    postMessage({ type: "noiseVolume", value: volume });
-  }, [volume, isReady, postMessage]);
-
   // send low pass freq to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
@@ -63,6 +57,12 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     if (!isReady) return;
     postMessage({ type: "noiseHighPass", value: highPassFreq });
   }, [highPassFreq, isReady, postMessage]);
+
+  // send volume to dsp when knob is moved
+  useEffect(() => {
+    if (!isReady) return;
+    postMessage({ type: "noiseVolume", value: volume });
+  }, [volume, isReady, postMessage]);
 
   // create noise layer props to pass
   const uiProps: LayerStripProps = {
@@ -83,7 +83,7 @@ export const useNoiseLayer = (engine: AudioEngine): UseNoiseLayerReturn => {
     ],
   };
 
-  // create function to get the current state of the kick layer
+  // create function to get the current state of the noise layer
   // which includes current sample and knob positions
   const getState = () => ({
     noiseSample: sample,

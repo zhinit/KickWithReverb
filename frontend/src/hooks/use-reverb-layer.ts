@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   irNames,
   mapKnobRangeToCustomRange,
@@ -6,6 +7,7 @@ import {
   mapKnobToFrequency,
   mapFrequencyToKnob,
 } from "../utils/audio-assets";
+
 import type { LayerStripProps } from "../types/types";
 import type { AudioEngine } from "./use-audio-engine";
 
@@ -26,13 +28,16 @@ export interface UseReverbLayerReturn {
 }
 
 export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
-  const { postMessage, isReady, irNameToIndex } = engine;
-
+  // states
   const [ir, setIr] = useState(irNames[0] || "JFKUnderpass");
   const [lowPassFreq, setLowPassFreq] = useState(7000);
   const [highPassFreq, setHighPassFreq] = useState(30);
   const [volume, setVolume] = useState(-6);
 
+  // get items from audio engine hook
+  const { postMessage, isReady, irNameToIndex } = engine;
+
+  // send current ir sample to dsp when sample is changed in dropdown
   useEffect(() => {
     if (!isReady) return;
     const index = irNameToIndex[ir];
@@ -41,21 +46,25 @@ export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
     }
   }, [ir, isReady, postMessage, irNameToIndex]);
 
+  // send low pass freq to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "reverbLowPass", value: lowPassFreq });
   }, [lowPassFreq, isReady, postMessage]);
 
+  // send high pass freq to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "reverbHighPass", value: highPassFreq });
   }, [highPassFreq, isReady, postMessage]);
 
+  // send volume to dsp when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "reverbVolume", value: volume });
   }, [volume, isReady, postMessage]);
 
+  // create noise layer props to pass
   const uiProps: LayerStripProps = {
     layerLabel: "Reverb Layer",
     dropdownItems: irNames,
@@ -74,6 +83,8 @@ export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
     ],
   };
 
+  // create function to get the current state of the noise layer
+  // which includes current sample and knob positions
   const getState = () => ({
     reverbSample: ir,
     reverbLowPassFreq: lowPassFreq,
@@ -81,6 +92,7 @@ export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
     reverbVolume: volume,
   });
 
+  // return helpful info so it can be accessed elsewhere
   return {
     uiProps,
     setters: {
