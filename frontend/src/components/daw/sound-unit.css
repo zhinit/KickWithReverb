@@ -1,7 +1,0 @@
-.sound-unit {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(3, var(--strip-v-width));
-  gap: var(--strip-gap);
-  justify-content: center;
-}

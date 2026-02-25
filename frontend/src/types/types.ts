@@ -33,12 +33,6 @@ export interface LayerStripProps {
   customDropdown?: React.ReactNode;
 }
 
-export interface SoundUnitProps {
-  kickKnobProps: LayerStripProps;
-  noiseKnobProps: LayerStripProps;
-  reverbKnobProps: LayerStripProps;
-}
-
 export interface MasterStripProps {
   layerKnobLabels: Array<string>;
   knobValues: Array<number>;

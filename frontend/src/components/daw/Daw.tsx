@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 // components
 import { ControlStrip } from "./ControlStrip";
 import { MasterStrip } from "./MasterStrip";
-import { SoundUnit } from "./SoundUnit";
+import { LayerStrip } from "./LayerStrip";
 import { PresetsBar } from "./PresetsBar";
 import { KickGenBar } from "./KickGenBar";
 import { LoadingOverlay } from "./LoadingOverlay";
@@ -129,10 +129,10 @@ export const Daw = () => {
         />
       )}
       <ControlStrip {...transport.controlProps} />
-      <SoundUnit
-        kickKnobProps={{
-          ...kick.uiProps,
-          ...(mode === "kickGen" && {
+      <div className="sound-unit">
+        <LayerStrip
+          {...kick.uiProps}
+          {...(mode === "kickGen" && {
             customDropdown: (
               <button
                 className="back-to-daw-btn"
@@ -141,11 +141,11 @@ export const Daw = () => {
                 Back To DAW
               </button>
             ),
-          }),
-        }}
-        noiseKnobProps={noise.uiProps}
-        reverbKnobProps={reverb.uiProps}
-      />
+          })}
+        />
+        <LayerStrip {...noise.uiProps} />
+        <LayerStrip {...reverb.uiProps} />
+      </div>
       <MasterStrip {...master.uiProps} />
       {isMember && mode === "daw" && (
         <button

@@ -23,6 +23,14 @@
   grid-column: 1 / -1;
 }
 
+.sound-unit {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, var(--strip-v-width));
+  gap: var(--strip-gap);
+  justify-content: center;
+}
+
 .generate-ai-kick-btn {
   padding: 14px 0;
   width: 80%;
