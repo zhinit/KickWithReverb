@@ -29,7 +29,7 @@ export interface UseReverbLayerReturn {
 
 export const useReverbLayer = (engine: AudioEngine): UseReverbLayerReturn => {
   // states
-  const [ir, setIr] = useState(irNames[0] || "JFKUnderpass");
+  const [ir, setIr] = useState(irNames[0] ?? "");
   const [lowPassFreq, setLowPassFreq] = useState(7000);
   const [highPassFreq, setHighPassFreq] = useState(30);
   const [volume, setVolume] = useState(-6);

@@ -10,6 +10,7 @@ import {
 } from "../utils/api";
 
 import { kickNames, noiseNames, irNames } from "../utils/audio-assets";
+
 import type { PresetData } from "../types/preset";
 import type { UseKickLayerReturn } from "./use-kick-layer";
 import type { UseNoiseLayerReturn } from "./use-noise-layer";
@@ -17,17 +18,17 @@ import type { UseReverbLayerReturn } from "./use-reverb-layer";
 import type { UseMasterChainReturn } from "./use-master-chain";
 import type { UseTransportReturn } from "./use-transport";
 
-// Default DAW state matches shared "Init" preset
+// Default DAW state
 const INIT_DEFAULTS = {
-  kickSample: kickNames[0] || "Kick1",
+  kickSample: kickNames[0] ?? "",
   kickLen: 1.0,
   kickDistAmt: 0,
   kickOttAmt: 0,
-  noiseSample: noiseNames[0] || "greyNoise",
+  noiseSample: noiseNames[0] ?? "",
   noiseLowPassFreq: 7000,
   noiseHighPassFreq: 30,
   noiseVolume: -70,
-  reverbSample: irNames[0] || "JFKUnderpass",
+  reverbSample: irNames[0] ?? "",
   reverbLowPassFreq: 7000,
   reverbHighPassFreq: 30,
   reverbVolume: -6,
@@ -37,6 +38,7 @@ const INIT_DEFAULTS = {
   bpm: 140,
 };
 
+// setters and getters for all layers
 interface LayerRefs {
   kick: Pick<UseKickLayerReturn, "setters" | "getState">;
   noise: Pick<UseNoiseLayerReturn, "setters" | "getState">;
@@ -45,46 +47,36 @@ interface LayerRefs {
   transport: Pick<UseTransportReturn, "setters" | "getState">;
 }
 
-export interface PresetItem {
-  id: number;
-  presetName: string;
-  isShared: boolean;
-}
+// sort presets so stock come before user
+const sortPresets = (data: PresetData[]): PresetData[] => [
+  ...data
+    .filter((p) => p.isShared)
+    .sort((a, b) => a.presetName.localeCompare(b.presetName)),
+  ...data
+    .filter((p) => !p.isShared)
+    .sort((a, b) => a.presetName.localeCompare(b.presetName)),
+];
 
 export interface UsePresetsReturn {
-  // State
-  presets: PresetItem[];
+  presets: PresetData[];
   currentPresetId: number | null;
   currentPresetName: string;
   isLoading: boolean;
-  // Actions
   loadPreset: (id: number) => void;
   savePreset: (name: string) => Promise<{ ok: boolean; error?: string }>;
   deleteCurrentPreset: () => Promise<{ ok: boolean; error?: string }>;
   nextPreset: () => void;
   prevPreset: () => void;
-  // Helpers
   canDelete: boolean;
 }
 
 export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
+  // states
   const { userStatus } = useAuth();
-  const isMember = userStatus === "member";
-
-  const [userPresets, setUserPresets] = useState<PresetData[]>([]);
-  const [sharedPresets, setSharedPresets] = useState<PresetData[]>([]);
+  const isMember = userStatus === "member"; // im here as a convienience
+  const [presets, setPresets] = useState<PresetData[]>([]);
   const [currentPresetId, setCurrentPresetId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Combined and sorted preset list for dropdown
-  const presets: PresetItem[] = [
-    ...sharedPresets
-      .sort((a, b) => a.presetName.localeCompare(b.presetName))
-      .map((p) => ({ id: p.id, presetName: p.presetName, isShared: true })),
-    ...userPresets
-      .sort((a, b) => a.presetName.localeCompare(b.presetName))
-      .map((p) => ({ id: p.id, presetName: p.presetName, isShared: false })),
-  ];
 
   // Current preset info
   const currentPreset = presets.find((p) => p.id === currentPresetId);
@@ -96,68 +88,43 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
   layersRef.current = layers;
 
   // Apply a set of DAW values to all layers (stable — no deps)
-  const applyValues = useCallback((values: typeof INIT_DEFAULTS) => {
+  const applyPreset = useCallback((presetValues: typeof INIT_DEFAULTS) => {
     const l = layersRef.current;
-    l.kick.setters.setSample(values.kickSample);
-    l.kick.setters.setLen(values.kickLen);
-    l.kick.setters.setDistAmt(values.kickDistAmt);
-    l.kick.setters.setOttAmt(values.kickOttAmt);
-    l.noise.setters.setSample(values.noiseSample);
-    l.noise.setters.setLowPassFreq(values.noiseLowPassFreq);
-    l.noise.setters.setHighPassFreq(values.noiseHighPassFreq);
-    l.noise.setters.setVolume(values.noiseVolume);
-    l.reverb.setters.setSample(values.reverbSample);
-    l.reverb.setters.setLowPassFreq(values.reverbLowPassFreq);
-    l.reverb.setters.setHighPassFreq(values.reverbHighPassFreq);
-    l.reverb.setters.setVolume(values.reverbVolume);
-    l.master.setters.setOttAmt(values.masterOttAmt);
-    l.master.setters.setDistAmt(values.masterDistAmt);
-    l.master.setters.setLimiterAmt(values.masterLimiterAmt);
-    l.transport.setters.setBpm(values.bpm);
+    l.kick.setters.setSample(presetValues.kickSample);
+    l.kick.setters.setLen(presetValues.kickLen);
+    l.kick.setters.setDistAmt(presetValues.kickDistAmt);
+    l.kick.setters.setOttAmt(presetValues.kickOttAmt);
+    l.noise.setters.setSample(presetValues.noiseSample);
+    l.noise.setters.setLowPassFreq(presetValues.noiseLowPassFreq);
+    l.noise.setters.setHighPassFreq(presetValues.noiseHighPassFreq);
+    l.noise.setters.setVolume(presetValues.noiseVolume);
+    l.reverb.setters.setSample(presetValues.reverbSample);
+    l.reverb.setters.setLowPassFreq(presetValues.reverbLowPassFreq);
+    l.reverb.setters.setHighPassFreq(presetValues.reverbHighPassFreq);
+    l.reverb.setters.setVolume(presetValues.reverbVolume);
+    l.master.setters.setOttAmt(presetValues.masterOttAmt);
+    l.master.setters.setDistAmt(presetValues.masterDistAmt);
+    l.master.setters.setLimiterAmt(presetValues.masterLimiterAmt);
+    l.transport.setters.setBpm(presetValues.bpm);
   }, []);
 
-  const prevStatusRef = useRef(userStatus);
-
-  // Fetch presets when authenticated or as guest, reset to Init on logout
+  // Fetch presets whenever auth status changes (login or logout)
   useEffect(() => {
-    const prev = prevStatusRef.current;
-    prevStatusRef.current = userStatus;
-
-    // Reset to defaults when logging out (member -> guest)
-    if (prev === "member" && userStatus === "guest") {
-      setUserPresets([]);
-      setSharedPresets([]);
-      setCurrentPresetId(null);
-      applyValues(INIT_DEFAULTS);
-    }
-
     const fetchPresets = async () => {
       setIsLoading(true);
-      const [userRes] = await Promise.all([getPresets()]);
+      setCurrentPresetId(null);
 
-      if (userRes.ok && userRes.data) {
-        const shared = userRes.data.filter((p) => p.isShared);
-        const user = userRes.data.filter((p) => !p.isShared);
-        setSharedPresets(shared);
-        setUserPresets(user);
+      const response = await getPresets();
+      if (response.ok && response.data) {
+        const sorted = sortPresets(response.data);
+        setPresets(sorted);
 
-        // Load Init preset for members and guests (if available)
-        if (isMember) {
-          const initPreset = userRes.data.find((p) => p.presetName === "Init");
-          if (initPreset) {
-            applyValues(initPreset);
-            setCurrentPresetId(initPreset.id);
-          }
-        } else if (shared.length > 0) {
-          // For guests, try to load Init preset first, otherwise first shared preset
-          const initPreset = shared.find((p) => p.presetName === "Init");
-          if (initPreset) {
-            applyValues(initPreset);
-            setCurrentPresetId(initPreset.id);
-          } else {
-            applyValues(shared[0]);
-            setCurrentPresetId(shared[0].id);
-          }
+        const initPreset =
+          sorted.find((p) => p.isShared && p.presetName === "Init") ??
+          sorted.find((p) => p.isShared);
+        if (initPreset) {
+          applyPreset(initPreset);
+          setCurrentPresetId(initPreset.id);
         }
       }
 
@@ -165,22 +132,21 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     };
 
     fetchPresets();
-  }, [isMember, userStatus, applyValues]);
+  }, [userStatus, applyPreset]);
 
   // Load a preset by applying its values to all layers
   const loadPreset = useCallback(
     (id: number) => {
-      const allPresets = [...sharedPresets, ...userPresets];
-      const preset = allPresets.find((p) => p.id === id);
+      const preset = presets.find((p) => p.id === id);
       if (!preset) return;
 
-      applyValues(preset);
+      applyPreset(preset);
       setCurrentPresetId(id);
     },
-    [sharedPresets, userPresets, applyValues]
+    [presets, applyPreset]
   );
 
-  // Save current state as a preset
+  // Save current state as preset
   const savePreset = useCallback(
     async (name: string): Promise<{ ok: boolean; error?: string }> => {
       // Guests cannot save presets
@@ -205,20 +171,25 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
         ...transportState,
       };
 
-      // Check if name matches a shared preset
-      const sharedMatch = sharedPresets.find((p) => p.presetName === name);
+      // validate name does not match a shared preset
+      const sharedMatch = presets.find(
+        (p) => p.isShared && p.presetName === name
+      );
       if (sharedMatch) {
         return { ok: false, error: "Cannot update shared presets" };
       }
 
-      // Check if updating existing preset with same name
-      const existingPreset = userPresets.find((p) => p.presetName === name);
-
+      // Check if preset name already exists, then update or create preset
+      const existingPreset = presets.find(
+        (p) => !p.isShared && p.presetName === name
+      );
       if (existingPreset) {
         const response = await updatePreset(existingPreset.id, presetData);
         if (response.ok && response.data) {
-          setUserPresets((prev) =>
-            prev.map((p) => (p.id === existingPreset.id ? response.data! : p))
+          setPresets((prev) =>
+            sortPresets(
+              prev.map((p) => (p.id === existingPreset.id ? response.data! : p))
+            )
           );
           setCurrentPresetId(existingPreset.id);
           return { ok: true };
@@ -227,14 +198,14 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
       } else {
         const response = await createPreset(presetData);
         if (response.ok && response.data) {
-          setUserPresets((prev) => [...prev, response.data!]);
+          setPresets((prev) => sortPresets([...prev, response.data!]));
           setCurrentPresetId(response.data.id);
           return { ok: true };
         }
         return { ok: false, error: "Failed to create preset" };
       }
     },
-    [isMember, userPresets, sharedPresets, layers]
+    [isMember, presets, layers]
   );
 
   // Delete the current preset
@@ -242,13 +213,13 @@ export const usePresets = (layers: LayerRefs): UsePresetsReturn => {
     ok: boolean;
     error?: string;
   }> => {
-    if (!currentPresetId || !canDelete) {
+    if (!canDelete || !currentPresetId) {
       return { ok: false, error: "Cannot delete this preset" };
     }
 
     const response = await apiDeletePreset(currentPresetId);
     if (response.ok) {
-      setUserPresets((prev) => prev.filter((p) => p.id !== currentPresetId));
+      setPresets((prev) => prev.filter((p) => p.id !== currentPresetId));
       setCurrentPresetId(null);
       return { ok: true };
     }

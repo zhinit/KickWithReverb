@@ -1,11 +1,11 @@
 import "./presets-bar.css";
 import "../ui/modal.css";
 import { useState } from "react";
-import type { PresetItem } from "../../hooks/use-presets";
+import type { PresetData } from "../../types/preset";
 
 interface PresetsBarProps {
   isMember: boolean;
-  presets: PresetItem[];
+  presets: PresetData[];
   currentPresetId: number | null;
   currentPresetName: string;
   canDelete: boolean;
@@ -208,10 +208,7 @@ export const PresetsBar = ({
 
       {/* Shared Preset Info Modal */}
       {sharedMessage && (
-        <div
-          className="modal-overlay"
-          onClick={() => setSharedMessage("")}
-        >
+        <div className="modal-overlay" onClick={() => setSharedMessage("")}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <p>{sharedMessage}</p>
             <div className="modal-buttons">
