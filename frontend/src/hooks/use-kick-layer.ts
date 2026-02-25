@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
   kickNames,
   mapKnobRangeToCustomRange,
@@ -6,6 +7,7 @@ import {
   mapKnobToLengthRatio,
   mapLengthRatioToKnob,
 } from "../utils/audio-assets";
+
 import type { LayerStripProps } from "../types/types";
 import type { AudioEngine } from "./use-audio-engine";
 
@@ -29,25 +31,29 @@ export const useKickLayer = (
   engine: AudioEngine,
   aiKickNameToIndex: Record<string, number> = {}
 ): UseKickLayerReturn => {
+  // states
+  const [sample, setSample] = useState(kickNames[0] ?? "");
+  const [len, setLen] = useState(1.0);
+  const [ottAmt, setOttAmt] = useState(0.0);
+  const [distortionAmt, setDistortionAmt] = useState(0.0);
+
+  // get items from audio engine hook
   const { postMessage, isReady, kickNameToIndex } = engine;
 
-  // Merge stock + AI kick maps for index lookup
+  // merge stock kicks map and AI kicks map
   const allKickNameToIndex = useMemo(
     () => ({ ...kickNameToIndex, ...aiKickNameToIndex }),
     [kickNameToIndex, aiKickNameToIndex]
   );
 
-  // Stock kicks + AI kicks (sorted) for the dropdown
+  // merge stock and ai kick names
   const allKickNames = useMemo(
     () => [...kickNames, ...Object.keys(aiKickNameToIndex).sort()],
     [aiKickNameToIndex]
   );
 
-  const [sample, setSample] = useState(kickNames[0] || "Kick1");
-  const [len, setLen] = useState(1.0);
-  const [ottAmt, setOttAmt] = useState(0);
-  const [distortionAmt, setDistortionAmt] = useState(0);
-
+  // send current sample index to dsp
+  // when the sample is changed or the sample map is updated
   useEffect(() => {
     if (!isReady) return;
     const index = allKickNameToIndex[sample];
@@ -56,21 +62,25 @@ export const useKickLayer = (
     }
   }, [sample, isReady, postMessage, allKickNameToIndex]);
 
+  // send kick len to DSP when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "kickLength", value: len });
   }, [len, isReady, postMessage]);
 
+  // send distortion amt to DSP when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "kickDistortion", value: distortionAmt });
   }, [distortionAmt, isReady, postMessage]);
 
+  // send ott amt to DSP when knob is moved
   useEffect(() => {
     if (!isReady) return;
     postMessage({ type: "kickOTT", value: ottAmt });
   }, [ottAmt, isReady, postMessage]);
 
+  // create kick layer props to pass
   const uiProps: LayerStripProps = {
     layerLabel: "Kick Layer",
     dropdownItems: allKickNames,
@@ -89,6 +99,8 @@ export const useKickLayer = (
     ],
   };
 
+  // create function to get the current state of the kick layer
+  // which includes current sample and knob positions
   const getState = () => ({
     kickSample: sample,
     kickLen: len,
@@ -96,6 +108,7 @@ export const useKickLayer = (
     kickOttAmt: ottAmt,
   });
 
+  // return helpful info so it can be accessed elsewhere
   return {
     uiProps,
     setters: {
