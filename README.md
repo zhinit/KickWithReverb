@@ -1,9 +1,10 @@
 # KickWithReverb
 
-A web-based DAW (Digital Audio Workstation) for creating and processing kick drum sounds with reverb effects.
+Fully featured DAW for the average techno producer.
+
 [kick-with-reverb.vercel.app](https://kick-with-reverb.vercel.app)
 
-<img width="490" height="814" alt="Screenshot 2026-02-09 at 10 09 04 AM" src="https://github.com/user-attachments/assets/ae88eae8-5f13-4533-8c14-348c0a267508" />
+<img width="519" height="937" alt="Screenshot 2026-02-26 at 10 41 10 AM" src="https://github.com/user-attachments/assets/87d61ac7-746b-4e2c-991d-9f9675d52576" />
 
 ## Features
 
