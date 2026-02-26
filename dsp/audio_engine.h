@@ -55,7 +55,7 @@ public:
 private:
     static constexpr int kBlockSize = 128;
 
-    // kick OTT boosts the lows and ratios a bit
+    // kick OTT boosts the lows and ratios a bit more than the master
     static constexpr float kKickOttRatioMultiplier = 10.0f;
     static constexpr float kKickOttLowBoost        =  9.0f;
     static constexpr float kKickOttMidBoost        = -3.0f;

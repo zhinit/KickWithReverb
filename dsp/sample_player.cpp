@@ -52,14 +52,14 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
 
     const auto& sample = samples_[activeSampleIndex_];
 
-    // Calculate the endpoint based on lengthRatio_
+    // Calculate endpoint based on lengthRatio_
     size_t endPosition = static_cast<size_t>(sample.size() * lengthRatio_);
     size_t fadeStartPosition = endPosition > kFadeOutSamples
         ? endPosition - kFadeOutSamples
         : 0;
 
     for (int i = 0; i < numSamples; ++i) {
-        float out = 0.0f;
+        float output = 0.0f;
 
         if (playing_) {
             if (position_ >= endPosition) {
@@ -72,17 +72,17 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
             }
 
             if (playing_ && position_ < endPosition) {
-                out = sample[position_] * volume_;
+                output = sample[position_] * volume_;
 
                 // Apply fade-out as we approach the end position
                 if (position_ >= fadeStartPosition && !looping_) {
                     float fadeProgress = static_cast<float>(position_ - fadeStartPosition)
                         / static_cast<float>(kFadeOutSamples);
-                    out *= (1.0f - fadeProgress);
+                    output *= (1.0f - fadeProgress);
                 }
 
                 if (releasing_) {
-                    out *= envelopeLevel_;
+                    output *= envelopeLevel_;
                     envelopeLevel_ -= envelopeDecrement_;
 
                     if (envelopeLevel_ <= 0.0f) {
@@ -96,8 +96,8 @@ void SamplePlayer::process(float* left, float* right, int numSamples)
             }
         }
 
-        left[i] = out;
-        right[i] = out;
+        left[i] = output;
+        right[i] = output;
     }
 }
 
