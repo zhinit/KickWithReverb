@@ -74,9 +74,8 @@ KickWithReverb/
 │       │   ├── PresetsBar
 │       │   ├── KickGenBar    # AI kick mode (generate, browse, delete)
 │       │   ├── ControlStrip  # BPM, play, cue
-│       │   ├── SoundUnit    # use-kick-layer, use-noise-layer, use-reverb-layer
+│       │   ├── LayerStrip    # Kick, Noise, Reverb layers
 │       │   ├── MasterStrip
-│       │   ├── LayerStrip
 │       │   ├── Knob
 │       │   ├── Selectah
 │       │   ├── LoginForm, RegisterForm

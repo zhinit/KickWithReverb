@@ -213,7 +213,7 @@ Uses Django's built-in `User` model from `django.contrib.auth.models`.
 
 - Without `?confirm=true`: checks for presets using this kick, returns 409 with preset names if found
 - With `?confirm=true` (or no presets affected): deletes from Supabase Storage, deletes affected presets, deletes DB record
-- Returns updated `totalGensCount`
+- Returns `totalCount` (updated total kicks count)
 
 ### German Name Generation (`kickgen/german_names.py`)
 
@@ -278,6 +278,7 @@ Server runs on `http://localhost:8000` by default.
 
 ## Database Commands
 
+
 ```bash
 # Create migrations
 python manage.py makemigrations
@@ -302,5 +303,3 @@ The `Procfile` tells Railway to start Gunicorn:
 ```
 web: gunicorn config.wsgi
 ```
-
-See `notes/railwayExecution.md` for full deployment details.

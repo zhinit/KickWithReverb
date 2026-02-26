@@ -39,19 +39,18 @@ Daw (mode: "daw" | "kickGen")
 │   ├── Cue Button (img)
 │   ├── Play Button (img)
 │   └── BPM Input
-├── SoundUnit
-│   ├── LayerStrip (Kick)
-│   │   ├── Selectah (daw mode: stock + AI kicks) OR "Back To DAW" button (kickGen mode)
-│   │   └── Knob (multiple)
-│   ├── LayerStrip (Noise)
-│   │   ├── Selectah
-│   │   └── Knob (multiple)
-│   └── LayerStrip (Reverb)
-│       ├── Selectah
-│       └── Knob (multiple)
+├── LayerStrip (Kick)
+│   ├── Selectah (daw mode: stock + AI kicks) OR "Back To DAW" button (kickGen mode)
+│   └── Knob (multiple)
+├── LayerStrip (Noise)
+│   ├── Selectah
+│   └── Knob (multiple)
+├── LayerStrip (Reverb)
+│   ├── Selectah
+│   └── Knob (multiple)
 ├── MasterStrip
 │   └── Knob (multiple)
-└── [daw mode, member only] "Generate AI Kick" Button
+└── [daw mode, member only] "Generate AI Kick From The Ether" Button
 ```
 
 ## File Organization
@@ -59,7 +58,7 @@ Daw (mode: "daw" | "kickGen")
 Components are organized into three subfolders:
 
 - **`auth/`** — Auth-flow views: LoginForm, RegisterForm, Logout
-- **`daw/`** — DAW interface: Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay
+- **`daw/`** — DAW interface: Daw, ControlStrip, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay
 - **`ui/`** — Reusable primitives: Knob, Selectah, modal.css
 
 Each component has a co-located CSS file (e.g. `daw/knob.css` next to `daw/Knob.tsx`). Shared styles like `modal.css` live in `ui/` and are imported where needed.
@@ -87,9 +86,9 @@ Main DAW interface. Initializes all audio layer hooks and connects the audio rou
 - Title (switches between "KICK WITH REVERB" and "AI KICK GEN MODE")
 - `PresetsBar` (daw mode) or `KickGenBar` (kickGen mode)
 - `ControlStrip` - Transport controls
-- `SoundUnit` - Sound layer controls (kick Selectah replaced with "Back To DAW" button in kickGen mode via `customDropdown` prop)
+- Three `LayerStrip` components (Kick, Noise, Reverb) inside a `div.sound-unit` wrapper — kick Selectah replaced with "Back To DAW" button in kickGen mode via `customDropdown` prop
 - `MasterStrip` - Master output controls
-- "Generate AI Kick" button (daw mode, members only) — enters kickGen mode
+- "Generate AI Kick From The Ether" button (daw mode, members only) — enters kickGen mode
 
 Hooks initialized: `useAudioEngine`, `useAiKicks`, `useKickLayer` (with AI kick map), `useNoiseLayer`, `useReverbLayer`, `useMasterChain`, `useTransport`, `usePresets`.
 
@@ -102,16 +101,6 @@ Transport controls for playback:
 - Cue button (triggers sounds while held)
 - Play button (toggles loop playback)
 - BPM input (60-365 range)
-
-### SoundUnit (`daw/SoundUnit.tsx`)
-
-Container for the three sound layer strips:
-
-- Kick layer
-- Noise layer
-- Reverb layer
-
-Each rendered as a `LayerStrip` component.
 
 ### LayerStrip (`daw/LayerStrip.tsx`)
 

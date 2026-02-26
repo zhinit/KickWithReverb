@@ -22,7 +22,7 @@ frontend/
 │   ├── index.css             # Base resets and variables
 │   ├── components/
 │   │   ├── auth/             # Auth-flow components (LoginForm, RegisterForm, Logout)
-│   │   ├── daw/              # DAW components (Daw, ControlStrip, SoundUnit, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay)
+│   │   ├── daw/              # DAW components (Daw, ControlStrip, LayerStrip, MasterStrip, PresetsBar, KickGenBar, LoadingOverlay)
 │   │   └── ui/               # Reusable primitives (Knob, Selectah, modal.css)
 │   ├── hooks/                # Custom React hooks
 │   ├── types/                # TypeScript type definitions
@@ -64,7 +64,7 @@ Each audio layer hook:
 
 TypeScript interfaces for component props:
 
-- `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps` (includes optional `customDropdown` for replacing Selectah), `SoundUnitProps`, `MasterStripProps`
+- `types.ts` - Defines `KnobProps`, `SelectahProps`, `ControlStripProps`, `LayerStripProps` (includes optional `customDropdown` for replacing Selectah), `MasterStripProps`
 - `preset.ts` - Defines `PresetData` interface for preset state (all layer parameters, BPM, timestamps)
 - `gen-kick.ts` - Defines `KickData` (id, name, audioUrl), `KickListResponse` (kicks + counts), `GenerateKickResponse` (single kick + counts)
 
