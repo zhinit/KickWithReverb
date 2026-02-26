@@ -50,26 +50,26 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
   float* left = reinterpret_cast<float*>(leftPtr);
   float* right = reinterpret_cast<float*>(rightPtr);
 
-  // --- 1. Transport: advance counters, trigger at beat boundaries ---
+  // trigger kick/noise at boundaries
   if (looping_ && samplesPerBeat_ > 0) {
-    sampleCounter_ += numSamples;
-    while (sampleCounter_ >= samplesPerBeat_) {
-      sampleCounter_ -= samplesPerBeat_;
-      beatCounter_++;
+    samplesSinceBeat_ += numSamples;
+    while (samplesSinceBeat_ >= samplesPerBeat_) {
+      samplesSinceBeat_ -= samplesPerBeat_;
+      noiseBeatCount_++;
       kickPlayer_.trigger();
 
-      // If a new noise sample was selected, trigger it now and reset the loop
+      // If new noise selected, trigger it and reset the loop
       if (pendingNoiseTrigger_) {
         noisePlayer_.trigger();
-        beatCounter_ = 0;
+        noiseBeatCount_ = 0;
         pendingNoiseTrigger_ = false;
-      } else if (beatCounter_ % 16 == 0) {
+      } else if (noiseBeatCount_ % 16 == 0) {
         noisePlayer_.trigger();
       }
     }
   }
 
-  // --- 2. Kick chain: player → distortion (wet/dry) → OTT ---
+  // kick chain 
   kickPlayer_.process(kickL_.data(), kickR_.data(), numSamples);
 
   if (kickDistortionMix_ > 0.0f) {
@@ -86,12 +86,12 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
 
   kickOTT_.process(kickL_.data(), kickR_.data(), numSamples);
 
-  // --- 3. Noise chain: player → lowpass → highpass ---
+  // noise chain
   noisePlayer_.process(noiseL_.data(), noiseR_.data(), numSamples);
   noiseLowPass_.process(noiseL_.data(), noiseR_.data(), numSamples);
   noiseHighPass_.process(noiseL_.data(), noiseR_.data(), numSamples);
 
-  // --- 4. Reverb: mix kick+noise → convolution → filters → volume ---
+  // reverb chain
   if (activeIRIndex_ >= 0) {
     for (int i = 0; i < numSamples; ++i) {
       reverbL_[i] = kickL_[i] + noiseL_[i];
@@ -109,8 +109,7 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
     std::memset(reverbR_.data(), 0, sizeof(float) * numSamples);
   }
 
-  // --- 5. Master: dry + reverb → OTT → distortion (wet/dry) → gain → limiter
-  // ---
+  // master chain
   for (int i = 0; i < numSamples; ++i) {
     left[i] = kickL_[i] + noiseL_[i] + reverbL_[i];
     right[i] = kickR_[i] + noiseR_[i] + reverbR_[i];
@@ -190,6 +189,7 @@ AudioEngine::selectNoiseSample(int index)
 void
 AudioEngine::setNoiseVolume(float db)
 {
+  // translate from db to linear number that can be multiplied onto signal
   noisePlayer_.setVolume(std::pow(10.0f, db / 20.0f));
 }
 
@@ -248,6 +248,7 @@ AudioEngine::setReverbVolume(float db)
   reverbGain_ = std::pow(10.0f, db / 20.0f);
 }
 
+
 // --- Master ---
 
 void
@@ -268,22 +269,16 @@ AudioEngine::setMasterLimiter(float amount)
   masterLimiterGain_ = std::clamp(amount, 1.0f, 8.0f);
 }
 
-// --- Transport ---
 
-void
-AudioEngine::setBPM(float bpm)
-{
-  bpm_ = bpm;
-  recalcSamplesPerBeat();
-}
+// --- Transport ---
 
 void
 AudioEngine::setLooping(bool enabled)
 {
   looping_ = enabled;
   if (enabled) {
-    sampleCounter_ = 0;
-    beatCounter_ = 0;
+    samplesSinceBeat_ = 0;
+    noiseBeatCount_ = 0;
     kickPlayer_.trigger();
     noisePlayer_.trigger();
   } else {
@@ -312,6 +307,13 @@ AudioEngine::recalcSamplesPerBeat()
   if (bpm_ > 0.0f) {
     samplesPerBeat_ = static_cast<int>(sampleRate_ * 60.0f / bpm_);
   }
+}
+
+void
+AudioEngine::setBPM(float bpm)
+{
+  bpm_ = bpm;
+  recalcSamplesPerBeat();
 }
 
 // --- Emscripten bindings ---

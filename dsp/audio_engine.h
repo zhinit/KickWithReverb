@@ -97,8 +97,8 @@ private:
     float bpm_ = 140.0f;
     bool looping_ = false;
     int samplesPerBeat_ = 0;
-    int sampleCounter_ = 0;
-    int beatCounter_ = 0;
+    int samplesSinceBeat_ = 0;
+    int noiseBeatCount_ = 0;
     bool pendingNoiseTrigger_ = false;
 
     // Scratch buffers (fixed at AudioWorklet block size)
