@@ -55,6 +55,17 @@ public:
 private:
     static constexpr int kBlockSize = 128;
 
+    // kick OTT boosts the lows and ratios a bit
+    static constexpr float kKickOttRatioMultiplier = 10.0f;
+    static constexpr float kKickOttLowBoost        =  9.0f;
+    static constexpr float kKickOttMidBoost        = -3.0f;
+    static constexpr float kKickOttHighBoost       =  0.0f;
+
+    static constexpr float kMasterOttRatioMultiplier = 8.0f;
+    static constexpr float kMasterOttLowBoost        = 3.0f;
+    static constexpr float kMasterOttMidBoost        = -3.0f;
+    static constexpr float kMasterOttHighBoost       =  0.0f;
+
     float sampleRate_ = 44100.0f;
 
     // Players
@@ -63,7 +74,7 @@ private:
 
     // Kick effects
     Distortion kickDistortion_;
-    OTTCompressor kickOTT_{ 10.0f, 9.0f, -3.0f, 0.0f };
+    OTTCompressor kickOTT_{ kKickOttRatioMultiplier, kKickOttLowBoost, kKickOttMidBoost, kKickOttHighBoost };
     float kickDistortionMix_ = 0.0f;
 
     // Noise filters
@@ -87,7 +98,7 @@ private:
     int activeIRIndex_ = -1;
 
     // Master chain
-    OTTCompressor masterOTT_{ 8.0f, 3.0f, -3.0f, 0.0f };
+    OTTCompressor masterOTT_{ kMasterOttRatioMultiplier, kMasterOttLowBoost, kMasterOttMidBoost, kMasterOttHighBoost };
     Distortion masterDistortion_;
     float masterDistortionMix_ = 0.0f;
     float masterLimiterGain_ = 1.0f;

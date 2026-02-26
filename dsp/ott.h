@@ -32,10 +32,10 @@ class OTTCompressor
 public:
   // ratioMultiplier: effective down ratio = 1 + ratioMultiplier * amount
   // EQ per-amount: actual gain = amount * eqDb for each band
-  OTTCompressor(float ratioMultiplier = 10.0f,
-                float lowEqPerAmount = 9.0f,
-                float midEqPerAmount = -3.0f,
-                float highEqPerAmount = 0.0f);
+  OTTCompressor(float knobRatioMultiplier = 10.0f,
+                float knobLowBoost = 9.0f,
+                float knobMidBoost = -3.0f,
+                float knobHighBoost = 0.0f);
 
   void prepare(float sampleRate);
   void process(float* left, float* right, int numSamples);
@@ -56,8 +56,8 @@ private:
   std::array<float, 128> highBandL_{}, highBandR_{};
 
   float amount_ = 0.0f;
-  float lowEqPerAmount_;
-  float midEqPerAmount_;
-  float highEqPerAmount_;
+  float knobLowBoost_;
+  float knobMidBoost_;
+  float knobHighBoost_;
   static constexpr float makeupGainDb_ = 18.0f;
 };

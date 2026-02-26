@@ -58,16 +58,16 @@ float BandCompressor::processSample(float sample, float& envelope,
 
 // --- OTTCompressor ---
 
-OTTCompressor::OTTCompressor(float ratioMultiplier,
-                             float lowEqPerAmount,
-                             float midEqPerAmount,
-                             float highEqPerAmount)
-  : lowComp_(10.0f, 100.0f, -20.0f, ratioMultiplier + 1.0f, -40.0f, 3.0f)
-  , midComp_(5.0f, 75.0f, -20.0f, ratioMultiplier + 1.0f, -40.0f, 4.0f)
-  , highComp_(1.0f, 50.0f, -20.0f, ratioMultiplier + 1.0f, -40.0f, 5.0f)
-  , lowEqPerAmount_(lowEqPerAmount)
-  , midEqPerAmount_(midEqPerAmount)
-  , highEqPerAmount_(highEqPerAmount)
+OTTCompressor::OTTCompressor(float knobRatioMultiplier,
+                             float knobLowBoost,
+                             float knobMidBoost,
+                             float knobHighBoost)
+  : lowComp_(10.0f, 100.0f, -20.0f, knobRatioMultiplier + 1.0f, -40.0f, 3.0f)
+  , midComp_(5.0f, 75.0f, -20.0f, knobRatioMultiplier + 1.0f, -40.0f, 4.0f)
+  , highComp_(1.0f, 50.0f, -20.0f, knobRatioMultiplier + 1.0f, -40.0f, 5.0f)
+  , knobLowBoost_(knobLowBoost)
+  , knobMidBoost_(knobMidBoost)
+  , knobHighBoost_(knobHighBoost)
 {
 }
 
@@ -123,9 +123,9 @@ void OTTCompressor::process(float* left, float* right, int numSamples)
   highComp_.process(highBandL_.data(), highBandR_.data(), numSamples, amount_);
 
   // Per-band EQ scaled by amount
-  float lowGain = std::pow(10.0f, (amount_ * lowEqPerAmount_) / 20.0f);
-  float midGain = std::pow(10.0f, (amount_ * midEqPerAmount_) / 20.0f);
-  float highGain = std::pow(10.0f, (amount_ * highEqPerAmount_) / 20.0f);
+  float lowGain = std::pow(10.0f, (amount_ * knobLowBoost_) / 20.0f);
+  float midGain = std::pow(10.0f, (amount_ * knobMidBoost_) / 20.0f);
+  float highGain = std::pow(10.0f, (amount_ * knobHighBoost_) / 20.0f);
 
   float makeupDb = amount_ * makeupGainDb_;
   float makeupGain = std::pow(10.0f, makeupDb / 20.0f);
