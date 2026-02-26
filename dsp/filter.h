@@ -19,7 +19,7 @@ public:
   {
     if (type == Type::lowpass)
       filter_.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    else
+    else // high pass
       filter_.setType(juce::dsp::StateVariableTPTFilterType::highpass);
   }
 

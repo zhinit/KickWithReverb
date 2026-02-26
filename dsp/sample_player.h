@@ -48,7 +48,6 @@ private:
 
     bool looping_ = false;
 
-    // Length truncation (1.0 = full sample, 0.1 = 10% of sample)
     float lengthRatio_ = 1.0f;
     static constexpr int kFadeOutSamples = 512; // ~12ms at 44.1kHz
 };

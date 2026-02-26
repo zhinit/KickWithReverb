@@ -12,7 +12,7 @@ public:
     juce::dsp::ProcessSpec spec{ sampleRate, 128u, 2u };
     limiter_.prepare(spec);
     limiter_.setThreshold(0.0f);  // 0 dB ceiling
-    limiter_.setRelease(50.0f);   // 50ms release
+    limiter_.setRelease(10.0f);   // 10ms release
   }
 
   void process(float* left, float* right, int numSamples)
