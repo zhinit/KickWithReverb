@@ -41,4 +41,6 @@ __pycache__/
 /kick_gen_trainer/weights
 /backend/.venv
 
-interviewPrep.md
+zzz_interview_prep/emails.md
+zzz_interview_prep/interview-prep.md
+zzz_interview_prep/job-description.md
