@@ -42,7 +42,6 @@ export const Daw = () => {
   const reverb = useReverbLayer(engine);
   const master = useMasterChain(engine);
   const transport = useTransport(engine);
-  useHotkeys(transport.controlProps);
 
   // Presets hook
   const presets = usePresets({
@@ -63,6 +62,9 @@ export const Daw = () => {
       return () => clearTimeout(timer);
     }
   }, [allLoaded, showOverlay]);
+
+  // setup hot keys once DAW is all loaded
+  useHotkeys(transport.controlProps, allLoaded);
 
   // reset state of daw when a user logs in/out
   useEffect(() => {

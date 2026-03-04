@@ -1,12 +1,16 @@
 import { useEffect } from "react";
 
-export const useHotkeys = (transport: {
-  handlePlayClick: Function;
-  handleCueMouseDown: Function;
-  handleCueMouseUp: Function;
-}) => {
+export const useHotkeys = (
+  transport: {
+    handlePlayClick: Function;
+    handleCueMouseDown: Function;
+    handleCueMouseUp: Function;
+  },
+  allLoaded: boolean
+) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!allLoaded) return;
       switch (e.key) {
         case " ":
           transport.handlePlayClick();
@@ -18,6 +22,7 @@ export const useHotkeys = (transport: {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (!allLoaded) return;
       if (e.key === "Enter") {
         transport.handleCueMouseUp();
       }
@@ -30,5 +35,5 @@ export const useHotkeys = (transport: {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [transport.handlePlayClick]);
+  }, [transport.handlePlayClick, allLoaded]);
 };
