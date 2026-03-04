@@ -20,6 +20,7 @@ import { useMasterChain } from "../../hooks/use-master-chain";
 import { useTransport } from "../../hooks/use-transport";
 import { usePresets } from "../../hooks/use-presets";
 import { useAiKicks } from "../../hooks/use-ai-kicks";
+import { useHotkeys } from "../../hooks/use-hotkeys";
 
 export const Daw = () => {
   // states
@@ -41,6 +42,7 @@ export const Daw = () => {
   const reverb = useReverbLayer(engine);
   const master = useMasterChain(engine);
   const transport = useTransport(engine);
+  useHotkeys(transport.controlProps);
 
   // Presets hook
   const presets = usePresets({
