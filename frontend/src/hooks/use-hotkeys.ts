@@ -5,6 +5,7 @@ export const useHotkeys = (
     handlePlayClick: Function;
     handleCueMouseDown: Function;
     handleCueMouseUp: Function;
+    setBPM: Function;
   },
   allLoaded: boolean
 ) => {
@@ -17,6 +18,12 @@ export const useHotkeys = (
           break;
         case "Enter":
           transport.handleCueMouseDown();
+          break;
+        case "=":
+          transport.setBPM((bpm: number) => Math.min(bpm + 1, 365));
+          break;
+        case "-":
+          transport.setBPM((bpm: number) => Math.max(bpm - 1, 110));
           break;
       }
     };
