@@ -52,6 +52,26 @@ Custom hooks that encapsulate audio logic and state management:
 - `use-transport.ts` - Playback transport controls (play, cue, BPM via postMessage). Exposes a `stop()` function that stops loop playback (used by Daw on logout).
 - `use-presets.ts` - Preset management (load, save, delete, navigate). Defines `INIT_DEFAULTS` constant matching hook initial values. Uses a stable `applyValues` helper (via `useRef` for layers) to apply preset values to all layers. On member login, fetches presets and loads the shared "Init" preset values. On logout (member → guest transition, detected via `prevStatusRef`), resets the DAW to `INIT_DEFAULTS`. `loadPreset` also uses `applyValues` internally.
 - `use-ai-kicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
+- `use-hotkeys.ts` - Global keyboard shortcut handler. Registers `keydown`/`keyup` listeners on `window` and cleans them up on unmount. Guards all handlers with `allLoaded` so hotkeys are inactive during the loading screen. Called in `Daw.tsx` at the top level (not inside effects). Accepts transport, kick, noise, reverb, and master setter objects.
+
+  | Key | Action |
+  |-----|--------|
+  | `Space` | Toggle play/pause |
+  | `Enter` (hold) | Cue (releases on keyup) |
+  | `=` / `-` | BPM +1 / -1 (clamp 110–365) |
+  | `1` / `2` | Kick length down/up |
+  | `3` / `4` | Kick distortion down/up |
+  | `5` / `6` | Kick OTT down/up |
+  | `q` / `w` | Noise low-pass down/up |
+  | `e` / `r` | Noise high-pass down/up |
+  | `t` / `y` | Noise volume -1/+1 dB |
+  | `a` / `s` | Reverb low-pass down/up |
+  | `d` / `f` | Reverb high-pass down/up |
+  | `g` / `h` | Reverb volume -1/+1 dB |
+  | `z` / `x` | Master OTT down/up |
+  | `c` / `v` | Master distortion down/up |
+  | `b` / `n` | Master limiter boost down/up (clamp 1–8) |
+  | `[` / `]` | Combo: OTT (kick+master) down + reverb up / OTT up + reverb down |
 
 Each audio layer hook:
 - Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter

@@ -13,6 +13,7 @@ Fully featured DAW for the average techno producer.
 - **Reverb Layer** – Impulse response selection with filtering and volume
 - **Master Chain** – OTT, distortion, and limiter controls
 - **Transport Controls** – BPM adjustment, play/stop, and cue functionality
+- **Keyboard Shortcuts** – Full hotkey control for all parameters (transport, kick, noise, reverb, master)
 - **Authentication** – Sign up, login, JWT-based sessions, guest mode
 - **Presets** – Save, load, and delete your own presets; browse shared presets
 - **AI Kick Generation** – Generate unique kick drums using a PyTorch diffusion model on a Modal serverless GPU. Per-user library with rate limits (10/day, 30 total). Kicks stored in Supabase Storage.
@@ -86,7 +87,8 @@ KickWithReverb/
 │       │   ├── use-kick-layer, use-noise-layer, use-reverb-layer
 │       │   ├── use-master-chain, use-transport
 │       │   ├── use-presets
-│       │   └── use-ai-kicks     # AI kick lifecycle (fetch, generate, delete)
+│       │   ├── use-ai-kicks     # AI kick lifecycle (fetch, generate, delete)
+│       │   └── use-hotkeys      # Global keyboard shortcuts (transport, layers, combos)
 │       ├── types/    # types.ts, preset.ts, gen-kick.ts
 │       ├── utils/    # api.ts, audio-assets.ts
 │       └── assets/ # Kicks, Noises, IRs, knobs, buttons
