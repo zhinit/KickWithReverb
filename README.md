@@ -18,6 +18,27 @@ Fully featured DAW for the average techno producer.
 - **Presets** – Save, load, and delete your own presets; browse shared presets
 - **AI Kick Generation** – Generate unique kick drums using a PyTorch diffusion model on a Modal serverless GPU. Per-user library with rate limits (10/day, 30 total). Kicks stored in Supabase Storage.
 
+# Hotkeys
+
+| Key       | Action                                    |
+| --------- | ----------------------------------------- |
+| `Space`   | Toggle play/pause                         |
+| `Enter`   | Cue (releases on keyup)                   |
+| `-` / `=` | BPM down/up                               |
+| `q` / `w` | Kick length down/up                       |
+| `a` / `s` | Kick distortion down/up                   |
+| `z` / `x` | Kick OTT down/up                          |
+| `e` / `r` | Noise low-pass down/up                    |
+| `d` / `f` | Noise high-pass down/up                   |
+| `c` / `v` | Noise volume down/up                      |
+| `t` / `y` | Reverb low-pass down/up                   |
+| `g` / `h` | Reverb high-pass down/up                  |
+| `b` / `n` | Reverb volume down/up                     |
+| `u` / `i` | Master OTT down/up                        |
+| `j` / `k` | Master distortion down/up                 |
+| `m` / `,` | Master limiter down/up                    |
+| `[` / `]` | Combo: BothOTT down/up reverb vol up/down |
+
 ## Documentation
 
 - **backend.md** – Backend API, auth, presets model, DB, deployment

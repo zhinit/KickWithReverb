@@ -54,26 +54,27 @@ Custom hooks that encapsulate audio logic and state management:
 - `use-ai-kicks.ts` - AI kick generation management. On startup (if member), fetches user's AI kicks from `GET /api/kicks/`, decodes audio from Supabase URLs, loads into WASM via `loadKickSample`. Exposes `generate()` and `remove()` functions that handle the full flow (API call + WASM loading + state update). Tracks `aiKicks`, `aiKickNameToIndex`, `isGenerating`, `remainingGensToday`, `totalGensCount`. Clears all state and resets `hasLoadedRef` on logout (`userStatus !== "member"`) so kicks are re-fetched per user session.
 - `use-hotkeys.ts` - Global keyboard shortcut handler. Registers `keydown`/`keyup` listeners on `window` and cleans them up on unmount. Guards all handlers with `allLoaded` so hotkeys are inactive during the loading screen. Called in `Daw.tsx` at the top level (not inside effects). Accepts transport, kick, noise, reverb, and master setter objects.
 
-  | Key | Action |
-  |-----|--------|
-  | `Space` | Toggle play/pause |
-  | `Enter` (hold) | Cue (releases on keyup) |
-  | `=` / `-` | BPM +1 / -1 (clamp 110–365) |
-  | `1` / `2` | Kick length down/up |
-  | `3` / `4` | Kick distortion down/up |
-  | `5` / `6` | Kick OTT down/up |
-  | `q` / `w` | Noise low-pass down/up |
-  | `e` / `r` | Noise high-pass down/up |
-  | `t` / `y` | Noise volume -1/+1 dB |
-  | `a` / `s` | Reverb low-pass down/up |
-  | `d` / `f` | Reverb high-pass down/up |
-  | `g` / `h` | Reverb volume -1/+1 dB |
-  | `z` / `x` | Master OTT down/up |
-  | `c` / `v` | Master distortion down/up |
-  | `b` / `n` | Master limiter boost down/up (clamp 1–8) |
-  | `[` / `]` | Combo: OTT (kick+master) down + reverb up / OTT up + reverb down |
+  | Key       | Action                                    |
+  | --------- | ----------------------------------------- |
+  | `Space`   | Toggle play/pause                         |
+  | `Enter`   | Cue (releases on keyup)                   |
+  | `-` / `=` | BPM down/up                               |
+  | `q` / `w` | Kick length down/up                       |
+  | `a` / `s` | Kick distortion down/up                   |
+  | `z` / `x` | Kick OTT down/up                          |
+  | `e` / `r` | Noise low-pass down/up                    |
+  | `d` / `f` | Noise high-pass down/up                   |
+  | `c` / `v` | Noise volume down/up                      |
+  | `t` / `y` | Reverb low-pass down/up                   |
+  | `g` / `h` | Reverb high-pass down/up                  |
+  | `b` / `n` | Reverb volume down/up                     |
+  | `u` / `i` | Master OTT down/up                        |
+  | `j` / `k` | Master distortion down/up                 |
+  | `m` / `,` | Master limiter down/up                    |
+  | `[` / `]` | Combo: BothOTT down/up reverb vol up/down |
 
 Each audio layer hook:
+
 - Takes an `AudioEngine` handle (from `useAudioEngine`) as its parameter
 - Keeps React state for UI display
 - Sends `postMessage` to the AudioWorklet when state changes
@@ -147,6 +148,7 @@ React Hooks ──postMessage──► AudioWorklet (dsp-processor.js) ──►
 ### Hook → Engine Message Flow
 
 Each hook watches its React state and sends typed messages:
+
 - `useKickLayer` → `selectKickSample`, `kickLength`, `kickDistortion`, `kickOTT`
 - `useNoiseLayer` → `selectNoiseSample`, `noiseVolume`, `noiseLowPass`, `noiseHighPass`
 - `useReverbLayer` → `selectIR`, `reverbLowPass`, `reverbHighPass`, `reverbVolume`
@@ -158,26 +160,31 @@ Each hook watches its React state and sends typed messages:
 The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 
 **DAW mode (default):**
+
 - PresetsBar shown at top
 - Kick Selectah shows stock kicks + AI kicks (AI kicks appended alphabetically, prefixed with "AI: ")
 - "Generate AI Kick" button shown below MasterStrip (members only)
 
 **KickGen mode:**
+
 - KickGenBar replaces PresetsBar (same layout: ⇇ ⇉ [dropdown] 🗑️ 🎨)
 - Title changes to "AI KICK GEN MODE"
 - Kick Selectah replaced with "Back To DAW" button
 - All knob/noise/reverb/master settings remain untouched during mode switches
 
 **Mode transitions:**
+
 - Entering kickGen: loads first AI kick alphabetically into sampler (if any exist) via `kick.setters.setSample()`
 - Exiting kickGen: kick stays in sampler, Selectah shows the AI kick name (stays in sync because selection goes through `useKickLayer`)
 - On `userStatus` change (logout/login): mode resets to `"daw"`, `selectedAiKickId` resets to `null`
 
 **Kick selection sync:**
+
 - `selectAiKick` and `handleGenerate` in Daw.tsx use `kick.setters.setSample(name)` (not direct `engine.postMessage`), which keeps `useKickLayer`'s `sample` state, the Selectah dropdown, and WASM all in sync.
 - After generating, Daw's `handleGenerate` wrapper selects the new kick (KickGenBar does not call `onSelectKick` after generate).
 
 **KickGenBar features:**
+
 - Prev/next arrows to cycle through AI kicks
 - Dropdown listing all AI kicks
 - 🎨 button generates a new kick (calls Modal GPU worker, ~10s). Shows "..." while generating. New kick auto-selected in sampler.
@@ -188,6 +195,7 @@ The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 **Rate limits:** 10 generations per day (midnight EST reset), 30 total kicks max.
 
 **Session reset:**
+
 - Since the Daw component stays mounted across login/logout (for eager audio loading), all state must be explicitly reset on user change.
 - `usePresets` resets DAW to Init defaults on logout (member → guest, detected via `prevStatusRef`), loads Init preset on member login.
 - `useAiKicks` clears AI kick state and resets `hasLoadedRef` on logout so kicks are re-fetched per user.
@@ -195,6 +203,7 @@ The Daw has two modes controlled by `mode` state (`"daw" | "kickGen"`):
 - Daw re-shows the loading overlay on any `userStatus` change (covers preset fetch transition).
 
 **Loading screen:**
+
 - `LoadingOverlay` component renders a full-viewport overlay with an animated kick waveform SVG and "Loading..." text.
 - Shown inside Daw whenever audio engine hasn't finished loading OR presets are still being fetched (`engine.isReady && !presets.isLoading`).
 - On `userStatus` change (login/guest), the overlay re-appears to cover the preset fetch.
