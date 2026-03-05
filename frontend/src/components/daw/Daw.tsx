@@ -64,7 +64,7 @@ export const Daw = () => {
   }, [allLoaded, showOverlay]);
 
   // setup hot keys once DAW is all loaded
-  useHotkeys(transport.controlProps, allLoaded);
+  useHotkeys(transport.controlProps, reverb.setters, allLoaded);
 
   // reset state of daw when a user logs in/out
   useEffect(() => {

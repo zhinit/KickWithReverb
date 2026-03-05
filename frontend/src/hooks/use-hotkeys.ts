@@ -7,12 +7,18 @@ export const useHotkeys = (
     handleCueMouseUp: Function;
     setBPM: Function;
   },
-  allLoaded: boolean
+  reverb: {
+    setLowPassFreq: Function;
+    setHighPassFreq: Function;
+    setVolume: Function;
+  },
+  allLoaded: boolean,
 ) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!allLoaded) return;
       switch (e.key) {
+        // transport hot heys
         case " ":
           transport.handlePlayClick();
           break;
@@ -24,6 +30,26 @@ export const useHotkeys = (
           break;
         case "-":
           transport.setBPM((bpm: number) => Math.max(bpm - 1, 110));
+          break;
+
+        // reverb hot keys
+        case "a":
+          reverb.setLowPassFreq((freq: number) => Math.max(freq * 0.9, 30));
+          break;
+        case "s":
+          reverb.setLowPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
+          break;
+        case "d":
+          reverb.setHighPassFreq((freq: number) => Math.max(freq * 0.9, 30));
+          break;
+        case "f":
+          reverb.setHighPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
+          break;
+        case "g":
+          reverb.setVolume((vol: number) => Math.max(vol - 1, -60));
+          break;
+        case "h":
+          reverb.setVolume((vol: number) => Math.min(vol + 1, 0));
           break;
       }
     };
