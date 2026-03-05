@@ -27,7 +27,7 @@ export const useHotkeys = (
     setDistAmt: Function;
     setLimiterAmt: Function;
   },
-  allLoaded: boolean,
+  allLoaded: boolean
 ) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,82 +48,82 @@ export const useHotkeys = (
           break;
 
         // kick layer hot keys
-        case "1":
-          kick.setLen((len: number) => Math.max(len * 0.9, 0.1));
+        case "q":
+          kick.setLen((len: number) => Math.max(len * 0.95, 0.1));
           break;
-        case "2":
-          kick.setLen((len: number) => Math.min(len * 1.1, 1));
+        case "w":
+          kick.setLen((len: number) => Math.min(len * 1.05, 1));
           break;
-        case "3":
+        case "a":
           kick.setDistAmt((amt: number) => Math.max(amt - 0.01, 0));
           break;
-        case "4":
+        case "s":
           kick.setDistAmt((amt: number) => Math.min(amt + 0.01, 0.5));
           break;
-        case "5":
+        case "z":
           kick.setOttAmt((amt: number) => Math.max(amt - 0.02, 0));
           break;
-        case "6":
+        case "x":
           kick.setOttAmt((amt: number) => Math.min(amt + 0.02, 1));
           break;
 
         // noise layer hot keys
-        case "q":
+        case "e":
           noise.setLowPassFreq((freq: number) => Math.max(freq * 0.9, 30));
           break;
-        case "w":
+        case "r":
           noise.setLowPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
           break;
-        case "e":
+        case "d":
           noise.setHighPassFreq((freq: number) => Math.max(freq * 0.9, 30));
           break;
-        case "r":
+        case "f":
           noise.setHighPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
           break;
-        case "t":
-          noise.setVolume((vol: number) => Math.max(vol - 1, -60));
+        case "c":
+          noise.setVolume((vol: number) => Math.max(vol - 1, -70));
           break;
-        case "y":
-          noise.setVolume((vol: number) => Math.min(vol + 1, 0));
+        case "v":
+          noise.setVolume((vol: number) => Math.min(vol + 1, -6));
           break;
 
         // reverb layer hot keys
-        case "a":
+        case "t":
           reverb.setLowPassFreq((freq: number) => Math.max(freq * 0.9, 30));
           break;
-        case "s":
+        case "y":
           reverb.setLowPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
           break;
-        case "d":
+        case "g":
           reverb.setHighPassFreq((freq: number) => Math.max(freq * 0.9, 30));
           break;
-        case "f":
+        case "h":
           reverb.setHighPassFreq((freq: number) => Math.min(freq * 1.1, 7_000));
           break;
-        case "g":
+        case "b":
           reverb.setVolume((vol: number) => Math.max(vol - 1, -60));
           break;
-        case "h":
+        case "n":
           reverb.setVolume((vol: number) => Math.min(vol + 1, 0));
           break;
 
         // master layer hot keys
-        case "z":
+        case "u":
           master.setOttAmt((amt: number) => Math.max(amt - 0.02, 0));
           break;
-        case "x":
+        case "i":
           master.setOttAmt((amt: number) => Math.min(amt + 0.02, 1));
           break;
-        case "c":
+        case "j":
           master.setDistAmt((amt: number) => Math.max(amt - 0.01, 0));
           break;
-        case "v":
+        case "k":
           master.setDistAmt((amt: number) => Math.min(amt + 0.01, 0.5));
           break;
-        case "b":
+        case "m":
           master.setLimiterAmt((amt: number) => Math.max(amt - 0.1, 1));
           break;
-        case "n":
+        case ",":
           master.setLimiterAmt((amt: number) => Math.min(amt + 0.1, 8));
           break;
 
