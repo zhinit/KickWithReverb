@@ -2,11 +2,10 @@
 HiFi-GAN vocoder training.
 
 Trains a mel-to-waveform generator with multi-period and multi-scale discriminators.
-Designed for 6GB VRAM: lazy-loads audio, uses random 8192-sample segments, small batch size.
 
 Usage:
     uv run training/train_vocoder.py
-    uv run training/train_vocoder.py --batch-size 4 --segment-size 8192
+    uv run training/train_vocoder.py --batch-size 4
 """
 
 import argparse
@@ -42,11 +41,10 @@ class VocoderDataset(Dataset):
     """Lazy-loading dataset that pairs raw audio with processed mel spectrograms.
 
     Only stores file paths in memory. Loads audio on-the-fly per __getitem__.
-    Returns random segments of `segment_size` samples for memory efficiency.
+    Returns full 2-second samples so the vocoder trains on the same length it generates.
     """
 
-    def __init__(self, raw_dir: Path, processed_dir: Path, segment_size: int = 8192) -> None:
-        self.segment_size = segment_size
+    def __init__(self, raw_dir: Path, processed_dir: Path) -> None:
         self.raw_dir = raw_dir
         self.processed_dir = processed_dir
 
@@ -87,29 +85,9 @@ class VocoderDataset(Dataset):
 
         # Load pre-computed mel
         mel = torch.load(mel_path, weights_only=True)  # (1, 128, 173)
+        audio_tensor = torch.from_numpy(audio).unsqueeze(0)  # (1, TARGET_SAMPLES)
 
-        # Pick random segment
-        # segment_size audio samples = segment_size // HOP_LENGTH mel frames
-        mel_frames = self.segment_size // HOP_LENGTH
-        max_mel_start = mel.shape[-1] - mel_frames
-        if max_mel_start > 0:
-            mel_start = torch.randint(0, max_mel_start, (1,)).item()
-        else:
-            mel_start = 0
-
-        audio_start = mel_start * HOP_LENGTH
-        audio_end = audio_start + self.segment_size
-
-        mel_seg = mel[:, :, mel_start:mel_start + mel_frames]  # (1, 128, mel_frames)
-        audio_seg = torch.from_numpy(audio[audio_start:audio_end])  # (segment_size,)
-
-        # Pad if needed (edge cases)
-        if mel_seg.shape[-1] < mel_frames:
-            mel_seg = F.pad(mel_seg, (0, mel_frames - mel_seg.shape[-1]))
-        if audio_seg.shape[-1] < self.segment_size:
-            audio_seg = F.pad(audio_seg, (0, self.segment_size - audio_seg.shape[-1]))
-
-        return mel_seg.squeeze(0), audio_seg.unsqueeze(0)  # (128, mel_frames), (1, segment_size)
+        return mel.squeeze(0), audio_tensor  # (128, 173), (1, TARGET_SAMPLES)
 
 
 # ---------------------------------------------------------------------------
@@ -138,19 +116,18 @@ def feature_matching_loss(real_fmaps: list[list[torch.Tensor]], fake_fmaps: list
     return loss
 
 
+import torchaudio
+_mel_spec_transform: dict = {}
+
 def mel_spectrogram_loss(y: torch.Tensor, y_hat: torch.Tensor) -> torch.Tensor:
     """L1 loss on mel spectrograms of real vs generated audio."""
-    mel_transform = torch.nn.Sequential(
-        torch.nn.Identity(),  # placeholder
-    )
-    # Compute mel on-the-fly for loss
-    # Use torchaudio for consistency
-    import torchaudio
-    mel_spec = torchaudio.transforms.MelSpectrogram(
-        sample_rate=SAMPLE_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH,
-        n_mels=N_MELS, power=1.0,
-    ).to(y.device)
-
+    device = y.device
+    if device not in _mel_spec_transform:
+        _mel_spec_transform[device] = torchaudio.transforms.MelSpectrogram(
+            sample_rate=SAMPLE_RATE, n_fft=N_FFT, hop_length=HOP_LENGTH,
+            n_mels=N_MELS, power=1.0,
+        ).to(device)
+    mel_spec = _mel_spec_transform[device]
     mel_real = torch.log(mel_spec(y.squeeze(1)).clamp(min=1e-5))
     mel_fake = torch.log(mel_spec(y_hat.squeeze(1)).clamp(min=1e-5))
     return F.l1_loss(mel_real, mel_fake)
@@ -172,7 +149,6 @@ def train(args: argparse.Namespace) -> None:
     dataset = VocoderDataset(
         raw_dir=Path(args.raw_dir),
         processed_dir=Path(args.processed_dir),
-        segment_size=args.segment_size,
     )
     loader = DataLoader(
         dataset,
@@ -326,7 +302,7 @@ def train(args: argparse.Namespace) -> None:
 
     # Save inference-ready checkpoint
     torch.save({
-        "generator_state_dict": generator.state_dict(),
+        "generator": generator.state_dict(),
     }, checkpoint_dir / "vocoder.pt")
     print(f"Saved inference checkpoint: {checkpoint_dir / 'vocoder.pt'}")
 
@@ -335,8 +311,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train HiFi-GAN vocoder")
     parser.add_argument("--raw-dir", type=str, default="data/raw")
     parser.add_argument("--processed-dir", type=str, default="data/processed")
-    parser.add_argument("--batch-size", type=int, default=8)
-    parser.add_argument("--segment-size", type=int, default=8192)
+    parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=2e-4)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--num-workers", type=int, default=2)

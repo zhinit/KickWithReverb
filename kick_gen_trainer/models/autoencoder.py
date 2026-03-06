@@ -50,9 +50,7 @@ class Encoder(nn.Module):
         self.conv_mu = nn.Conv2d(256, latent_dim, 1)
         self.conv_logvar = nn.Conv2d(256, latent_dim, 1)
 
-    def forward(
-        self, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         h = self.net(x)
         return self.conv_mu(h), self.conv_logvar(h)
 
@@ -92,9 +90,7 @@ class KickVAE(nn.Module):
         self.encoder = Encoder(latent_dim)
         self.decoder = Decoder(latent_dim)
 
-    def reparameterize(
-        self, mu: torch.Tensor, logvar: torch.Tensor
-    ) -> torch.Tensor:
+    def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std

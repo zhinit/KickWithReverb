@@ -12,16 +12,26 @@ import torch.nn.functional as F
 # ---------------------------------------------------------------------------
 
 class NoiseScheduler:
-    """Linear beta noise schedule with precomputed alpha values."""
+    """Cosine beta noise schedule with precomputed alpha values.
+
+    Cosine schedule from "Improved Denoising Diffusion Probabilistic Models"
+    (Nichol & Dhariwal, 2021). Distributes noise more evenly than linear,
+    especially beneficial for small latent spaces.
+    """
 
     def __init__(
         self,
         timesteps: int = 1000,
-        beta_start: float = 0.0001,
-        beta_end: float = 0.02,
+        beta_start: float = 0.0001,  # unused, kept for API compatibility
+        beta_end: float = 0.02,      # unused, kept for API compatibility
+        s: float = 0.008,
     ) -> None:
         self.timesteps = timesteps
-        self.betas = torch.linspace(beta_start, beta_end, timesteps)
+        t = torch.arange(timesteps + 1, dtype=torch.float64)
+        f = torch.cos(((t / timesteps + s) / (1 + s)) * math.pi / 2) ** 2
+        alpha_bars = f / f[0]
+        betas = 1 - alpha_bars[1:] / alpha_bars[:-1]
+        self.betas = betas.clamp(max=0.999).float()
         self.alphas = 1.0 - self.betas
         self.alpha_bars = torch.cumprod(self.alphas, dim=0)
 

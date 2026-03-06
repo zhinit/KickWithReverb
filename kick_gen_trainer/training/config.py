@@ -11,7 +11,7 @@ class AutoencoderConfig:
     val_split: float = 0.1
 
     # Model
-    latent_dim: int = 4
+    latent_dim: int = 8
 
     # Training
     batch_size: int = 32
@@ -55,7 +55,7 @@ class DiffusionConfig:
 
     # VAE
     vae_checkpoint: Path = Path("checkpoints/vae_epoch_100.pt")
-    latent_dim: int = 4
+    latent_dim: int = 8
 
     # Noise schedule
     timesteps: int = 1000
