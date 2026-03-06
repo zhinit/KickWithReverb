@@ -22,38 +22,38 @@ These constants are shared across all components:
 | hop_length | 512 |
 | n_mels | 128 |
 | Mel shape | (1, 128, 173) |
-| Latent shape | (4, 8, 11) -- 352 floats, ~63x compression |
+| Latent shape | (8, 8, 11) -- 704 floats, ~31x compression |
 
 ## Data Pipeline
 
-### Step 1: Aggregate samples (`scripts/aggregate_data.py`)
+### Step 1: Aggregate samples (`data_preprocessing/aggregate_raw_data.py`)
 
 Collects kick drum samples from a source directory of nested folders into a single flat `data/raw/` folder. Filters files by:
-- Filename contains "kick"
+- Filename contains "kick" (case-insensitive, works on any OS)
 - Not a loop or BPM-tagged file
 - File size between 5KB and 1MB
 
-Each file is renamed with a hash prefix to avoid collisions (e.g. `a3f2e1_KICK3.WAV`). A `data/metadata.csv` is generated with columns: `filename`, `original_path`, `keywords`.
+Each file is renamed with a 6-character hex counter prefix to avoid collisions (e.g. `0000a3-KICK3.WAV`). A `data/metadata.csv` is generated with columns: `filename`, `original_path`, `keywords`.
 
-Keywords are extracted from filenames by splitting on separators (`-`, `_`, spaces, dots), lowercasing, and removing pure numbers and tokens shorter than 2 characters.
+Keywords are extracted from filenames by splitting on separators (`-`, `_`, spaces, dots) and lowercasing. All tokens including numbers are kept (e.g. `808`, `909` are valid keywords).
 
 **Result:** ~13,600 kick samples in `data/raw/`, with `data/metadata.csv`.
 
-### Step 2: Preprocess audio (`scripts/preprocess.py`)
+### Step 2: Preprocess audio (`data_preprocessing/convert_raw_to_mel.py`)
 
 Converts each raw audio file to a log-mel spectrogram tensor:
 
-1. Load audio via `soundfile`
-2. Convert to mono
+1. Load audio via `torchaudio.load`
+2. Take left channel (avoids phase issues from channel averaging)
 3. Resample to 44,100 Hz
 4. Pad or trim to exactly 2 seconds
-5. Normalize to -1 dB peak
+5. Normalize to full volume (peak = 1.0)
 6. Apply 0.2s linear fade-out
 7. Compute mel spectrogram via `torchaudio.transforms.MelSpectrogram`
 8. Convert to log scale: `log(mel.clamp(min=1e-5))`
 9. Save as `.pt` tensor in `data/processed/`
 
-**Result:** 13,613 tensors of shape `(1, 128, 173)` in `data/processed/`.
+**Result:** ~13,600 tensors of shape `(1, 128, 173)` in `data/processed/`.
 
 ## VAE Training
 
@@ -63,7 +63,7 @@ Converts each raw audio file to a log-mel spectrogram tensor:
 ```
 (1, 128, 173) -> (32, 64, 87) -> (64, 32, 44) -> (128, 16, 22) -> (256, 8, 11)
 ```
-Then 1x1 convolutions produce `mu` and `logvar`, each of shape `(4, 8, 11)`.
+Then 1x1 convolutions produce `mu` and `logvar`, each of shape `(8, 8, 11)`.
 
 **Decoder:** Mirror of encoder using ConvTranspose2d, outputs are cropped to `(1, 128, 173)`.
 
@@ -83,6 +83,7 @@ KL weight anneals linearly from 0.0001 to 0.001 over the first 20 epochs to prev
 |-----------|-------|
 | Batch size | 32 |
 | Learning rate | 1e-4 (AdamW) |
+| LR scheduler | CosineAnnealingLR over 100 epochs |
 | Epochs | 100 |
 | Mixed precision | Yes (fp16 on CUDA) |
 | Checkpoint every | 10 epochs |
@@ -91,13 +92,13 @@ KL weight anneals linearly from 0.0001 to 0.001 over the first 20 epochs to prev
 
 ### Pre-encoding latents
 
-Before diffusion training, all mel spectrograms are encoded to latents using the frozen VAE encoder (`mu` only, no sampling). Saved as `.pt` files in `data/latents/`, shape `(4, 8, 11)` each.
+Before diffusion training, all mel spectrograms are encoded to latents using the frozen VAE encoder (`mu` only, no sampling). Saved as `.pt` files in `data/latents/`, shape `(8, 8, 11)` each.
 
 ## Diffusion Model Training
 
 ### Architecture
 
-**LatentUNet** operates on `(4, 8, 11)` latent tensors:
+**LatentUNet** operates on `(8, 8, 11)` latent tensors:
 
 - **Timestep embedding:** Sinusoidal positional encoding (dim=64) -> MLP -> (256,)
 - **Text embedding:** Keyword embeddings averaged -> linear projection -> (256,)
@@ -105,7 +106,7 @@ Before diffusion training, all mel spectrograms are encoded to latents using the
 
 **Down path:**
 ```
-Conv2d(4, 64) -> CondResBlock(64)              -> (64, 8, 11)
+Conv2d(8, 64) -> CondResBlock(64)              -> (64, 8, 11)
 Conv2d(64, 128, stride=2) -> CondResBlock(128) -> (128, 4, 6)
 Conv2d(128, 256, stride=2)                     -> (256, 2, 3)
 ```
@@ -118,7 +119,7 @@ ConvTranspose2d + skip + CondResBlock -> (128, 4, 6)
 ConvTranspose2d + skip + CondResBlock -> (64, 8, 11)
 ```
 
-**Output:** GroupNorm + SiLU + Conv2d -> `(4, 8, 11)` predicted noise.
+**Output:** GroupNorm + SiLU + Conv2d -> `(8, 8, 11)` predicted noise.
 
 ### Text Encoder
 
@@ -131,7 +132,7 @@ Vocabulary is built from `metadata.csv` keywords with `min_count=5`.
 
 ### Noise Schedule
 
-Linear beta schedule from 0.0001 to 0.02 over 1000 timesteps.
+Cosine beta schedule over 1000 timesteps (Nichol & Dhariwal, 2021). Distributes noise more evenly than a linear schedule, which improves quality on small latent spaces.
 
 ### Classifier-Free Guidance (CFG)
 
@@ -186,15 +187,15 @@ loss_d = LS-GAN discriminator loss (real vs fake)
 
 | Parameter | Value |
 |-----------|-------|
-| Batch size | 4-8 |
+| Batch size | 4 |
 | Learning rate | 2e-4 (AdamW, betas=0.8/0.99) |
 | Epochs | 50 |
-| Segment size | 8,192 samples (random crop per batch item) |
+| Segment size | Full 2-second samples (88,200 samples) |
 | Mixed precision | No (fp32 for GAN stability) |
 | LR scheduler | ExponentialLR(gamma=0.999) |
 | Checkpoint every | 10 epochs |
 
-The vocoder dataset lazy-loads raw audio paired with pre-computed mel spectrograms. Only file paths are stored in memory.
+The vocoder trains on full 2-second samples rather than random crops. This ensures the model sees the same length audio at training time as it generates at inference, preventing periodic tiling artifacts. The vocoder dataset lazy-loads raw audio paired with pre-computed mel spectrograms. Only file paths are stored in memory.
 
 **Checkpoint:** `checkpoints/vocoder_epoch_50.pt` (contains generator, discriminator, optimizer, and scheduler states).
 
