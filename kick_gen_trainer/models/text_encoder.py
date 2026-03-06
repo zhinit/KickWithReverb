@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 
-def build_vocab(metadata_csv: Path, min_count: int = 5) -> list[str]:
+def build_vocab(metadata_csv: Path, min_count: int = 30) -> list[str]:
     """Build vocabulary from metadata CSV keywords, filtering rare tokens."""
     counts: dict[str, int] = {}
     with open(metadata_csv) as f:

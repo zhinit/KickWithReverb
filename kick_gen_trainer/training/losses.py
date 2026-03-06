@@ -23,6 +23,7 @@ def kl_divergence(
     mu: torch.Tensor, logvar: torch.Tensor
 ) -> torch.Tensor:
     """KL divergence from N(mu, sigma) to N(0, 1)."""
+    logvar = logvar.clamp(-10, 10)  # prevent fp16 overflow in exp()
     return -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
 

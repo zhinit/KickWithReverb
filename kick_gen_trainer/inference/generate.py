@@ -100,6 +100,7 @@ class DDIMSampler:
 
             # Predicted x_0
             x0_pred = (x - (1 - alpha_bar_t).sqrt() * noise_pred) / alpha_bar_t.sqrt()
+            x0_pred = x0_pred.clamp(-15, 15)  # prevent explosion from dividing by small alpha_bar
             # Direction pointing to x_t
             dir_xt = (1 - alpha_bar_prev).sqrt() * noise_pred
             # DDIM step (eta=0, deterministic)
@@ -284,7 +285,7 @@ def generate(
 
     # --- Vocoder ---
     # Squeeze for processing: (1, 128, 173)
-    log_mel_2d = log_mel.squeeze(0)  # Keep in log scale
+    log_mel_2d = log_mel.squeeze(0).clamp(-10, 10)  # clamp to prevent exp overflow
 
     if vocoder_checkpoint is not None and vocoder_checkpoint.exists():
         print("Synthesizing waveform with HiFi-GAN vocoder...")

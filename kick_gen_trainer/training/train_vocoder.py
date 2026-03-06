@@ -48,17 +48,24 @@ class VocoderDataset(Dataset):
         self.raw_dir = raw_dir
         self.processed_dir = processed_dir
 
-        # Build list of (raw_path, mel_path) pairs
+        # Build list of (raw_path, mel_path) pairs, skipping unreadable audio
         self.pairs: list[tuple[Path, Path]] = []
         mel_stems = {p.stem for p in processed_dir.glob("*.pt")}
+        skipped = 0
         for raw_path in sorted(raw_dir.iterdir()):
             if raw_path.suffix.lower() not in (".wav", ".aif", ".aiff", ".mp3", ".flac"):
                 continue
             stem = raw_path.stem
-            if stem in mel_stems:
-                self.pairs.append((raw_path, processed_dir / f"{stem}.pt"))
+            if stem not in mel_stems:
+                continue
+            try:
+                sf.info(raw_path)
+            except Exception:
+                skipped += 1
+                continue
+            self.pairs.append((raw_path, processed_dir / f"{stem}.pt"))
 
-        print(f"VocoderDataset: {len(self.pairs)} paired samples found")
+        print(f"VocoderDataset: {len(self.pairs)} paired samples found ({skipped} skipped)")
 
     def __len__(self) -> int:
         return len(self.pairs)
@@ -181,6 +188,10 @@ def train(args: argparse.Namespace) -> None:
     sched_g = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=0.999)
     sched_d = torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=0.999)
 
+    use_amp = args.use_amp and device.type == "cuda"
+    scaler_g = torch.amp.GradScaler(enabled=use_amp)
+    scaler_d = torch.amp.GradScaler(enabled=use_amp)
+
     # Checkpointing - resume if exists
     checkpoint_dir = Path(args.checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -226,36 +237,38 @@ def train(args: argparse.Namespace) -> None:
             audio_t = audio[..., :min_len]
             audio_f = audio_fake[..., :min_len]
 
-            mpd_real, _ = mpd(audio_t)
-            mpd_fake, _ = mpd(audio_f)
-            msd_real, _ = msd(audio_t)
-            msd_fake, _ = msd(audio_f)
+            with torch.amp.autocast(device_type=device.type, enabled=use_amp):
+                mpd_real, _ = mpd(audio_t)
+                mpd_fake, _ = mpd(audio_f)
+                msd_real, _ = msd(audio_t)
+                msd_fake, _ = msd(audio_f)
+                loss_d = discriminator_loss(mpd_real, mpd_fake) + discriminator_loss(msd_real, msd_fake)
 
-            loss_d = discriminator_loss(mpd_real, mpd_fake) + discriminator_loss(msd_real, msd_fake)
-
-            loss_d.backward()
-            optim_d.step()
+            scaler_d.scale(loss_d).backward()
+            scaler_d.step(optim_d)
+            scaler_d.update()
 
             # ---- Generator step ----
             optim_g.zero_grad()
-            audio_fake = generator(mel)
-            min_len = min(audio.shape[-1], audio_fake.shape[-1])
-            audio_t = audio[..., :min_len]
-            audio_f = audio_fake[..., :min_len]
+            with torch.amp.autocast(device_type=device.type, enabled=use_amp):
+                audio_fake = generator(mel)
+                min_len = min(audio.shape[-1], audio_fake.shape[-1])
+                audio_t = audio[..., :min_len]
+                audio_f = audio_fake[..., :min_len]
 
-            mpd_real, mpd_real_fmap = mpd(audio_t)
-            mpd_fake, mpd_fake_fmap = mpd(audio_f)
-            msd_real, msd_real_fmap = msd(audio_t)
-            msd_fake, msd_fake_fmap = msd(audio_f)
+                mpd_real, mpd_real_fmap = mpd(audio_t)
+                mpd_fake, mpd_fake_fmap = mpd(audio_f)
+                msd_real, msd_real_fmap = msd(audio_t)
+                msd_fake, msd_fake_fmap = msd(audio_f)
 
-            loss_gen = generator_adversarial_loss(mpd_fake) + generator_adversarial_loss(msd_fake)
-            loss_fm = feature_matching_loss(mpd_real_fmap, mpd_fake_fmap) + feature_matching_loss(msd_real_fmap, msd_fake_fmap)
-            loss_mel = mel_spectrogram_loss(audio_t, audio_f)
+                loss_gen = generator_adversarial_loss(mpd_fake) + generator_adversarial_loss(msd_fake)
+                loss_fm = feature_matching_loss(mpd_real_fmap, mpd_fake_fmap) + feature_matching_loss(msd_real_fmap, msd_fake_fmap)
+                loss_mel = mel_spectrogram_loss(audio_t, audio_f)
+                loss_g = loss_gen + 2.0 * loss_fm + 45.0 * loss_mel
 
-            loss_g = loss_gen + 2.0 * loss_fm + 45.0 * loss_mel
-
-            loss_g.backward()
-            optim_g.step()
+            scaler_g.scale(loss_g).backward()
+            scaler_g.step(optim_g)
+            scaler_g.update()
 
             global_step += 1
             pbar.set_postfix(loss_g=f"{loss_g.item():.3f}", loss_d=f"{loss_d.item():.3f}")

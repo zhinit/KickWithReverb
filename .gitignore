@@ -40,6 +40,10 @@ __pycache__/
 .claudeignore
 /kick_gen_trainer/weights
 /kick_gen_trainer/data
+/kick_gen_trainer/checkpoints
+/kick_gen_trainer/runs
+/kick_gen_trainer/generations
+/kick_gen_trainer/debug_inference.py
 
 .venv/
 

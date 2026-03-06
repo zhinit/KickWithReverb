@@ -26,7 +26,7 @@ class AutoencoderConfig:
     kl_anneal_epochs: int = 20
 
     # Mixed precision
-    use_amp: bool = True
+    use_amp: bool = False
 
     # Checkpointing
     checkpoint_dir: Path = Path("checkpoints")
@@ -63,7 +63,7 @@ class DiffusionConfig:
     beta_end: float = 0.02
 
     # Model
-    base_channels: int = 64
+    base_channels: int = 96
     cond_dim: int = 256
     text_embed_dim: int = 64
 

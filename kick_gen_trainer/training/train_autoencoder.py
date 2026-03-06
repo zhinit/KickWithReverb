@@ -104,12 +104,14 @@ def train() -> None:
 
             optimizer.zero_grad()
             scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             scaler.step(optimizer)
             scaler.update()
 
-            # Accumulate metrics
+            # Accumulate metrics (cast to float32 to avoid fp16 overflow)
             for k, v in metrics.items():
-                epoch_metrics[k] = epoch_metrics.get(k, 0.0) + v
+                epoch_metrics[k] = epoch_metrics.get(k, 0.0) + float(v)
             epoch_count += 1
             global_step += 1
 
