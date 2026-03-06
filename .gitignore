@@ -39,7 +39,9 @@ __pycache__/
 .env
 .claudeignore
 /kick_gen_trainer/weights
-/backend/.venv
+/kick_gen_trainer/data
+
+.venv/
 
 zzz_interview_prep/emails.md
 zzz_interview_prep/interview-prep.md
