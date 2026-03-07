@@ -24,7 +24,9 @@ class MelDataset(Dataset):
             f for f in data_dir.glob("*.pt") if not f.name.startswith("._")
         )
         if not self.files:
-            raise FileNotFoundError(f"No .pt files found in {data_dir}")
+            raise FileNotFoundError(
+                f"No .pt files found in {data_dir}"
+            )
 
     def __len__(self) -> int:
         return len(self.files)
@@ -33,14 +35,15 @@ class MelDataset(Dataset):
         return torch.load(self.files[idx], weights_only=False)
 
 
-def train() -> None:
+def train(cfg: AutoencoderConfig | None = None) -> None:
     """Run VAE training."""
-    cfg = AutoencoderConfig()
+    if cfg is None:
+        cfg = AutoencoderConfig()
 
     device = torch.device(
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available() else "cpu"
+        "cuda" if torch.cuda.is_available()
+        else "mps" if torch.backends.mps.is_available()
+        else "cpu"
     )
     print(f"Using device: {device}")
 
@@ -49,8 +52,7 @@ def train() -> None:
     val_size = int(len(dataset) * cfg.val_split)
     train_size = len(dataset) - val_size
     train_set, val_set = random_split(
-        dataset,
-        [train_size, val_size],
+        dataset, [train_size, val_size],
         generator=torch.Generator().manual_seed(42),
     )
 
@@ -74,7 +76,6 @@ def train() -> None:
     # Model
     model = KickVAE(latent_dim=cfg.latent_dim).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.learning_rate)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.epochs)
     scaler = torch.amp.GradScaler(enabled=cfg.use_amp and device.type == "cuda")
 
     # Logging
@@ -100,18 +101,18 @@ def train() -> None:
                 enabled=cfg.use_amp and device.type == "cuda",
             ):
                 recon, mu, logvar = model(batch)
-                loss, metrics = vae_loss(recon, batch, mu, logvar, kl_weight)
+                loss, metrics = vae_loss(
+                    recon, batch, mu, logvar, kl_weight
+                )
 
             optimizer.zero_grad()
             scaler.scale(loss).backward()
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             scaler.step(optimizer)
             scaler.update()
 
-            # Accumulate metrics (cast to float32 to avoid fp16 overflow)
+            # Accumulate metrics
             for k, v in metrics.items():
-                epoch_metrics[k] = epoch_metrics.get(k, 0.0) + float(v)
+                epoch_metrics[k] = epoch_metrics.get(k, 0.0) + v
             epoch_count += 1
             global_step += 1
 
@@ -131,7 +132,9 @@ def train() -> None:
             for batch in val_loader:
                 batch = batch.to(device)
                 recon, mu, logvar = model(batch)
-                _, metrics = vae_loss(recon, batch, mu, logvar, kl_weight)
+                _, metrics = vae_loss(
+                    recon, batch, mu, logvar, kl_weight
+                )
                 for k, v in metrics.items():
                     val_metrics[k] = val_metrics.get(k, 0.0) + v
                 val_count += 1
@@ -147,20 +150,15 @@ def train() -> None:
             f"kl_w={kl_weight:.6f}"
         )
 
-        scheduler.step()
-
         # Checkpoint
         if (epoch + 1) % cfg.checkpoint_every == 0:
             path = cfg.checkpoint_dir / f"vae_epoch_{epoch+1}.pt"
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "config": cfg,
-                },
-                path,
-            )
+            torch.save({
+                "epoch": epoch + 1,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "config": cfg,
+            }, path)
             print(f"Saved checkpoint: {path}")
 
     writer.close()

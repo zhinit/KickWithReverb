@@ -7,11 +7,9 @@ requires-python = ">=3.11.8"
 dependencies = [
     "numpy>=2.4.2",
     "pandas>=3.0.0",
-    "scipy>=1.17.1",
     "soundfile>=0.13.1",
     "tensorboard>=2.20.0",
     "torch>=2.10.0",
     "torchaudio>=2.10.0",
-    "torchcodec>=0.10.0",
     "tqdm>=4.67.2",
 ]

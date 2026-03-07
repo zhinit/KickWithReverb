@@ -11,7 +11,7 @@ class AutoencoderConfig:
     val_split: float = 0.1
 
     # Model
-    latent_dim: int = 8
+    latent_dim: int = 4
 
     # Training
     batch_size: int = 32
@@ -26,7 +26,7 @@ class AutoencoderConfig:
     kl_anneal_epochs: int = 20
 
     # Mixed precision
-    use_amp: bool = False
+    use_amp: bool = True
 
     # Checkpointing
     checkpoint_dir: Path = Path("checkpoints")
@@ -55,7 +55,7 @@ class DiffusionConfig:
 
     # VAE
     vae_checkpoint: Path = Path("checkpoints/vae_epoch_100.pt")
-    latent_dim: int = 8
+    latent_dim: int = 4
 
     # Noise schedule
     timesteps: int = 1000
@@ -63,7 +63,7 @@ class DiffusionConfig:
     beta_end: float = 0.02
 
     # Model
-    base_channels: int = 96
+    base_channels: int = 64
     cond_dim: int = 256
     text_embed_dim: int = 64
 

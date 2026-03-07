@@ -202,9 +202,6 @@ def train(cfg: DiffusionConfig | None = None) -> None:
         list(model.parameters()) + list(text_enc.parameters()),
         lr=cfg.learning_rate,
     )
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=cfg.iterations, eta_min=1e-6
-    )
     scaler = torch.amp.GradScaler(enabled=cfg.use_amp and device.type == "cuda")
 
     # Logging
@@ -255,7 +252,6 @@ def train(cfg: DiffusionConfig | None = None) -> None:
                 scaler.step(optimizer)
                 scaler.update()
                 optimizer.zero_grad()
-                lr_scheduler.step()
                 ema.update(model)
 
             # Logging

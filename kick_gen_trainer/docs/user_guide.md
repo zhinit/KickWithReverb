@@ -29,7 +29,7 @@ inference/
 ### Weights (3 files)
 
 ```
-weights/
+weightss/
 ├── vae_epoch_100.pt          # VAE decoder weights
 ├── diffusion_step_100000.pt  # Diffusion U-Net + text encoder + vocab
 └── vocoder_epoch_50.pt       # HiFi-GAN generator weights
@@ -156,7 +156,7 @@ with torch.no_grad():
 
 ## CLI Usage
 
-Run from the `kick_gen_trainer/` directory:
+Run from the `pytorch/` directory:
 
 ```bash
 # Basic generation (unconditional)
