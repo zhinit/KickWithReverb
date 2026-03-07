@@ -354,17 +354,17 @@ def main() -> None:
     parser.add_argument("--output", type=str, default=None, help="Output WAV path (default: generations/kick_XXXX.wav)")
     parser.add_argument(
         "--diffusion-ckpt", type=str,
-        default="checkpoints/diffusion_step_100000.pt",
+        default="weights/diffusion_step_100000.pt",
         help="Diffusion model checkpoint",
     )
     parser.add_argument(
         "--vae-ckpt", type=str,
-        default="checkpoints/vae_epoch_100.pt",
+        default="weights/vae_epoch_100.pt",
         help="VAE checkpoint",
     )
     parser.add_argument(
         "--vocoder-ckpt", type=str,
-        default="checkpoints/vocoder.pt",
+        default="weights/vocoder_epoch_50.pt",
         help="HiFi-GAN vocoder checkpoint",
     )
     parser.add_argument(

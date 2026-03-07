@@ -29,7 +29,7 @@ inference/
 ### Weights (3 files)
 
 ```
-weightss/
+weights/
 ├── vae_epoch_100.pt          # VAE decoder weights
 ├── diffusion_step_100000.pt  # Diffusion U-Net + text encoder + vocab
 └── vocoder_epoch_50.pt       # HiFi-GAN generator weights
@@ -57,9 +57,9 @@ from pathlib import Path
 from inference.generate import generate
 
 output_path = generate(
-    diffusion_checkpoint=Path("checkpoints/diffusion_step_100000.pt"),
-    vae_checkpoint=Path("checkpoints/vae_epoch_100.pt"),
-    vocoder_checkpoint=Path("checkpoints/vocoder_epoch_50.pt"),
+    diffusion_checkpoint=Path("weights/diffusion_step_100000.pt"),
+    vae_checkpoint=Path("weights/vae_epoch_100.pt"),
+    vocoder_checkpoint=Path("weights/vocoder_epoch_50.pt"),
     prompt="808",
     cfg_scale=3.0,
     ddim_steps=50,
@@ -108,7 +108,7 @@ from inference.generate import DDIMSampler, parse_prompt
 device = torch.device("cpu")
 
 # Load diffusion model
-diff_ckpt = torch.load("checkpoints/diffusion_step_100000.pt", weights_only=False, map_location=device)
+diff_ckpt = torch.load("weights/diffusion_step_100000.pt", weights_only=False, map_location=device)
 vocab = diff_ckpt["vocab"]
 cfg = diff_ckpt["config"]
 
@@ -132,7 +132,7 @@ sampler = DDIMSampler(scheduler, num_steps=50)
 latent = sampler.sample(model, shape=(1, cfg.latent_dim, 8, 11), cond=cond, uncond=uncond, cfg_scale=3.0, device=device)
 
 # Decode with VAE
-vae_ckpt = torch.load("checkpoints/vae_epoch_100.pt", weights_only=False, map_location=device)
+vae_ckpt = torch.load("weights/vae_epoch_100.pt", weights_only=False, map_location=device)
 vae = KickVAE(latent_dim=cfg.latent_dim).to(device)
 vae.load_state_dict(vae_ckpt["model_state_dict"])
 vae.eval()
@@ -142,7 +142,7 @@ with torch.no_grad():
 
 # Vocoder
 vocoder = HiFiGANGenerator(in_channels=128).to(device)
-voc_ckpt = torch.load("checkpoints/vocoder_epoch_50.pt", weights_only=False, map_location=device)
+voc_ckpt = torch.load("weights/vocoder_epoch_50.pt", weights_only=False, map_location=device)
 vocoder.load_state_dict(voc_ckpt["generator"])
 vocoder.eval()
 vocoder.remove_weight_norm()
@@ -156,18 +156,18 @@ with torch.no_grad():
 
 ## CLI Usage
 
-Run from the `pytorch/` directory:
+Run from the `kick_gen_trainer/` directory:
 
 ```bash
 # Basic generation (unconditional)
-uv run inference/generate.py --vocoder-ckpt checkpoints/vocoder_epoch_50.pt
+uv run inference/generate.py --vocoder-ckpt weights/vocoder_epoch_50.pt
 
 # With text prompt
-uv run inference/generate.py --vocoder-ckpt checkpoints/vocoder_epoch_50.pt --prompt "808"
+uv run inference/generate.py --vocoder-ckpt weights/vocoder_epoch_50.pt --prompt "808"
 
 # With custom settings
 uv run inference/generate.py \
-    --vocoder-ckpt checkpoints/vocoder_epoch_50.pt \
+    --vocoder-ckpt weights/vocoder_epoch_50.pt \
     --prompt "punchy analog" \
     --cfg-scale 5.0 \
     --steps 50 \
@@ -175,7 +175,7 @@ uv run inference/generate.py \
 
 # Specify output path
 uv run inference/generate.py \
-    --vocoder-ckpt checkpoints/vocoder_epoch_50.pt \
+    --vocoder-ckpt weights/vocoder_epoch_50.pt \
     --output my_kick.wav
 
 # Griffin-Lim fallback (no vocoder needed, lower quality)
@@ -191,9 +191,9 @@ uv run inference/generate.py --no-vocoder
 | `--steps`          | `50`                                   | DDIM steps                                                      |
 | `--seed`           | None                                   | Random seed                                                     |
 | `--output`         | auto                                   | Output path (default: `generations/kick_<keywords>_<hash>.wav`) |
-| `--diffusion-ckpt` | `checkpoints/diffusion_step_100000.pt` | Diffusion checkpoint                                            |
-| `--vae-ckpt`       | `checkpoints/vae_epoch_100.pt`         | VAE checkpoint                                                  |
-| `--vocoder-ckpt`   | `checkpoints/vocoder.pt`               | Vocoder checkpoint                                              |
+| `--diffusion-ckpt` | `weights/diffusion_step_100000.pt` | Diffusion checkpoint                                            |
+| `--vae-ckpt`       | `weights/vae_epoch_100.pt`         | VAE checkpoint                                                  |
+| `--vocoder-ckpt`   | `weights/vocoder_epoch_50.pt`      | Vocoder checkpoint                                              |
 | `--no-vocoder`     | false                                  | Use Griffin-Lim instead of HiFi-GAN                             |
 
 ## Text Conditioning
@@ -203,7 +203,7 @@ The model supports keyword-based text prompts. Prompts are matched against a voc
 To see what keywords are available, they are stored in the diffusion checkpoint:
 
 ```python
-ckpt = torch.load("checkpoints/diffusion_step_100000.pt", weights_only=False)
+ckpt = torch.load("weights/diffusion_step_100000.pt", weights_only=False)
 print(ckpt["vocab"])  # list of valid keyword strings
 ```
 

@@ -54,7 +54,7 @@ class DiffusionConfig:
     val_split: float = 0.1
 
     # VAE
-    vae_checkpoint: Path = Path("checkpoints/vae_epoch_100.pt")
+    vae_checkpoint: Path = Path("weights/vae_epoch_100.pt")
     latent_dim: int = 4
 
     # Noise schedule

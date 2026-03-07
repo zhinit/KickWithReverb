@@ -87,7 +87,7 @@ KL weight anneals linearly from 0.0001 to 0.001 over the first 20 epochs to prev
 | Mixed precision | Yes (fp16 on CUDA) |
 | Checkpoint every | 10 epochs |
 
-**Checkpoint:** `checkpoints/vae_epoch_100.pt` (contains model state, optimizer state, config).
+**Checkpoint:** `weights/vae_epoch_100.pt` (contains model state, optimizer state, config).
 
 ### Pre-encoding latents
 
@@ -150,7 +150,7 @@ During training, 15% of samples have their keywords dropped (replaced with empty
 | CFG dropout | 0.15 |
 | Checkpoint every | 5,000 iterations |
 
-**Checkpoint:** `checkpoints/diffusion_step_100000.pt` (contains model state, EMA state, text encoder state, vocab list, config).
+**Checkpoint:** `weights/diffusion_step_100000.pt` (contains model state, EMA state, text encoder state, vocab list, config).
 
 ## Vocoder Training
 
@@ -196,7 +196,7 @@ loss_d = LS-GAN discriminator loss (real vs fake)
 
 The vocoder dataset lazy-loads raw audio paired with pre-computed mel spectrograms. Only file paths are stored in memory.
 
-**Checkpoint:** `checkpoints/vocoder_epoch_50.pt` (contains generator, discriminator, optimizer, and scheduler states).
+**Checkpoint:** `weights/vocoder_epoch_50.pt` (contains generator, discriminator, optimizer, and scheduler states).
 
 ## Training Hardware
 
