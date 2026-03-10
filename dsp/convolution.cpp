@@ -60,54 +60,73 @@ ConvolutionEngine::loadIR(const float* irData, size_t irLength)
 void
 ConvolutionEngine::process(const float* input, float* output, int numSamples)
 {
+  // pass audio through unchanged until an IR is loaded
   if (!irLoaded_) {
     std::copy(input, input + numSamples, output);
     return;
   }
 
   int numSamplesProcessed = 0;
+
+  // how far apart IR segments are spaced in the circular input buffer
   size_t indexStep = numInputSegments_ / numSegments_;
 
   while (numSamplesProcessed < numSamples) {
+    // true if we're starting a fresh internal block
     bool inputBufferWasEmpty = (inputDataPos_ == 0);
+
+    // how many samples to handle this iteration. capped at what fits in the
+    // current block
     size_t samplesToProcess =
       std::min(static_cast<size_t>(numSamples - numSamplesProcessed),
                blockSize_ - inputDataPos_);
 
+    // accumulate incoming samples into the staging buffer
     for (size_t i = 0; i < samplesToProcess; ++i) {
       inputBuffer_[inputDataPos_ + i] = input[numSamplesProcessed + i];
     }
 
+    // pointer to the current slot in the circular input segment buffer
     float* inputSegmentData = inputSegmentsFFT_[currentSegment_].data();
 
+    // only run FFT and tail convolution once per block (at the block boundary)
     if (inputBufferWasEmpty) {
+      // FFT the new input block and store it in the circular buffer
       std::copy(inputBuffer_.begin(), inputBuffer_.end(), inputSegmentData);
-      std::fill(
-        inputSegmentData + fftSize_, inputSegmentData + fftSize_ * 2, 0.0f);
+      std::fill(inputSegmentData + fftSize_,
+                inputSegmentData + fftSize_ * 2,
+                0.0f); // zero-pad second half
       fft_.performRealOnlyForwardTransform(inputSegmentData);
       prepareForConvolution(inputSegmentData);
 
+      // convolve past input blocks against IR segments 1..N (the tail)
+      // each IR segment is paired with the input block from that many blocks
+      // ago
       std::fill(tempBuffer_.begin(), tempBuffer_.end(), 0.0f);
-
       size_t index = currentSegment_;
       for (size_t seg = 1; seg < numSegments_; ++seg) {
         index += indexStep;
         if (index >= numInputSegments_)
-          index -= numInputSegments_;
+          index -= numInputSegments_; // wrap around the circular buffer
 
         convolutionProcessingAndAccumulate(inputSegmentsFFT_[index].data(),
                                            irSegmentsFFT_[seg].data(),
                                            tempBuffer_.data());
       }
+      // tempBuffer_ now holds the summed tail contribution (IR segments 1..N)
     }
 
+    // start output with the tail result, then add IR segment 0 (most recent
+    // input vs IR start)
     std::copy(tempBuffer_.begin(), tempBuffer_.end(), outputBuffer_.begin());
     convolutionProcessingAndAccumulate(
       inputSegmentData, irSegmentsFFT_[0].data(), outputBuffer_.data());
 
+    // restore FFT symmetry then inverse FFT back to time domain
     updateSymmetricFrequencyDomainData(outputBuffer_.data());
     fft_.performRealOnlyInverseTransform(outputBuffer_.data());
 
+    // write output samples, adding overlap from the previous block's tail
     for (size_t i = 0; i < samplesToProcess; ++i) {
       output[numSamplesProcessed + i] =
         outputBuffer_[inputDataPos_ + i] + overlapBuffer_[inputDataPos_ + i];
@@ -115,14 +134,17 @@ ConvolutionEngine::process(const float* input, float* output, int numSamples)
 
     inputDataPos_ += samplesToProcess;
 
+    // end of internal block — save the tail and advance the circular buffer
     if (inputDataPos_ == blockSize_) {
       std::fill(inputBuffer_.begin(), inputBuffer_.end(), 0.0f);
       inputDataPos_ = 0;
 
+      // finish adding overlap to the tail portion of outputBuffer_
       for (size_t i = blockSize_; i < fftSize_; ++i) {
         outputBuffer_[i] += overlapBuffer_[i];
       }
 
+      // save the tail of this block to add into the next block's output
       std::copy(outputBuffer_.begin() + blockSize_,
                 outputBuffer_.begin() + fftSize_,
                 overlapBuffer_.begin());
@@ -130,6 +152,8 @@ ConvolutionEngine::process(const float* input, float* output, int numSamples)
                 overlapBuffer_.end(),
                 0.0f);
 
+      // step backward in the circular buffer (newest slot is always
+      // currentSegment_)
       currentSegment_ =
         (currentSegment_ > 0) ? (currentSegment_ - 1) : (numInputSegments_ - 1);
     }
