@@ -2,27 +2,27 @@
 
 // --- ConvolutionEngine ---
 
-void ConvolutionEngine::prepare(float sampleRate)
-{
+void ConvolutionEngine::prepare(float sampleRate) {
   sampleRate_ = sampleRate;
   reset();
 }
 
-void ConvolutionEngine::loadIR(const float* irData, size_t irLength)
-{
+void ConvolutionEngine::loadIR(const float *irData, size_t irLength) {
+  // validate input
   if (irLength == 0 || irData == nullptr)
     return;
 
+  // allocate arrays and buffers initialized to 0
   numSegments_ = (irLength + segmentSize_ - 1) / segmentSize_;
   numInputSegments_ = numSegments_ * 3;
 
   irSegmentsFFT_.resize(numSegments_);
-  for (auto& segment : irSegmentsFFT_) {
+  for (auto &segment : irSegmentsFFT_) {
     segment.resize(fftSize_ * 2, 0.0f);
   }
 
   inputSegmentsFFT_.resize(numInputSegments_);
-  for (auto& segment : inputSegmentsFFT_) {
+  for (auto &segment : inputSegmentsFFT_) {
     segment.resize(fftSize_ * 2, 0.0f);
   }
 
@@ -35,13 +35,17 @@ void ConvolutionEngine::loadIR(const float* irData, size_t irLength)
     std::fill(irSegmentsFFT_[seg].begin(), irSegmentsFFT_[seg].end(), 0.0f);
 
     size_t srcOffset = seg * segmentSize_;
+    // handle partial segment
     size_t copyLen = std::min(segmentSize_, irLength - srcOffset);
 
+    // copy ir file raw samples into each segment
     for (size_t i = 0; i < copyLen; ++i) {
       irSegmentsFFT_[seg][i] = irData[srcOffset + i];
     }
 
+    // apply fft in place
     fft_.performRealOnlyForwardTransform(irSegmentsFFT_[seg].data());
+    // reorganize segments so real numbers come before complex numbers
     prepareForConvolution(irSegmentsFFT_[seg].data());
   }
 
@@ -49,8 +53,8 @@ void ConvolutionEngine::loadIR(const float* irData, size_t irLength)
   reset();
 }
 
-void ConvolutionEngine::process(const float* input, float* output, int numSamples)
-{
+void ConvolutionEngine::process(const float *input, float *output,
+                                int numSamples) {
   if (!irLoaded_) {
     std::copy(input, input + numSamples, output);
     return;
@@ -62,19 +66,19 @@ void ConvolutionEngine::process(const float* input, float* output, int numSample
   while (numSamplesProcessed < numSamples) {
     bool inputBufferWasEmpty = (inputDataPos_ == 0);
     size_t samplesToProcess =
-      std::min(static_cast<size_t>(numSamples - numSamplesProcessed),
-               blockSize_ - inputDataPos_);
+        std::min(static_cast<size_t>(numSamples - numSamplesProcessed),
+                 blockSize_ - inputDataPos_);
 
     for (size_t i = 0; i < samplesToProcess; ++i) {
       inputBuffer_[inputDataPos_ + i] = input[numSamplesProcessed + i];
     }
 
-    float* inputSegmentData = inputSegmentsFFT_[currentSegment_].data();
+    float *inputSegmentData = inputSegmentsFFT_[currentSegment_].data();
 
     if (inputBufferWasEmpty) {
       std::copy(inputBuffer_.begin(), inputBuffer_.end(), inputSegmentData);
-      std::fill(
-        inputSegmentData + fftSize_, inputSegmentData + fftSize_ * 2, 0.0f);
+      std::fill(inputSegmentData + fftSize_, inputSegmentData + fftSize_ * 2,
+                0.0f);
       fft_.performRealOnlyForwardTransform(inputSegmentData);
       prepareForConvolution(inputSegmentData);
 
@@ -94,14 +98,14 @@ void ConvolutionEngine::process(const float* input, float* output, int numSample
 
     std::copy(tempBuffer_.begin(), tempBuffer_.end(), outputBuffer_.begin());
     convolutionProcessingAndAccumulate(
-      inputSegmentData, irSegmentsFFT_[0].data(), outputBuffer_.data());
+        inputSegmentData, irSegmentsFFT_[0].data(), outputBuffer_.data());
 
     updateSymmetricFrequencyDomainData(outputBuffer_.data());
     fft_.performRealOnlyInverseTransform(outputBuffer_.data());
 
     for (size_t i = 0; i < samplesToProcess; ++i) {
       output[numSamplesProcessed + i] =
-        outputBuffer_[inputDataPos_ + i] + overlapBuffer_[inputDataPos_ + i];
+          outputBuffer_[inputDataPos_ + i] + overlapBuffer_[inputDataPos_ + i];
     }
 
     inputDataPos_ += samplesToProcess;
@@ -115,11 +119,9 @@ void ConvolutionEngine::process(const float* input, float* output, int numSample
       }
 
       std::copy(outputBuffer_.begin() + blockSize_,
-                outputBuffer_.begin() + fftSize_,
-                overlapBuffer_.begin());
+                outputBuffer_.begin() + fftSize_, overlapBuffer_.begin());
       std::fill(overlapBuffer_.begin() + (fftSize_ - blockSize_),
-                overlapBuffer_.end(),
-                0.0f);
+                overlapBuffer_.end(), 0.0f);
 
       currentSegment_ = (currentSegment_ > 0) ? (currentSegment_ - 1)
                                               : (numInputSegments_ - 1);
@@ -129,8 +131,7 @@ void ConvolutionEngine::process(const float* input, float* output, int numSample
   }
 }
 
-void ConvolutionEngine::reset()
-{
+void ConvolutionEngine::reset() {
   currentSegment_ = 0;
   inputDataPos_ = 0;
 
@@ -139,13 +140,14 @@ void ConvolutionEngine::reset()
   std::fill(overlapBuffer_.begin(), overlapBuffer_.end(), 0.0f);
   std::fill(tempBuffer_.begin(), tempBuffer_.end(), 0.0f);
 
-  for (auto& segment : inputSegmentsFFT_) {
+  for (auto &segment : inputSegmentsFFT_) {
     std::fill(segment.begin(), segment.end(), 0.0f);
   }
 }
 
-void ConvolutionEngine::prepareForConvolution(float* samples)
-{
+void ConvolutionEngine::prepareForConvolution(float *samples) {
+  // juce fft returns results alternating real, complex, real, complex, ...
+  // this function puts all reals together, then all complex together
   size_t halfSize = fftSize_ / 2;
 
   for (size_t i = 0; i < halfSize; ++i)
@@ -157,10 +159,9 @@ void ConvolutionEngine::prepareForConvolution(float* samples)
     samples[i + halfSize] = -samples[((fftSize_ - i) << 1) + 1];
 }
 
-void ConvolutionEngine::convolutionProcessingAndAccumulate(const float* input,
-                                                           const float* impulse,
-                                                           float* output)
-{
+void ConvolutionEngine::convolutionProcessingAndAccumulate(const float *input,
+                                                           const float *impulse,
+                                                           float *output) {
   size_t halfSize = fftSize_ / 2;
 
   for (size_t i = 0; i < halfSize; ++i) {
@@ -180,8 +181,7 @@ void ConvolutionEngine::convolutionProcessingAndAccumulate(const float* input,
   output[fftSize_] += input[fftSize_] * impulse[fftSize_];
 }
 
-void ConvolutionEngine::updateSymmetricFrequencyDomainData(float* samples)
-{
+void ConvolutionEngine::updateSymmetricFrequencyDomainData(float *samples) {
   size_t halfSize = fftSize_ / 2;
 
   for (size_t i = 1; i < halfSize; ++i) {
@@ -199,17 +199,15 @@ void ConvolutionEngine::updateSymmetricFrequencyDomainData(float* samples)
 
 // --- StereoConvolutionReverb ---
 
-void StereoConvolutionReverb::prepare(float sampleRate)
-{
+void StereoConvolutionReverb::prepare(float sampleRate) {
   leftEngine_.prepare(sampleRate);
   rightEngine_.prepare(sampleRate);
   dryBuffer_.resize(128 * 2);
 }
 
-void StereoConvolutionReverb::loadIR(const float* irData,
+void StereoConvolutionReverb::loadIR(const float *irData,
                                      size_t irLengthPerChannel,
-                                     int numChannels)
-{
+                                     int numChannels) {
   if (numChannels == 1) {
     leftEngine_.loadIR(irData, irLengthPerChannel);
     rightEngine_.loadIR(irData, irLengthPerChannel);
@@ -227,8 +225,8 @@ void StereoConvolutionReverb::loadIR(const float* irData,
   }
 }
 
-void StereoConvolutionReverb::process(float* left, float* right, int numSamples)
-{
+void StereoConvolutionReverb::process(float *left, float *right,
+                                      int numSamples) {
   if (dryBuffer_.size() < static_cast<size_t>(numSamples * 2))
     dryBuffer_.resize(numSamples * 2);
 
@@ -246,14 +244,12 @@ void StereoConvolutionReverb::process(float* left, float* right, int numSamples)
   }
 }
 
-void StereoConvolutionReverb::setMix(float wetLevel, float dryLevel)
-{
+void StereoConvolutionReverb::setMix(float wetLevel, float dryLevel) {
   wetLevel_ = wetLevel;
   dryLevel_ = dryLevel;
 }
 
-void StereoConvolutionReverb::reset()
-{
+void StereoConvolutionReverb::reset() {
   leftEngine_.reset();
   rightEngine_.reset();
 }
