@@ -1,5 +1,10 @@
 #include "convolution-mt.h"
 
+std::vector<float>
+multiplyFFTs(std::vector<float> fft1, std::vector<float> fft2)
+{
+}
+
 void
 EarlyConvolutionEngine::loadIR(const float* irData, const size_t irLength)
 {
@@ -32,7 +37,25 @@ EarlyConvolutionEngine::process(const float* input,
                                 float* output,
                                 const size_t numSamples)
 {
-  // pass
+  // pull in input segment
+  std::vector<float> drySegment;
+  drySegment.resize(fftSize_ * 2.0, 0.0f);
+  for (size_t sample = 0; sample < segmentSize_; sample++)
+    drySegment[sample] = input[sample];
+
+  // take fft on input segment
+  fft_.performRealOnlyForwardTransform(drySegment.data());
+
+  // reflect new info in history
+  inputHistoryFFT_[currSegment_] = drySegment;
+  currSegment_++;
+
+  // multiply 0 index segment dry FFT with 0 index segment ir FFT
+  std::vector<float> combinedFFT_ =
+    multiplySpectra(drySegment, irSegmentsFFT_[currSegment_]);
+
+  // take IFFT to get result
+  // put it in the output
 }
 
 void
@@ -57,7 +80,11 @@ LateConvolutionEngine::process(const float* input,
                                float* output,
                                const size_t numSamples)
 {
-  // pass
+  // take fft on input
+  // reflect new info in history
+  // multiply 0 index segment dry FFT with 0 index segment ir FFT
+  // take IFFT to get result
+  // put it in the output
 }
 
 void
