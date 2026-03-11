@@ -20,6 +20,7 @@ private:
   static constexpr int fftOrder_ = 9; // 2^9 = 512
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
+  static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
 
   juce::dsp::FFT fft_{ fftOrder_ };
 };
