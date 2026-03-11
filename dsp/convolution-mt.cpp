@@ -1,8 +1,21 @@
 #include "convolution-mt.h"
 
-std::vector<float>
-multiplyFFTs(std::vector<float> fft1, std::vector<float> fft2)
+void
+multiplyAndAccumulateFFTs(const std::vector<float>& fftDry,
+                          const std::vector<float>& fftIr,
+                          std::vector<float>& fftOutput)
 {
+  // (a + bi) (c + di)
+  // ac + cbi + adi + bdi^2
+  // ac - bd + i (cb + ad)
+  for (size_t i = 0; i < fftDry.size(); i += 2) {
+    float a = fftDry[i];
+    float b = fftDry[i + 1];
+    float c = fftIr[i];
+    float d = fftIr[i + 1];
+    fftOutput[i] += a * c - b * d;
+    fftOutput[i + 1] += c * b + a * d;
+  }
 }
 
 void
