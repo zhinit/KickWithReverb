@@ -38,7 +38,12 @@ EarlyConvolutionEngine::process(const float* input,
 void
 EarlyConvolutionEngine::reset()
 {
-  // pass
+  currSegment_ = 0;
+  std::fill(overlapBuffer_.begin(), overlapBuffer_.end(), 0.0f);
+
+  for (auto& segment : inputHistoryFFT_) {
+    std::fill(segment.begin(), segment.end(), 0.0f);
+  }
 }
 
 void
