@@ -13,8 +13,9 @@ public:
 private:
   size_t numIrSegments_;
   size_t currSegment_;
+  bool irLoaded_ = false;
+
   std::vector<std::vector<float>> irSegmentsFFT_;
-  std::vector<std::vector<float>> inputHistoryFFT_;
   std::vector<float> overlapBuffer_;
 
   static constexpr int fftOrder_ = 9; // 2^9 = 512
@@ -35,6 +36,8 @@ public:
 private:
   size_t numIrSegments_;
   size_t currSegment_;
+  bool irLoaded_ = false;
+
   std::vector<std::vector<float>> irSegmentsFFT_;
   std::vector<std::vector<float>> inputHistoryFFT_;
   std::vector<float> overlapBuffer_;
@@ -42,6 +45,7 @@ private:
   static constexpr int fftOrder_ = 9; // 2^9 = 512
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
+  static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
 
   juce::dsp::FFT fft_{ fftOrder_ };
 };
