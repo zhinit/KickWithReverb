@@ -9,6 +9,7 @@ Split the existing convolution reverb into two engines: an early engine (segment
 ## Why This Works
 
 The IR is naturally split into two regions:
+
 - **Segment 0** (first 384 samples, ~8.7ms): the attack and early reflections — needs to feel immediate
 - **Segments 1..N-1** (the tail): already delayed by nature, one extra block (~3ms) is inaudible
 
@@ -27,12 +28,14 @@ The early engine runs synchronously on the audio thread. The late engine runs in
 Files: `dsp/convolution-mt.h` and `dsp/convolution-mt.cpp`
 
 **Design decisions made:**
+
 - `EarlyConvolutionEngine` and `LateConvolutionEngine` are **mono** engines (not stereo directly)
-- Stereo will be handled by `StereoEarlyConvolutionReverb` / `StereoLateConvolutionReverb` wrapper classes added at the end (same pattern as existing `StereoConvolutionReverb`)
-- Both classes written from scratch based on the TypeScript OverlapAddConvolver mental model — NOT derived from existing `convolution.cpp`
+- Stereo handled by `EarlyStereoConvolutionReverb` / `LateStereoConvolutionReverb` wrapper classes (no `prepare`, no `setMix`, no `dryBuffer_` — AudioEngine manages wet/dry externally)
 - A free function `multiplyAndAccumulateFFTs` is defined at the top of the `.cpp`, shared by both classes
+- **Known issue**: reverb produces metallic output. Root cause not yet confirmed — suspect the JUCE FFT output format requires the same `prepareForConvolution`/`updateSymmetricFrequencyDomainData` treatment as `convolution.cpp`. **Next session: investigate and fix.**
 
 **Constants (both classes):**
+
 ```
 fftOrder_ = 9        (2^9 = 512)
 fftSize_  = 512
@@ -40,7 +43,7 @@ blockSize_ = 128
 segmentSize_ = fftSize_ - blockSize_ = 384
 ```
 
-**EarlyConvolutionEngine — COMPLETE**
+**EarlyConvolutionEngine — IMPLEMENTED (but broken, see above)**
 
 ```
 Private members:
@@ -74,21 +77,32 @@ Public API:
   reset()
     - currSegment_ = 0
     - zero overlapBuffer_
-    - zero all inputHistoryFFT_ segments (note: inputHistoryFFT_ unused in Early, can be removed)
 ```
 
-**LateConvolutionEngine — TODO**
+**LateConvolutionEngine — IMPLEMENTED (but broken, see above)**
 
-Needs all the same members as Early, plus:
-- `segmentSize_` constant (missing from header currently — add it)
-- `irLoaded_` bool (missing from header currently — add it)
+Same structure as Early, plus `inputHistoryFFT_` circular buffer.
 
-`loadIR`: same as Early — loads ALL segments. `process()` skips segment 0, iterates segments 1..N-1.
+```
+process(input, output, numSamples)
+  - guard: !irLoaded_ → copy input to output, return
+  - build drySegment, FFT it, store in inputHistoryFFT_[currSegment_]
+  - build combined (fftSize_*2, zeros)
+  - for segment = 1..numIrSegments_-1:
+      segmentsBackIdx = (currSegment_ + numIrSegments_ - segment) % numIrSegments_
+      multiplyAndAccumulateFFTs(inputHistoryFFT_[segmentsBackIdx], irSegmentsFFT_[segment], combined)
+  - IFFT + overlap-add (same as Early)
+  - currSegment_ = (currSegment_ + 1) % numIrSegments_
+```
 
-The key difference in `process()`:
-- Must FFT the current input block and store it in `inputHistoryFFT_` (circular buffer)
-- For each IR segment k (1..N-1): multiply `inputHistoryFFT_[k blocks ago]` × `irSegmentsFFT_[k]`, accumulate into combined
-- Then IFFT + overlap-add same as Early
+**Stereo wrappers — COMPLETE**
+
+`EarlyStereoConvolutionReverb` and `LateStereoConvolutionReverb`:
+
+- No `prepare`, no `setMix`, no `dryBuffer_`
+- `loadIR`: deinterleaves stereo IR into left/right, loads each mono engine
+- `process(left, right, numSamples)`: calls left/right engine in-place
+- `reset()`: calls both engines
 
 ---
 
@@ -101,9 +115,20 @@ void multiplyAndAccumulateFFTs(
   std::vector<float>& fftOutput)
 ```
 
-Complex multiply-accumulate, JUCE interleaved format (real, imag, real, imag...):
+Standard complex multiply-accumulate, JUCE interleaved format (real, imag, real, imag...):
+
 - `(a + bi)(c + di) = (ac - bd) + (cb + ad)i`
-- Steps by 2, accumulates into fftOutput
+- Steps by 2 over full buffer, accumulates into fftOutput
+- **Suspected broken** — may need to use `prepareForConvolution` format like `convolution.cpp`
+
+---
+
+## audio_engine.h/.cpp — COMPLETE
+
+- `audio_engine.h`: includes `convolution-mt.h`, owns `EarlyStereoConvolutionReverb convolution_`
+- `audio_engine.cpp`: removed `convolution_.prepare()` and `convolution_.setMix()` calls from `prepare()`
+- `EMSCRIPTEN_BINDINGS`: `LateStereoConvolutionReverb` bound with `allow_raw_pointers()` for `loadIR` and `process`
+- `dsp/CMakeLists.txt`: `convolution-mt.cpp` added to sources
 
 ---
 
@@ -111,30 +136,28 @@ Complex multiply-accumulate, JUCE interleaved format (real, imag, real, imag...)
 
 ```
 AudioWorkletProcessor process():
-  1. Run EarlyConvolutionEngine.process(input, output, 128)   ← synchronous
+  1. Run EarlyStereoConvolutionReverb.process(left, right, 128)   ← synchronous
   2. If lateResult is available: sum it into output
-  3. postMessage({ inputBlock }, [inputBlock.buffer])
+  3. postMessage({ inputLeft, inputRight }, [buffers])
      ← transfer this block's input to the worker
 
 late-convolution-worker.js onmessage:
-  1. Write inputBlock into WASM heap
-  2. Run LateConvolutionEngine.process(input, output, 128)
-  3. Read output from WASM heap into resultBlock
-  4. postMessage({ resultBlock }, [resultBlock.buffer])
+  1. Write inputLeft/Right into WASM heap
+  2. Run LateStereoConvolutionReverb.process(left, right, 128)
+  3. Read output from WASM heap into resultLeft/Right
+  4. postMessage({ resultLeft, resultRight }, [buffers])
 
 AudioWorkletProcessor onmessage:
-  Store resultBlock → summed into output next block at step 2
+  Store result → summed into output next block at step 2
 ```
-
-Note: both engines are mono. The AudioWorklet runs Early L+R separately, and the Worker runs Late L+R separately. The stereo wrappers handle this.
 
 ---
 
 ## IR Loading Flow (once per IR selection)
 
-1. AudioWorklet loads IR into `StereoEarlyConvolutionReverb` as normal
+1. AudioWorklet loads IR into `EarlyStereoConvolutionReverb` as normal
 2. AudioWorklet also postMessages the full IR data to the Worker
-3. Worker loads it into `StereoLateConvolutionReverb`
+3. Worker loads it into `LateStereoConvolutionReverb`
 
 ---
 
@@ -143,9 +166,9 @@ Note: both engines are mono. The AudioWorklet runs Early L+R separately, and the
 AudioWorklets can't directly spawn Web Workers. The connection is made on the main thread using a `MessageChannel`:
 
 ```js
-const channel = new MessageChannel()
-audioWorkletNode.port.postMessage({ port: channel.port1 }, [channel.port1])
-worker.postMessage({ port: channel.port2 }, [channel.port2])
+const channel = new MessageChannel();
+audioWorkletNode.port.postMessage({ port: channel.port1 }, [channel.port1]);
+worker.postMessage({ port: channel.port2 }, [channel.port2]);
 ```
 
 The AudioWorkletProcessor and Worker then communicate directly via `port1 ↔ port2`, bypassing the main thread entirely on every audio block.
@@ -154,15 +177,15 @@ The AudioWorkletProcessor and Worker then communicate directly via `port1 ↔ po
 
 ## Files
 
-| File | Status | Notes |
-|------|--------|-------|
-| `dsp/convolution-mt.h` | In progress | EarlyConvolutionEngine done. LateConvolutionEngine needs `segmentSize_` and `irLoaded_` added. |
-| `dsp/convolution-mt.cpp` | In progress | EarlyConvolutionEngine done. LateConvolutionEngine stubs only. |
-| `dsp/convolution.h/.cpp` | Untouched | Existing file, leave alone for now |
-| `dsp/audio_engine.h/.cpp` | TODO | Replace `StereoConvolutionReverb` with `StereoEarlyConvolutionReverb` |
-| `dsp/audio_engine.cpp` | TODO | Add `LateConvolutionEngine` / `StereoLateConvolutionReverb` to `EMSCRIPTEN_BINDINGS` |
-| `frontend/public/late-convolution-worker.js` | TODO | Web Worker: loads WASM, owns `StereoLateConvolutionReverb`, handles messages |
-| `frontend/src/hooks/use-audio-engine.ts` | TODO | Create `MessageChannel`, spawn Worker, wire ports |
+| File                                         | Status              | Notes                                                                        |
+| -------------------------------------------- | ------------------- | ---------------------------------------------------------------------------- |
+| `dsp/convolution-mt.h`                       | Complete            | All 4 classes done                                                           |
+| `dsp/convolution-mt.cpp`                     | Implemented, broken | FFT multiply produces metallic output — fix `multiplyAndAccumulateFFTs`      |
+| `dsp/convolution.h/.cpp`                     | Untouched           | Leave alone                                                                  |
+| `dsp/audio_engine.h/.cpp`                    | Complete            | Uses `EarlyStereoConvolutionReverb`, binds `LateStereoConvolutionReverb`     |
+| `dsp/CMakeLists.txt`                         | Complete            | `convolution-mt.cpp` added                                                   |
+| `frontend/public/late-convolution-worker.js` | TODO                | Web Worker: loads WASM, owns `LateStereoConvolutionReverb`, handles messages |
+| `frontend/src/hooks/use-audio-engine.ts`     | TODO                | Create `MessageChannel`, spawn Worker, wire ports                            |
 
 ---
 
@@ -174,12 +197,7 @@ None. No new Emscripten flags. No `-pthread`. No server header changes. The exis
 
 ## Next Steps (when returning)
 
-1. Fix `LateConvolutionEngine` header — add `segmentSize_` and `irLoaded_`
-2. Implement `LateConvolutionEngine::loadIR` (same as Early)
-3. Implement `LateConvolutionEngine::process` — same structure as Early but:
-   - Store FFT'd input in `inputHistoryFFT_` circular buffer each block
-   - Loop over segments 1..N-1, multiplying each against the appropriate historical input
-4. Implement `LateConvolutionEngine::reset`
-5. Add stereo wrapper classes to the bottom of convolution-mt.h/.cpp
-6. Wire into AudioEngine and build
-7. Implement the JS side (Worker + MessageChannel)
+1. **Fix `multiplyAndAccumulateFFTs`** — investigate whether JUCE's `performRealOnlyForwardTransform` output requires the `prepareForConvolution`/`updateSymmetricFrequencyDomainData` treatment from `convolution.cpp` before multiplying. Try using those helper functions instead of standard complex multiply.
+2. Confirm reverb sounds correct with Early-only (segment 0)
+3. Implement `frontend/public/late-convolution-worker.js`
+4. Wire `MessageChannel` in `frontend/src/hooks/use-audio-engine.ts`

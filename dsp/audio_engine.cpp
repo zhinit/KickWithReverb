@@ -348,7 +348,11 @@ EMSCRIPTEN_BINDINGS(audio_module)
     .function("cueRelease", &AudioEngine::cueRelease);
   emscripten::class_<LateStereoConvolutionReverb>("LateStereoConvolutionReverb")
     .constructor()
-    .function("loadIR", &LateStereoConvolutionReverb::loadIR)
-    .function("process", &LateStereoConvolutionReverb::process)
+    .function("loadIR",
+              &LateStereoConvolutionReverb::loadIR,
+              emscripten::allow_raw_pointers())
+    .function("process",
+              &LateStereoConvolutionReverb::process,
+              emscripten::allow_raw_pointers())
     .function("reset", &LateStereoConvolutionReverb::reset);
 }
