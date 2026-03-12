@@ -205,3 +205,75 @@ LateConvolutionEngine::reset()
     std::fill(segment.begin(), segment.end(), 0.0f);
   }
 }
+
+void
+EarlyStereoConvolutionReverb::loadIR(const float* irData,
+                                     size_t irLengthPerChannel,
+                                     int numChannels)
+{
+  if (numChannels == 1) {
+    leftEngine_.loadIR(irData, irLengthPerChannel);
+    rightEngine_.loadIR(irData, irLengthPerChannel);
+  } else {
+    std::vector<float> leftIR(irLengthPerChannel);
+    std::vector<float> rightIR(irLengthPerChannel);
+
+    for (size_t i = 0; i < irLengthPerChannel; ++i) {
+      leftIR[i] = irData[i * 2];
+      rightIR[i] = irData[i * 2 + 1];
+    }
+
+    leftEngine_.loadIR(leftIR.data(), irLengthPerChannel);
+    rightEngine_.loadIR(rightIR.data(), irLengthPerChannel);
+  }
+}
+
+void
+EarlyStereoConvolutionReverb::process(float* left, float* right, int numSamples)
+{
+  leftEngine_.process(left, left, numSamples);
+  rightEngine_.process(right, right, numSamples);
+}
+
+void
+EarlyStereoConvolutionReverb::reset()
+{
+  leftEngine_.reset();
+  rightEngine_.reset();
+}
+
+void
+LateStereoConvolutionReverb::loadIR(const float* irData,
+                                    size_t irLengthPerChannel,
+                                    int numChannels)
+{
+  if (numChannels == 1) {
+    leftEngine_.loadIR(irData, irLengthPerChannel);
+    rightEngine_.loadIR(irData, irLengthPerChannel);
+  } else {
+    std::vector<float> leftIR(irLengthPerChannel);
+    std::vector<float> rightIR(irLengthPerChannel);
+
+    for (size_t i = 0; i < irLengthPerChannel; ++i) {
+      leftIR[i] = irData[i * 2];
+      rightIR[i] = irData[i * 2 + 1];
+    }
+
+    leftEngine_.loadIR(leftIR.data(), irLengthPerChannel);
+    rightEngine_.loadIR(rightIR.data(), irLengthPerChannel);
+  }
+}
+
+void
+LateStereoConvolutionReverb::process(float* left, float* right, int numSamples)
+{
+  leftEngine_.process(left, left, numSamples);
+  rightEngine_.process(right, right, numSamples);
+}
+
+void
+LateStereoConvolutionReverb::reset()
+{
+  leftEngine_.reset();
+  rightEngine_.reset();
+}

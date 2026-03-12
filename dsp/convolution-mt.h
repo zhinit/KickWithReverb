@@ -49,3 +49,27 @@ private:
 
   juce::dsp::FFT fft_{ fftOrder_ };
 };
+
+class EarlyStereoConvolutionReverb
+{
+public:
+  void loadIR(const float* irData, size_t irLengthPerChannel, int numChannels);
+  void process(float* left, float* right, int numSamples);
+  void reset();
+
+private:
+  EarlyConvolutionEngine leftEngine_;
+  EarlyConvolutionEngine rightEngine_;
+};
+
+class LateStereoConvolutionReverb
+{
+public:
+  void loadIR(const float* irData, size_t irLengthPerChannel, int numChannels);
+  void process(float* left, float* right, int numSamples);
+  void reset();
+
+private:
+  LateConvolutionEngine leftEngine_;
+  LateConvolutionEngine rightEngine_;
+};
