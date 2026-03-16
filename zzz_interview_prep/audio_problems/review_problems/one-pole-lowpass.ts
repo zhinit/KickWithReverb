@@ -1,22 +1,22 @@
-function applyLowPass(
-  input: Float32Array,
-  sampleRate: number,
-  cutoffHz: number,
-): Float32Array {
-  const output = new Float32Array(input.length);
-  const a = 1 - Math.exp((-2 * Math.PI * cutoffHz) / sampleRate);
+// we want to take weighted average of current and last sample
+// this way high frequencies phase cancel out
+// low frequencies are largely uneffected
+
+function onePoleLowPass(buffer: Float32Array, sampleRate: number, cutoffHz: number): Float32Array {
+  const a = Math.exp(- 2 * Math.PI * cutoffHz / sampleRate);
+  const output = new Float32Array(buffer.length);
   let prevSample = 0;
-  for (let i = 0; i < output.length; i++) {
-    output[i] = a * input[i] + (1 - a) * prevSample;
+
+  for (let i = 0; i < buffer.length; i++) {
+    output[i] = buffer[i] * (1 - a) + a * prevSample;
     prevSample = output[i];
   }
+
   return output;
 }
 
-console.log(
-  applyLowPass(
-    new Float32Array([1, 0.75, 0.5, 0.25, 0, -0.25, -0.5, -0.75]),
-    8,
-    1,
-  ),
-);
+console.log(onePoleLowPass(
+  new Float32Array([1, 0.75, 0.5, 0.25, 0, -0.25, -0.5, -0.75]),
+  16,
+  1
+))
