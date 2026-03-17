@@ -1,6 +1,6 @@
 #pragma once
+#include "fft.h"
 #include <cstddef>
-#include <juce_dsp/juce_dsp.h>
 #include <vector>
 
 class EarlyConvolutionEngine
@@ -22,8 +22,6 @@ private:
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
   static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
-
-  juce::dsp::FFT fft_{ fftOrder_ };
 };
 
 class LateConvolutionEngine
@@ -46,8 +44,6 @@ private:
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
   static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
-
-  juce::dsp::FFT fft_{ fftOrder_ };
 };
 
 class EarlyStereoConvolutionReverb
