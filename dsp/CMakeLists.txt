@@ -38,7 +38,7 @@ if(EMSCRIPTEN)
 endif()
 
 add_executable(audio-engine audio_engine.cpp sample_player.cpp distortion.cpp
-                            ott.cpp convolution-mt.cpp)
+                            ott.cpp convolution.cpp)
 
 target_compile_definitions(audio-engine PRIVATE JUCE_USE_CURL=0
                                                 JUCE_WEB_BROWSER=0)
