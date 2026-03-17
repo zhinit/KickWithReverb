@@ -26,9 +26,6 @@ AudioEngine::prepare(float sampleRate)
   noiseHighPass_.setType(Filter::Type::highpass);
   noiseHighPass_.setFrequency(30.0f);
 
-  convolution_.prepare(sampleRate);
-  convolution_.setMix(1.0f, 0.0f);
-
   reverbLowPass_.prepare(sampleRate);
   reverbLowPass_.setType(Filter::Type::lowpass);
   reverbLowPass_.setFrequency(7000.0f);
@@ -69,7 +66,7 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
     }
   }
 
-  // kick chain 
+  // kick chain
   kickPlayer_.process(kickL_.data(), kickR_.data(), numSamples);
 
   if (kickDistortionMix_ > 0.0f) {
@@ -248,7 +245,6 @@ AudioEngine::setReverbVolume(float db)
   reverbGain_ = std::pow(10.0f, db / 20.0f);
 }
 
-
 // --- Master ---
 
 void
@@ -268,7 +264,6 @@ AudioEngine::setMasterLimiter(float amount)
 {
   masterLimiterGain_ = std::clamp(amount, 1.0f, 8.0f);
 }
-
 
 // --- Transport ---
 
@@ -351,4 +346,13 @@ EMSCRIPTEN_BINDINGS(audio_module)
     .function("setLooping", &AudioEngine::setLooping)
     .function("cue", &AudioEngine::cue)
     .function("cueRelease", &AudioEngine::cueRelease);
+  emscripten::class_<LateStereoConvolutionReverb>("LateStereoConvolutionReverb")
+    .constructor()
+    .function("loadIR",
+              &LateStereoConvolutionReverb::loadIR,
+              emscripten::allow_raw_pointers())
+    .function("process",
+              &LateStereoConvolutionReverb::process,
+              emscripten::allow_raw_pointers())
+    .function("reset", &LateStereoConvolutionReverb::reset);
 }

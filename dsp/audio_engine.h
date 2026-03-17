@@ -1,11 +1,11 @@
 #pragma once
 
-#include "sample_player.h"
+#include "convolution-mt.h"
 #include "distortion.h"
-#include "ott.h"
-#include "convolution.h"
 #include "filter.h"
 #include "limiter.h"
+#include "ott.h"
+#include "sample_player.h"
 
 #include <array>
 #include <cmath>
@@ -15,112 +15,118 @@
 class AudioEngine
 {
 public:
-    AudioEngine();
+  AudioEngine();
 
-    void prepare(float sampleRate);
-    void process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples);
+  void prepare(float sampleRate);
+  void process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples);
 
-    // Kick
-    void loadKickSample(uintptr_t ptr, size_t length);
-    void selectKickSample(int index);
-    void setKickLength(float ratio);
-    void setKickDistortion(float amount);
-    void setKickOTT(float amount);
+  // Kick
+  void loadKickSample(uintptr_t ptr, size_t length);
+  void selectKickSample(int index);
+  void setKickLength(float ratio);
+  void setKickDistortion(float amount);
+  void setKickOTT(float amount);
 
-    // Noise
-    void loadNoiseSample(uintptr_t ptr, size_t length);
-    void selectNoiseSample(int index);
-    void setNoiseVolume(float db);
-    void setNoiseLowPass(float hz);
-    void setNoiseHighPass(float hz);
+  // Noise
+  void loadNoiseSample(uintptr_t ptr, size_t length);
+  void selectNoiseSample(int index);
+  void setNoiseVolume(float db);
+  void setNoiseLowPass(float hz);
+  void setNoiseHighPass(float hz);
 
-    // Reverb
-    void loadIR(uintptr_t ptr, size_t irLength, size_t numChannels);
-    void selectIR(int index);
-    void setReverbLowPass(float hz);
-    void setReverbHighPass(float hz);
-    void setReverbVolume(float db);
+  // Reverb
+  void loadIR(uintptr_t ptr, size_t irLength, size_t numChannels);
+  void selectIR(int index);
+  void setReverbLowPass(float hz);
+  void setReverbHighPass(float hz);
+  void setReverbVolume(float db);
 
-    // Master chain
-    void setMasterOTT(float amount);
-    void setMasterDistortion(float amount);
-    void setMasterLimiter(float amount);
+  // Master chain
+  void setMasterOTT(float amount);
+  void setMasterDistortion(float amount);
+  void setMasterLimiter(float amount);
 
-    // Transport
-    void setBPM(float bpm);
-    void setLooping(bool enabled);
-    void cue();
-    void cueRelease();
+  // Transport
+  void setBPM(float bpm);
+  void setLooping(bool enabled);
+  void cue();
+  void cueRelease();
 
 private:
-    static constexpr int kBlockSize = 128;
+  static constexpr int kBlockSize = 128;
 
-    // kick OTT boosts the lows and ratios a bit more than the master
-    static constexpr float kKickOttRatioMultiplier = 10.0f;
-    static constexpr float kKickOttLowBoost        =  9.0f;
-    static constexpr float kKickOttMidBoost        = -3.0f;
-    static constexpr float kKickOttHighBoost       =  0.0f;
+  // kick OTT boosts the lows and ratios a bit more than the master
+  static constexpr float kKickOttRatioMultiplier = 10.0f;
+  static constexpr float kKickOttLowBoost = 9.0f;
+  static constexpr float kKickOttMidBoost = -3.0f;
+  static constexpr float kKickOttHighBoost = 0.0f;
 
-    static constexpr float kMasterOttRatioMultiplier = 8.0f;
-    static constexpr float kMasterOttLowBoost        = 3.0f;
-    static constexpr float kMasterOttMidBoost        = -3.0f;
-    static constexpr float kMasterOttHighBoost       =  0.0f;
+  static constexpr float kMasterOttRatioMultiplier = 8.0f;
+  static constexpr float kMasterOttLowBoost = 3.0f;
+  static constexpr float kMasterOttMidBoost = -3.0f;
+  static constexpr float kMasterOttHighBoost = 0.0f;
 
-    float sampleRate_ = 44100.0f;
+  float sampleRate_ = 44100.0f;
 
-    // Players
-    SamplePlayer kickPlayer_;
-    SamplePlayer noisePlayer_;
+  // Players
+  SamplePlayer kickPlayer_;
+  SamplePlayer noisePlayer_;
 
-    // Kick effects
-    Distortion kickDistortion_;
-    OTTCompressor kickOTT_{ kKickOttRatioMultiplier, kKickOttLowBoost, kKickOttMidBoost, kKickOttHighBoost };
-    float kickDistortionMix_ = 0.0f;
+  // Kick effects
+  Distortion kickDistortion_;
+  OTTCompressor kickOTT_{ kKickOttRatioMultiplier,
+                          kKickOttLowBoost,
+                          kKickOttMidBoost,
+                          kKickOttHighBoost };
+  float kickDistortionMix_ = 0.0f;
 
-    // Noise filters
-    Filter noiseLowPass_;
-    Filter noiseHighPass_;
+  // Noise filters
+  Filter noiseLowPass_;
+  Filter noiseHighPass_;
 
-    // Reverb
-    StereoConvolutionReverb convolution_;
-    Filter reverbLowPass_;
-    Filter reverbHighPass_;
-    float reverbGain_ = 1.0f;
+  // Reverb
+  EarlyStereoConvolutionReverb convolution_;
+  Filter reverbLowPass_;
+  Filter reverbHighPass_;
+  float reverbGain_ = 1.0f;
 
-    // IR storage for selectIR
-    struct IRData
-    {
-        std::vector<float> samples;
-        size_t lengthPerChannel;
-        int numChannels;
-    };
-    std::vector<IRData> irStorage_;
-    int activeIRIndex_ = -1;
+  // IR storage for selectIR
+  struct IRData
+  {
+    std::vector<float> samples;
+    size_t lengthPerChannel;
+    int numChannels;
+  };
+  std::vector<IRData> irStorage_;
+  int activeIRIndex_ = -1;
 
-    // Master chain
-    OTTCompressor masterOTT_{ kMasterOttRatioMultiplier, kMasterOttLowBoost, kMasterOttMidBoost, kMasterOttHighBoost };
-    Distortion masterDistortion_;
-    float masterDistortionMix_ = 0.0f;
-    float masterLimiterGain_ = 1.0f;
-    Limiter masterLimiter_;
+  // Master chain
+  OTTCompressor masterOTT_{ kMasterOttRatioMultiplier,
+                            kMasterOttLowBoost,
+                            kMasterOttMidBoost,
+                            kMasterOttHighBoost };
+  Distortion masterDistortion_;
+  float masterDistortionMix_ = 0.0f;
+  float masterLimiterGain_ = 1.0f;
+  Limiter masterLimiter_;
 
-    // Transport
-    float bpm_ = 140.0f;
-    bool looping_ = false;
-    int samplesPerBeat_ = 0;
-    int samplesSinceBeat_ = 0;
-    int noiseBeatCount_ = 0;
-    bool pendingNoiseTrigger_ = false;
+  // Transport
+  float bpm_ = 140.0f;
+  bool looping_ = false;
+  int samplesPerBeat_ = 0;
+  int samplesSinceBeat_ = 0;
+  int noiseBeatCount_ = 0;
+  bool pendingNoiseTrigger_ = false;
 
-    // Scratch buffers (fixed at AudioWorklet block size)
-    std::array<float, kBlockSize> kickL_{};
-    std::array<float, kBlockSize> kickR_{};
-    std::array<float, kBlockSize> noiseL_{};
-    std::array<float, kBlockSize> noiseR_{};
-    std::array<float, kBlockSize> reverbL_{};
-    std::array<float, kBlockSize> reverbR_{};
-    std::array<float, kBlockSize> tempL_{};
-    std::array<float, kBlockSize> tempR_{};
+  // Scratch buffers (fixed at AudioWorklet block size)
+  std::array<float, kBlockSize> kickL_{};
+  std::array<float, kBlockSize> kickR_{};
+  std::array<float, kBlockSize> noiseL_{};
+  std::array<float, kBlockSize> noiseR_{};
+  std::array<float, kBlockSize> reverbL_{};
+  std::array<float, kBlockSize> reverbR_{};
+  std::array<float, kBlockSize> tempL_{};
+  std::array<float, kBlockSize> tempR_{};
 
-    void recalcSamplesPerBeat();
+  void recalcSamplesPerBeat();
 };
