@@ -53,6 +53,15 @@ fft(const float* input, float* output, size_t size)
 }
 
 void
+ifftReal(const float* input, float* output, size_t size)
+{
+  std::vector<float> fullOutput(size * 2);
+  ifft(input, fullOutput.data(), size);
+  for (size_t i = 0; i < size; i++)
+    output[i] = fullOutput[i * 2];
+}
+
+void
 ifft(const float* input, float* output, size_t size)
 {
   // base case when we are down to 1 frequency
