@@ -42,6 +42,7 @@ export const useAudioEngine = (): AudioEngine => {
   // refs for audio context and audio worklet since we dont want these to restart on render
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const lateConvolutionWorkerRef = useRef<Worker | null>(null);
 
   const nextKickIndexRef = useRef(kickNames.length);
 
@@ -52,7 +53,7 @@ export const useAudioEngine = (): AudioEngine => {
     (message: { type: string; [key: string]: unknown }) => {
       workletNodeRef.current?.port.postMessage(message);
     },
-    []
+    [],
   );
 
   // function so that audio can play (browser starts as suspended)
@@ -111,6 +112,19 @@ export const useAudioEngine = (): AudioEngine => {
         node.port.postMessage({ type: "init", scriptCode: emscriptenGlueCode });
       });
 
+      // create late convolution worker
+      const lateConvolutionWorker = new Worker("/late-convolution-worker.js");
+      lateConvolutionWorkerRef.current = lateConvolutionWorker;
+
+      // create a message channel so that late audio workelt port1 can communicate with conv worker port 2
+      const channel = new MessageChannel();
+      node.port.postMessage({ type: "lateWorkerPort", port: channel.port1 }, [
+        channel.port1,
+      ]);
+      lateConvolutionWorker.postMessage({ port: channel.port2 }, [
+        channel.port2,
+      ]);
+
       // guard to make sure we havent cleaned up while awaiting
       if (cancelled) return;
 
@@ -153,6 +167,9 @@ export const useAudioEngine = (): AudioEngine => {
           samples[i * 2 + 1] = right[i];
         }
 
+        // need to make a copy so it is possible to send in 2 transferables
+        const workerSamples = samples.slice();
+
         node.port.postMessage(
           {
             type: "loadIR",
@@ -160,8 +177,16 @@ export const useAudioEngine = (): AudioEngine => {
             irLength: audioBuffer.length,
             numChannels: audioBuffer.numberOfChannels,
           },
-          [samples.buffer]
+          [samples.buffer],
         );
+
+        lateConvolutionWorker.postMessage({
+          type: "loadIR",
+          data: {
+            samples: workerSamples,
+            numChannels: audioBuffer.numberOfChannels,
+          },
+        });
       }
 
       if (!cancelled) setIsReady(true);
