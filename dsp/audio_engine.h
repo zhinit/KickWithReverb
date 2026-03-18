@@ -1,6 +1,6 @@
 #pragma once
 
-#include "convolution.h"
+#include "convolution_mt.h"
 #include "distortion.h"
 #include "filter.h"
 #include "limiter.h"
@@ -85,7 +85,7 @@ private:
   Filter noiseHighPass_;
 
   // Reverb
-  StereoConvolutionReverb convolution_;
+  EarlyStereoConvolutionReverb earlyConvolution_;
   Filter reverbLowPass_;
   Filter reverbHighPass_;
   float reverbGain_ = 1.0f;

@@ -94,7 +94,7 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
       reverbL_[i] = kickL_[i] + noiseL_[i];
       reverbR_[i] = kickR_[i] + noiseR_[i];
     }
-    convolution_.process(reverbL_.data(), reverbR_.data(), numSamples);
+    earlyConvolution_.process(reverbL_.data(), reverbR_.data(), numSamples);
     reverbLowPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
     reverbHighPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
     for (int i = 0; i < numSamples; ++i) {
@@ -223,7 +223,8 @@ AudioEngine::selectIR(int index)
       index != activeIRIndex_) {
     activeIRIndex_ = index;
     const auto& ir = irStorage_[index];
-    convolution_.loadIR(ir.samples.data(), ir.lengthPerChannel, ir.numChannels);
+    earlyConvolution_.loadIR(
+      ir.samples.data(), ir.lengthPerChannel, ir.numChannels);
   }
 }
 
@@ -346,4 +347,13 @@ EMSCRIPTEN_BINDINGS(audio_module)
     .function("setLooping", &AudioEngine::setLooping)
     .function("cue", &AudioEngine::cue)
     .function("cueRelease", &AudioEngine::cueRelease);
+  emscripten::class_<LateStereoConvolutionReverb>("LateStereoConvolutionReverb")
+    .constructor()
+    .function("loadIR",
+              &LateStereoConvolutionReverb::loadIR,
+              emscripten::allow_raw_pointers())
+    .function("process",
+              &LateStereoConvolutionReverb::process,
+              emscripten::allow_raw_pointers())
+    .function("reset", &LateStereoConvolutionReverb::reset);
 }
