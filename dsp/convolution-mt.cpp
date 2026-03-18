@@ -114,7 +114,7 @@ LateConvolutionEngine::loadIR(const float* irData, const size_t irLength)
     return;
 
   // initialize overlap buffer (this seems like the best place to do it)
-  overlapBuffer_.resize(fftSize_, 0.0f);
+  overlapBuffer_.resize(fftSize_);
 
   // clear any stale buffers
   reset();
@@ -127,18 +127,19 @@ LateConvolutionEngine::loadIR(const float* irData, const size_t irLength)
 
   for (size_t segment = 0; segment < numIrSegments_; segment++) {
     // resize segment and fill with 0s
-    irSegmentsFFT_[segment].resize(fftSize_ * 2, 0.0f);
-    inputHistoryFFT_[segment].resize(fftSize_ * 2, 0.0f);
+    irSegmentsFFT_[segment].resize(fftSize_ * 2);
+    inputHistoryFFT_[segment].resize(fftSize_ * 2);
 
     // fill segment with ir samples
     size_t offset = segment * segmentSize_;
     size_t segmentSizeAdj = std::min(segmentSize_, irLength - offset);
+    std::vector<float> irSamples(fftSize_);
     for (size_t sample = 0; sample < segmentSizeAdj; sample++) {
-      irSegmentsFFT_[segment][sample] = irData[sample + offset];
+      irSamples[sample] = irData[sample + offset];
     }
 
     // apply fft on segment
-    fft_.performRealOnlyForwardTransform(irSegmentsFFT_[segment].data());
+    fft(irSamples.data(), irSegmentsFFT_[segment].data(), fftSize_);
   }
 
   irLoaded_ = true;
@@ -156,39 +157,41 @@ LateConvolutionEngine::process(const float* input,
   }
 
   // pull in input segment
-  std::vector<float> drySegment(fftSize_ * 2, 0.0f);
+  std::vector<float> drySamples(fftSize_);
   for (size_t sample = 0; sample < numSamples; sample++)
-    drySegment[sample] = input[sample];
+    drySamples[sample] = input[sample];
   // take fft on dry segment
-  fft_.performRealOnlyForwardTransform(drySegment.data());
+  std::vector<float> dryFFT(fftSize_ * 2);
+  fft(drySamples.data(), dryFFT.data(), fftSize_);
   // add dry fft to history
-  inputHistoryFFT_[currSegment_] = drySegment;
+  inputHistoryFFT_[currSegment_] = dryFFT;
 
   // calculations for [1..n-1] segments
-  std::vector<float> combined(fftSize_ * 2, 0.0f);
+  std::vector<float> combinedFFT(fftSize_ * 2);
   for (size_t segment = 1; segment < numIrSegments_; segment++) {
     // multiply and accumulate dry fft and ir fft onto the combined buffer
     size_t segmentsBackIdx =
       (currSegment_ + numIrSegments_ - segment) % numIrSegments_;
     multiplyAndAccumulateFFTs(
-      inputHistoryFFT_[segmentsBackIdx], irSegmentsFFT_[segment], combined);
+      inputHistoryFFT_[segmentsBackIdx], irSegmentsFFT_[segment], combinedFFT);
   }
 
   // take IFFT
-  fft_.performRealOnlyInverseTransform(combined.data());
+  std::vector<float> combinedSamples(fftSize_);
+  ifftReal(combinedFFT.data(), combinedSamples.data(), fftSize_);
 
   // add overlap and set output for 1 block
   for (size_t sample = 0; sample < numSamples; sample++) {
-    output[sample] = combined[sample] + overlapBuffer_[sample];
+    output[sample] = combinedSamples[sample] + overlapBuffer_[sample];
   }
 
   // add overlap for tail
   for (size_t sample = numSamples; sample < fftSize_; sample++)
-    combined[sample] += overlapBuffer_[sample];
+    combinedSamples[sample] += overlapBuffer_[sample];
 
   // save tail into overlapBuffer for next go around
-  std::copy(combined.begin() + numSamples,
-            combined.begin() + fftSize_,
+  std::copy(combinedSamples.begin() + numSamples,
+            combinedSamples.begin() + fftSize_,
             overlapBuffer_.begin());
   std::fill(overlapBuffer_.begin() + (fftSize_ - numSamples),
             overlapBuffer_.end(),

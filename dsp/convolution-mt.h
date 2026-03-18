@@ -1,5 +1,6 @@
 #pragma once
 #include "fft.h"
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -18,7 +19,6 @@ private:
   std::vector<std::vector<float>> irSegmentsFFT_;
   std::vector<float> overlapBuffer_;
 
-  static constexpr int fftOrder_ = 9; // 2^9 = 512
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
   static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
@@ -40,7 +40,6 @@ private:
   std::vector<std::vector<float>> inputHistoryFFT_;
   std::vector<float> overlapBuffer_;
 
-  static constexpr int fftOrder_ = 9; // 2^9 = 512
   static constexpr size_t fftSize_ = 512;
   static constexpr size_t blockSize_ = 128;
   static constexpr size_t segmentSize_ = fftSize_ - blockSize_;
