@@ -6,6 +6,10 @@ class DSPProcessor extends AudioWorkletProcessor {
     this.heapBufferLeft = null;
     this.heapBufferRight = null;
     this.port.onmessage = (e) => this.handleMessage(e.data);
+
+    this.lateWorkerPort = null;
+    this.lateResultLeft = null;
+    this.lateResultRight = null;
   }
 
   async handleMessage(data) {
@@ -45,6 +49,10 @@ class DSPProcessor extends AudioWorkletProcessor {
         this.module._free(ptr);
         break;
       }
+      case "lateWorkerPort":
+        this.lateWorkerPort = data.port;
+        this.lateWorkerPort.onmessage = (e) => this.handleLateResult(e.data);
+        break;
 
       // Sample selection
       case "selectKickSample":
@@ -139,20 +147,43 @@ class DSPProcessor extends AudioWorkletProcessor {
     const wasmLeft = new Float32Array(
       this.module.HEAPF32.buffer, // buffer
       this.heapBufferLeft, // byte offset address
-      numSamples // number of float elements
+      numSamples, // number of float elements
     );
     const wasmRight = new Float32Array(
       this.module.HEAPF32.buffer,
       this.heapBufferRight,
-      numSamples
+      numSamples,
     );
 
     // put buffers into browser audio output
     leftOutput.set(wasmLeft);
     rightOutput.set(wasmRight);
 
+    // add late result
+    if (this.lateResultLeft && this.lateResultRight) {
+      for (let i = 0; i < numSamples; i++) {
+        leftOutput[i] += this.lateResultLeft[i];
+        rightOutput[i] += this.lateResultRight[i];
+      }
+    }
+
+    // senf dry signal to late convolution
+    if (this.lateWorkerPort) {
+      const left = wasmLeft.slice();
+      const right = wasmRight.slice();
+      this.lateWorkerPort.postMessage(
+        { type: "process", data: { left, right } },
+        [left.buffer, right.buffer],
+      );
+    }
+
     // stayin' alive
     return true;
+  }
+
+  handleLateResult(data) {
+    this.lateResultLeft = data.left;
+    this.lateResultRight = data.right;
   }
 }
 
