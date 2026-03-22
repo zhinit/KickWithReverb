@@ -21,7 +21,6 @@ public:
       }
     }
 
-    // normalize IR
     normalizeEnergy(leftIR);
     normalizeEnergy(rightIR);
 

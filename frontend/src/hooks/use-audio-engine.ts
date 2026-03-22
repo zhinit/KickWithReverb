@@ -86,7 +86,14 @@ export const useAudioEngine = (): AudioEngine => {
       node.port.postMessage({ type: "sharedBuffer", sab });
       worker.postMessage({ type: "sharedBuffer", sab });
 
-      // send IR to tail worker (triggers processLoop)
+      // forward tailReady from worker to worklet
+      worker.onmessage = (e) => {
+        if (e.data.type === "tailReady") {
+          node.port.postMessage({ type: "tailReady" });
+        }
+      };
+
+      // send IR to tail worker (loads all levels, then enters processLoop)
       const irCopy = new Float32Array(irEntry.irSamples);
       worker.postMessage({
         type: "loadIR",

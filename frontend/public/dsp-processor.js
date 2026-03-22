@@ -20,6 +20,7 @@ class DSPProcessor extends AudioWorkletProcessor {
     this.writeCount = 0;
     this.wetReadPos = 0;
     this.irActive = false;
+    this.tailReady = false;
 
     this.port.onmessage = (e) => this.handleMessage(e.data);
   }
@@ -45,6 +46,13 @@ class DSPProcessor extends AudioWorkletProcessor {
       const wetROffset = wetLOffset + MAX_RING_BLOCKS * BLOCK * 4;
       this.wetRingL = new Float32Array(sab, wetLOffset, MAX_RING_BLOCKS * BLOCK);
       this.wetRingR = new Float32Array(sab, wetROffset, MAX_RING_BLOCKS * BLOCK);
+      return;
+    }
+
+    if (data.type === "tailReady") {
+      this.writeCount = 0;
+      this.wetReadPos = 0;
+      this.tailReady = true;
       return;
     }
 
@@ -84,12 +92,7 @@ class DSPProcessor extends AudioWorkletProcessor {
       case "selectIR":
         this.engine.selectIR(data.index);
         this.irActive = true;
-        this.wetReadPos = 0;
-        this.writeCount = 0;
-        if (this.dryWriteCount) {
-          Atomics.store(this.dryWriteCount, 0, 0);
-          Atomics.store(this.wetWriteCount, 0, 0);
-        }
+        this.tailReady = false;
         break;
 
       // Transport
@@ -168,7 +171,7 @@ class DSPProcessor extends AudioWorkletProcessor {
     }
 
     // Feed tail wet from worker before process() so it gets mixed in
-    if (this.irActive && this.wetWriteCount) {
+    if (this.tailReady && this.wetWriteCount) {
       const wetWriteCount = Atomics.load(this.wetWriteCount, 0);
       if (this.wetReadPos < wetWriteCount) {
         const wetOffset = (this.wetReadPos % MAX_RING_BLOCKS) * BLOCK;
@@ -189,7 +192,7 @@ class DSPProcessor extends AudioWorkletProcessor {
     this.engine.process(this.heapBufferLeft, this.heapBufferRight, numSamples);
 
     // Copy dry block to shared ring for tail worker
-    if (this.irActive && this.dryWriteCount) {
+    if (this.tailReady && this.dryWriteCount) {
       const dryPtr = this.engine.getDryBlock();
       const dryMono = new Float32Array(
         this.module.HEAPF32.buffer,

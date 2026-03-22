@@ -9,7 +9,6 @@ let heapDryPtr = null;
 let dryWriteCount = null;
 let wetWriteCount = null;
 let dryRing = null;
-// Wet ring buffers (same layout as dry ring)
 let wetRingL = null;
 let wetRingR = null;
 
@@ -17,18 +16,15 @@ function processLoop() {
   let lastProcessed = 0;
 
   while (true) {
-    // Block until audio thread writes new dry data
     Atomics.wait(dryWriteCount, 0, lastProcessed);
     const writeCount = Atomics.load(dryWriteCount, 0);
 
-    // Process all pending dry blocks, writing result after each
     while (lastProcessed < writeCount) {
       const readIdx = (lastProcessed % MAX_RING_BLOCKS) * BLOCK;
       const drySub = dryRing.subarray(readIdx, readIdx + BLOCK);
       module.HEAPF32.set(drySub, heapDryPtr / 4);
       engine.processBlock(heapDryPtr);
 
-      // Write result to wet ring buffer (compute index BEFORE incrementing)
       const wetIdx = (lastProcessed % MAX_RING_BLOCKS) * BLOCK;
       lastProcessed++;
       const leftPtr = engine.getResultLeft();
@@ -74,11 +70,10 @@ self.onmessage = async (e) => {
     engine.prepareIR(irPtr, data.irLength, data.numChannels);
     module._free(irPtr);
 
-    // Load all IR levels upfront before processing starts
     while (engine.loadNextLevel()) {}
-    self.postMessage({ type: "irLoaded" });
 
-    // Start the processing loop — blocks the event loop from here on
+    // signal ready THEN enter loop — main thread forwards this to worklet
+    self.postMessage({ type: "tailReady" });
     processLoop();
   }
 };
