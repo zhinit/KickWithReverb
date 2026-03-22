@@ -38,7 +38,7 @@ if(EMSCRIPTEN)
 endif()
 
 add_executable(audio-engine audio_engine.cpp sample_player.cpp distortion.cpp
-                            ott.cpp convolution.cpp)
+                            ott.cpp convolution_mt.cpp fft.cpp)
 
 target_compile_definitions(audio-engine PRIVATE JUCE_USE_CURL=0
                                                 JUCE_WEB_BROWSER=0)
@@ -64,5 +64,25 @@ target_link_options(
 set_target_properties(
   audio-engine
   PROPERTIES OUTPUT_NAME "audio-engine"
+             SUFFIX ".js"
+             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../frontend/public")
+
+# Tail engine (runs in Web Worker, levels 1+)
+add_executable(tail-engine tail_worker.cpp convolution_mt.cpp fft.cpp)
+
+target_link_options(
+  tail-engine
+  PRIVATE
+  --bind
+  "SHELL:-s MODULARIZE=1"
+  "SHELL:-s EXPORT_NAME=createTailEngine"
+  "SHELL:-s ENVIRONMENT=worker"
+  "SHELL:-s SINGLE_FILE=1"
+  "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+  "SHELL:-s INITIAL_MEMORY=67108864")
+
+set_target_properties(
+  tail-engine
+  PROPERTIES OUTPUT_NAME "tail-engine"
              SUFFIX ".js"
              RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../frontend/public")
