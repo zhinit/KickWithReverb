@@ -1,3 +1,6 @@
+const BLOCK = 128;
+const MAX_RING_BLOCKS = 64;
+
 class DSPProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -5,6 +8,19 @@ class DSPProcessor extends AudioWorkletProcessor {
     this.module = null;
     this.heapBufferLeft = null;
     this.heapBufferRight = null;
+    this.heapTailLeft = null;
+    this.heapTailRight = null;
+
+    // SharedArrayBuffer views for tail worker communication
+    this.dryWriteCount = null;
+    this.wetWriteCount = null;
+    this.dryRing = null;
+    this.wetRingL = null;
+    this.wetRingR = null;
+    this.writeCount = 0;
+    this.wetReadPos = 0;
+    this.irActive = false;
+
     this.port.onmessage = (e) => this.handleMessage(e.data);
   }
 
@@ -17,6 +33,18 @@ class DSPProcessor extends AudioWorkletProcessor {
       this.engine.prepare(sampleRate);
       this.module = module;
       this.port.postMessage({ type: "ready" });
+      return;
+    }
+
+    if (data.type === "sharedBuffer") {
+      const sab = data.sab;
+      this.dryWriteCount = new Int32Array(sab, 0, 1);
+      this.wetWriteCount = new Int32Array(sab, 4, 1);
+      this.dryRing = new Float32Array(sab, 8, MAX_RING_BLOCKS * BLOCK);
+      const wetLOffset = 8 + MAX_RING_BLOCKS * BLOCK * 4;
+      const wetROffset = wetLOffset + MAX_RING_BLOCKS * BLOCK * 4;
+      this.wetRingL = new Float32Array(sab, wetLOffset, MAX_RING_BLOCKS * BLOCK);
+      this.wetRingR = new Float32Array(sab, wetROffset, MAX_RING_BLOCKS * BLOCK);
       return;
     }
 
@@ -55,6 +83,13 @@ class DSPProcessor extends AudioWorkletProcessor {
         break;
       case "selectIR":
         this.engine.selectIR(data.index);
+        this.irActive = true;
+        this.wetReadPos = 0;
+        this.writeCount = 0;
+        if (this.dryWriteCount) {
+          Atomics.store(this.dryWriteCount, 0, 0);
+          Atomics.store(this.wetWriteCount, 0, 0);
+        }
         break;
 
       // Transport
@@ -125,21 +160,54 @@ class DSPProcessor extends AudioWorkletProcessor {
     const numSamples = leftOutput.length;
 
     // Allocate heap buffers if needed
-    if (!this.heapBufferLeft || this.heapBufferLeft.length < numSamples) {
-      if (this.heapBufferLeft) this.module._free(this.heapBufferLeft);
-      if (this.heapBufferRight) this.module._free(this.heapBufferRight);
+    if (!this.heapBufferLeft) {
       this.heapBufferLeft = this.module._malloc(numSamples * 4);
       this.heapBufferRight = this.module._malloc(numSamples * 4);
+      this.heapTailLeft = this.module._malloc(numSamples * 4);
+      this.heapTailRight = this.module._malloc(numSamples * 4);
     }
 
-    // Process audio through WASM engine
+    // Feed tail wet from worker before process() so it gets mixed in
+    if (this.irActive && this.wetWriteCount) {
+      const wetWriteCount = Atomics.load(this.wetWriteCount, 0);
+      if (this.wetReadPos < wetWriteCount) {
+        const wetOffset = (this.wetReadPos % MAX_RING_BLOCKS) * BLOCK;
+        this.wetReadPos++;
+        this.module.HEAPF32.set(
+          this.wetRingL.subarray(wetOffset, wetOffset + numSamples),
+          this.heapTailLeft / 4
+        );
+        this.module.HEAPF32.set(
+          this.wetRingR.subarray(wetOffset, wetOffset + numSamples),
+          this.heapTailRight / 4
+        );
+        this.engine.addTailWet(this.heapTailLeft, this.heapTailRight, numSamples);
+      }
+    }
+
+    // Process audio through WASM engine (includes level 0 convolution + tail mixing)
     this.engine.process(this.heapBufferLeft, this.heapBufferRight, numSamples);
+
+    // Copy dry block to shared ring for tail worker
+    if (this.irActive && this.dryWriteCount) {
+      const dryPtr = this.engine.getDryBlock();
+      const dryMono = new Float32Array(
+        this.module.HEAPF32.buffer,
+        dryPtr,
+        numSamples
+      );
+      const ringIdx = (this.writeCount % MAX_RING_BLOCKS) * BLOCK;
+      this.dryRing.set(dryMono, ringIdx);
+      this.writeCount++;
+      Atomics.store(this.dryWriteCount, 0, this.writeCount);
+      Atomics.notify(this.dryWriteCount, 0);
+    }
 
     // Copy from WASM heap to JS output buffers
     const wasmLeft = new Float32Array(
-      this.module.HEAPF32.buffer, // buffer
-      this.heapBufferLeft, // byte offset address
-      numSamples // number of float elements
+      this.module.HEAPF32.buffer,
+      this.heapBufferLeft,
+      numSamples
     );
     const wasmRight = new Float32Array(
       this.module.HEAPF32.buffer,
@@ -147,14 +215,11 @@ class DSPProcessor extends AudioWorkletProcessor {
       numSamples
     );
 
-    // put buffers into browser audio output
     leftOutput.set(wasmLeft);
     rightOutput.set(wasmRight);
 
-    // stayin' alive
     return true;
   }
 }
 
-// register the processor with the browser
 registerProcessor("dsp-processor", DSPProcessor);
