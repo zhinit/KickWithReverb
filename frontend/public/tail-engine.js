@@ -402,7 +402,7 @@ function updateMemoryViews() {
   HEAPU16 = new Uint16Array(b);
   HEAP32 = new Int32Array(b);
   HEAPU32 = new Uint32Array(b);
-  HEAPF32 = new Float32Array(b);
+  Module['HEAPF32'] = HEAPF32 = new Float32Array(b);
   HEAPF64 = new Float64Array(b);
   HEAP64 = new BigInt64Array(b);
   HEAPU64 = new BigUint64Array(b);
@@ -3015,7 +3015,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'callMain',
   'abort',
   'wasmExports',
-  'HEAPF32',
   'HEAPF64',
   'HEAP8',
   'HEAPU8',
@@ -3324,9 +3323,9 @@ var ___getTypeName = makeInvalidEarlyAccess('___getTypeName');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
-var _malloc = makeInvalidEarlyAccess('_malloc');
+var _malloc = Module['_malloc'] = makeInvalidEarlyAccess('_malloc');
 var _strerror = makeInvalidEarlyAccess('_strerror');
-var _free = makeInvalidEarlyAccess('_free');
+var _free = Module['_free'] = makeInvalidEarlyAccess('_free');
 var _emscripten_stack_init = makeInvalidEarlyAccess('_emscripten_stack_init');
 var _emscripten_stack_get_free = makeInvalidEarlyAccess('_emscripten_stack_get_free');
 var __emscripten_stack_restore = makeInvalidEarlyAccess('__emscripten_stack_restore');
@@ -3356,9 +3355,9 @@ function assignWasmExports(wasmExports) {
   _fflush = createExportWrapper('fflush', 1);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];
-  _malloc = createExportWrapper('malloc', 1);
+  _malloc = Module['_malloc'] = createExportWrapper('malloc', 1);
   _strerror = createExportWrapper('strerror', 1);
-  _free = createExportWrapper('free', 1);
+  _free = Module['_free'] = createExportWrapper('free', 1);
   _emscripten_stack_init = wasmExports['emscripten_stack_init'];
   _emscripten_stack_get_free = wasmExports['emscripten_stack_get_free'];
   __emscripten_stack_restore = wasmExports['_emscripten_stack_restore'];
