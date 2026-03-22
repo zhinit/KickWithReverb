@@ -34,6 +34,12 @@ irNames.forEach((name, i) => {
   irNameToIndex[name] = i;
 });
 
+const BLOCK = 128;
+const MAX_RING_BLOCKS = 64;
+
+// SharedArrayBuffer layout: dryWriteCount(4) + wetWriteCount(4) + dryRing + wetRingL + wetRingR
+const SAB_SIZE = 8 + MAX_RING_BLOCKS * BLOCK * 4 * 3;
+
 // Audio engine custom hook which is used in DAW component
 export const useAudioEngine = (): AudioEngine => {
   // states
@@ -45,14 +51,63 @@ export const useAudioEngine = (): AudioEngine => {
 
   const nextKickIndexRef = useRef(kickNames.length);
 
-  // cache functions so they dont need to be remade on each render
+  // tail worker refs
+  const tailWorkerRef = useRef<Worker | null>(null);
+  const tailGlueCodeRef = useRef<string | null>(null);
+  const irDataRef = useRef<{ irSamples: Float32Array; irLength: number; numChannels: number }[]>([]);
 
-  // function to send msg to WASM DSP
+  // starts (or restarts) the tail worker for a given IR
+  const startTailWorker = useCallback(
+    async (irIndex: number) => {
+      const node = workletNodeRef.current;
+      const glueCode = tailGlueCodeRef.current;
+      const irEntry = irDataRef.current[irIndex];
+      if (!node || !glueCode || !irEntry) return;
+
+      // terminate previous worker
+      if (tailWorkerRef.current) {
+        tailWorkerRef.current.terminate();
+        tailWorkerRef.current = null;
+      }
+
+      const worker = new Worker("/tail-worker.js");
+      tailWorkerRef.current = worker;
+
+      // init WASM in worker
+      await new Promise<void>((resolve) => {
+        worker.onmessage = (e) => {
+          if (e.data.type === "ready") resolve();
+        };
+        worker.postMessage({ type: "init", scriptCode: glueCode });
+      });
+
+      // create and distribute SharedArrayBuffer
+      const sab = new SharedArrayBuffer(SAB_SIZE);
+      node.port.postMessage({ type: "sharedBuffer", sab });
+      worker.postMessage({ type: "sharedBuffer", sab });
+
+      // send IR to tail worker (triggers processLoop)
+      const irCopy = new Float32Array(irEntry.irSamples);
+      worker.postMessage({
+        type: "loadIR",
+        irSamples: irCopy,
+        irLength: irEntry.irLength,
+        numChannels: irEntry.numChannels,
+      });
+    },
+    []
+  );
+
+  // function to send msg to WASM DSP (intercepts selectIR for tail worker)
   const postMessage = useCallback(
     (message: { type: string; [key: string]: unknown }) => {
       workletNodeRef.current?.port.postMessage(message);
+
+      if (message.type === "selectIR" && typeof message.index === "number") {
+        startTailWorker(message.index);
+      }
     },
-    []
+    [startTailWorker]
   );
 
   // function so that audio can play (browser starts as suspended)
@@ -89,9 +144,13 @@ export const useAudioEngine = (): AudioEngine => {
       const ctx = new AudioContext({ sampleRate: 44100 });
       audioContextRef.current = ctx;
 
-      // Fetch Emscripten glue code
-      const response = await fetch("/audio-engine.js");
-      const emscriptenGlueCode = await response.text();
+      // Fetch Emscripten glue code for both engines
+      const [engineResponse, tailResponse] = await Promise.all([
+        fetch("/audio-engine.js"),
+        fetch("/tail-engine.js"),
+      ]);
+      const emscriptenGlueCode = await engineResponse.text();
+      tailGlueCodeRef.current = await tailResponse.text();
 
       // loads and runs dsp-processor.js in the audio worklet
       await ctx.audioWorklet.addModule("/dsp-processor.js");
@@ -140,18 +199,24 @@ export const useAudioEngine = (): AudioEngine => {
         ]);
       }
 
-      // Load all IRs
+      // Load all IRs (store data for tail worker)
       for (const name of irNames) {
         const audioBuffer = await decodeAudio(irFiles[name]);
-        let samples: Float32Array;
 
         const left = audioBuffer.getChannelData(0);
         const right = audioBuffer.getChannelData(1);
-        samples = new Float32Array(left.length * 2);
+        const samples = new Float32Array(left.length * 2);
         for (let i = 0; i < left.length; i++) {
           samples[i * 2] = left[i];
           samples[i * 2 + 1] = right[i];
         }
+
+        // store for tail worker (needs a copy since we transfer the original)
+        irDataRef.current.push({
+          irSamples: new Float32Array(samples),
+          irLength: audioBuffer.length,
+          numChannels: audioBuffer.numberOfChannels,
+        });
 
         node.port.postMessage(
           {
@@ -173,6 +238,7 @@ export const useAudioEngine = (): AudioEngine => {
     // cleanup
     return () => {
       cancelled = true;
+      tailWorkerRef.current?.terminate();
       workletNodeRef.current?.disconnect();
       audioContextRef.current?.close();
     };
