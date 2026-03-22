@@ -88,13 +88,31 @@ AudioEngine::process(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
   noiseLowPass_.process(noiseL_.data(), noiseR_.data(), numSamples);
   noiseHighPass_.process(noiseL_.data(), noiseR_.data(), numSamples);
 
-  // reverb chain
-  if (activeIRIndex_ >= 0) {
+  // reverb chain — level 0 on audio thread, tail from worker
+  if (activeIRIndex_ >= 0 && irReady_) {
+    // mix kick+noise as dry reverb input (mono — L and R are summed)
+    for (int i = 0; i < numSamples; ++i)
+      dryBlock_[i] = kickL_[i] + noiseL_[i];
+
+    // level 0 convolution
+    level0Left_.processBlock(dryBlock_.data(), irFFTLevel0Left_);
+    level0Right_.processBlock(dryBlock_.data(), irFFTLevel0Right_);
+
+    const float* l0L = level0Left_.getResult();
+    const float* l0R = level0Right_.getResult();
     for (int i = 0; i < numSamples; ++i) {
-      reverbL_[i] = kickL_[i] + noiseL_[i];
-      reverbR_[i] = kickR_[i] + noiseR_[i];
+      reverbL_[i] = l0L[i];
+      reverbR_[i] = l0R[i];
     }
-    convolution_.process(reverbL_.data(), reverbR_.data(), numSamples);
+
+    // add tail wet from worker (if available)
+    if (hasTailWet_) {
+      for (int i = 0; i < numSamples; ++i) {
+        reverbL_[i] += tailWetL_[i];
+        reverbR_[i] += tailWetR_[i];
+      }
+    }
+
     reverbLowPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
     reverbHighPass_.process(reverbL_.data(), reverbR_.data(), numSamples);
     for (int i = 0; i < numSamples; ++i) {
@@ -223,7 +241,47 @@ AudioEngine::selectIR(int index)
       index != activeIRIndex_) {
     activeIRIndex_ = index;
     const auto& ir = irStorage_[index];
-    convolution_.loadIR(ir.samples.data(), ir.lengthPerChannel, ir.numChannels);
+
+    // deinterleave stereo IR
+    std::vector<float> leftIR(ir.lengthPerChannel);
+    std::vector<float> rightIR(ir.lengthPerChannel);
+    if (ir.numChannels == 1) {
+      leftIR.assign(ir.samples.data(), ir.samples.data() + ir.lengthPerChannel);
+      rightIR.assign(ir.samples.data(), ir.samples.data() + ir.lengthPerChannel);
+    } else {
+      for (size_t i = 0; i < ir.lengthPerChannel; ++i) {
+        leftIR[i] = ir.samples[i * 2];
+        rightIR[i] = ir.samples[i * 2 + 1];
+      }
+    }
+
+    normalizeEnergy(leftIR);
+    normalizeEnergy(rightIR);
+
+    // build level 0 IR FFTs — 2 partitions covering IR[0..2*blockSize)
+    const size_t fftSize = kBlockSize * 2;
+    auto buildLevel0FFTs = [&](const std::vector<float>& irData) {
+      std::vector<std::vector<float>> partitions;
+      for (size_t p = 0; p < 2; ++p) {
+        std::vector<float> slice(fftSize, 0.0f);
+        size_t offset = p * kBlockSize;
+        size_t count =
+          (offset < irData.size()) ? std::min((size_t)kBlockSize, irData.size() - offset) : 0;
+        for (size_t i = 0; i < count; ++i)
+          slice[i] = irData[offset + i];
+        std::vector<float> irFFT(fftSize * 2, 0.0f);
+        fft(slice.data(), irFFT.data(), fftSize);
+        partitions.push_back(std::move(irFFT));
+      }
+      return partitions;
+    };
+
+    irFFTLevel0Left_ = buildLevel0FFTs(leftIR);
+    irFFTLevel0Right_ = buildLevel0FFTs(rightIR);
+    level0Left_ = ConvolutionLevel(0, kBlockSize, 0, 2);
+    level0Right_ = ConvolutionLevel(0, kBlockSize, 0, 2);
+    irReady_ = true;
+    hasTailWet_ = false;
   }
 }
 
@@ -311,6 +369,25 @@ AudioEngine::setBPM(float bpm)
   recalcSamplesPerBeat();
 }
 
+// --- Tail worker integration ---
+
+void
+AudioEngine::addTailWet(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples)
+{
+  const float* left = reinterpret_cast<const float*>(leftPtr);
+  const float* right = reinterpret_cast<const float*>(rightPtr);
+  int count = std::min(numSamples, kBlockSize);
+  std::copy_n(left, count, tailWetL_.data());
+  std::copy_n(right, count, tailWetR_.data());
+  hasTailWet_ = true;
+}
+
+uintptr_t
+AudioEngine::getDryBlock() const
+{
+  return reinterpret_cast<uintptr_t>(dryBlock_.data());
+}
+
 // --- Emscripten bindings ---
 
 EMSCRIPTEN_BINDINGS(audio_module)
@@ -337,6 +414,8 @@ EMSCRIPTEN_BINDINGS(audio_module)
     .function("setReverbLowPass", &AudioEngine::setReverbLowPass)
     .function("setReverbHighPass", &AudioEngine::setReverbHighPass)
     .function("setReverbVolume", &AudioEngine::setReverbVolume)
+    .function("addTailWet", &AudioEngine::addTailWet)
+    .function("getDryBlock", &AudioEngine::getDryBlock)
     // Master
     .function("setMasterOTT", &AudioEngine::setMasterOTT)
     .function("setMasterDistortion", &AudioEngine::setMasterDistortion)

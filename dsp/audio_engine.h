@@ -1,8 +1,9 @@
 #pragma once
 
-#include "convolution.h"
+#include "convolution_mt.h"
 #include "distortion.h"
 #include "filter.h"
+#include "fft.h"
 #include "limiter.h"
 #include "ott.h"
 #include "sample_player.h"
@@ -40,6 +41,10 @@ public:
   void setReverbLowPass(float hz);
   void setReverbHighPass(float hz);
   void setReverbVolume(float db);
+
+  // Tail worker integration
+  void addTailWet(uintptr_t leftPtr, uintptr_t rightPtr, int numSamples);
+  uintptr_t getDryBlock() const;
 
   // Master chain
   void setMasterOTT(float amount);
@@ -84,8 +89,21 @@ private:
   Filter noiseLowPass_;
   Filter noiseHighPass_;
 
-  // Reverb
-  StereoConvolutionReverb convolution_;
+  // Reverb — level 0 convolution (runs on audio thread)
+  ConvolutionLevel level0Left_{ 0, kBlockSize };
+  ConvolutionLevel level0Right_{ 0, kBlockSize };
+  std::vector<std::vector<float>> irFFTLevel0Left_;
+  std::vector<std::vector<float>> irFFTLevel0Right_;
+  bool irReady_ = false;
+
+  // dry reverb input saved for tail worker
+  std::array<float, kBlockSize> dryBlock_{};
+
+  // tail wet buffer (written by addTailWet, applied after level 0)
+  std::array<float, kBlockSize> tailWetL_{};
+  std::array<float, kBlockSize> tailWetR_{};
+  bool hasTailWet_ = false;
+
   Filter reverbLowPass_;
   Filter reverbHighPass_;
   float reverbGain_ = 1.0f;
