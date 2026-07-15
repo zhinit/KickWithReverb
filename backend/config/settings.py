@@ -167,3 +167,13 @@ CORS_ALLOWED_ORIGINS = [
 # Supabase settings
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+# Production security headers (only enforced when DEBUG is off)
+if not DEBUG:
+    # Railway terminates TLS at its proxy; trust its forwarded-proto header
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    # Start HSTS at 1 hour; bump to 31536000 (1 year) once confirmed stable
+    SECURE_HSTS_SECONDS = 3600
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
