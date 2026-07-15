@@ -13,6 +13,7 @@ from .german_names import generate_kick_name
 
 DAILY_GEN_LIMIT = 10
 TOTAL_GEN_CAP = 30
+GLOBAL_DAILY_GEN_BUDGET = 1000
 EST_OFFSET = timezone.timedelta(hours=-5)
 
 
@@ -20,6 +21,11 @@ def get_midnight_est():
     now_est = timezone.now() + EST_OFFSET
     midnight_est = datetime.combine(now_est.date(), time.min, tzinfo=now_est.tzinfo)
     return midnight_est - EST_OFFSET
+
+
+def get_global_gens_today():
+    today_midnight = get_midnight_est()
+    return GeneratedKick.objects.filter(created_at__gte=today_midnight).count()
 
 
 def get_user_counts(user):
@@ -49,6 +55,12 @@ class GenerateKickView(APIView):
             return Response(
                 {"error": f"Daily generation limit reached {DAILY_GEN_LIMIT}"},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        if get_global_gens_today() >= GLOBAL_DAILY_GEN_BUDGET:
+            return Response(
+                {"error": "Generation temporarily unavailable, try again tomorrow"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         # call modal worker
