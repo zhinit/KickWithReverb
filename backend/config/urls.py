@@ -17,15 +17,15 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from users.views import RegisterView
+from rest_framework_simplejwt.views import TokenRefreshView
+from users.views import RegisterView, ThrottledTokenObtainPairView
 from presets.views import PresetListCreateView, PresetDetailView
 from kickgen.views import GenerateKickView, KickListView, KickDeleteView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     # login (access and refresh token)
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/", ThrottledTokenObtainPairView.as_view(), name="token_obtain_pair"),
     # refresh
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # create new user
