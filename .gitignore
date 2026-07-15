@@ -37,6 +37,7 @@ __pycache__/
 # Private
 /notes
 .env
+.gstack/
 .claudeignore
 /kick_gen_trainer/weights
 /kick_gen_trainer/data
