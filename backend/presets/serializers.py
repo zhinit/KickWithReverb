@@ -28,7 +28,7 @@ class PresetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "is_shared", "created_at", "updated_at"]
 
     def validate_preset_name(self, value):
         if not value.replace(" ", "").isalnum():
