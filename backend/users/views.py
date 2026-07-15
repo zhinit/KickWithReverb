@@ -9,6 +9,7 @@ from .serializers import RegisterSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = "register"
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)

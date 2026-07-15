@@ -61,6 +61,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": (
         "djangorestframework_camel_case.parser.CamelCaseJSONParser",
     ),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.ScopedRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "register": "5/hour",
+    },
 }
 
 MIDDLEWARE = [
