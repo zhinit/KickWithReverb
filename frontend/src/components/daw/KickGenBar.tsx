@@ -138,7 +138,7 @@ export const KickGenBar = ({
           }}
         >
           {aiKicks.length === 0 ? (
-            <option value="">Click 🎨 to generate new kick</option>
+            <option value="">Click GEN to generate new kick</option>
           ) : (
             aiKicks.map((kick) => (
               <option key={kick.id} value={kick.id}>
