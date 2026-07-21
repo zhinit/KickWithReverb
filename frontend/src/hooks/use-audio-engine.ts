@@ -85,6 +85,12 @@ export const useAudioEngine = (): AudioEngine => {
     let cancelled = false;
 
     async function init() {
+      // iOS mutes Web Audio when the silent switch is on unless the session
+      // is declared as media playback (iOS 17+, WebKit-only API)
+      if ("audioSession" in navigator) {
+        (navigator.audioSession as { type: string }).type = "playback";
+      }
+
       // create audio context and connect to ref
       const ctx = new AudioContext({ sampleRate: 44100 });
       audioContextRef.current = ctx;
