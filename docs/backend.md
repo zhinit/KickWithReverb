@@ -23,7 +23,8 @@ The backend is a Django REST API that handles user authentication, presets, and 
 backend/
 ├── manage.py                 # Django CLI entry point
 ├── Procfile                  # Railway/Heroku process definition
-├── requirements.txt          # Python dependencies
+├── pyproject.toml            # Python dependency declarations (uv)
+├── uv.lock                   # Exact resolved dependency versions
 ├── config/                   # Project configuration
 │   ├── __init__.py
 │   ├── settings.py          # Django settings
@@ -271,7 +272,8 @@ This allows the frontend to use JavaScript conventions while Django uses Python 
 
 ```bash
 cd backend
-python manage.py runserver
+uv sync --locked
+uv run --locked python manage.py runserver
 ```
 
 Server runs on `http://localhost:8000` by default.
@@ -281,13 +283,13 @@ Server runs on `http://localhost:8000` by default.
 
 ```bash
 # Create migrations
-python manage.py makemigrations
+uv run --locked python manage.py makemigrations
 
 # Apply migrations
-python manage.py migrate
+uv run --locked python manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+uv run --locked python manage.py createsuperuser
 ```
 
 ## Production Deployment
@@ -298,8 +300,9 @@ Deployed on **Railway** with **Supabase** PostgreSQL.
 - **Root directory**: `backend`
 - **Port**: `8080`
 
-The `Procfile` tells Railway to start Gunicorn:
+Railpack detects `pyproject.toml` and `uv.lock` to install dependencies with uv,
+and uses the `Procfile` to start the server. Leave custom build and start
+commands empty. Redeploy to apply changes.
 
-```
-web: gunicorn config.wsgi
-```
+Manage dependencies with `uv add` and `uv remove` from `backend`.
+Commit both `pyproject.toml` and `uv.lock` when dependencies change.
